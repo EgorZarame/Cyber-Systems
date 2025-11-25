@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КиберСистемс - Уровень 1.1</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/blockly/blockly.min.css" />
+</head>
+<body class="game-screen">
+    <!-- Верхняя панель -->
+    <header class="game-header">
+        <button class="back-btn" onclick="location.href='level-map.html'">← НАЗАД</button>
+        <div class="level-info">
+            <h2>📦 ОТДЕЛ ДРОНОВ - Уровень 1.1</h2>
+            <p>Задача: Провести дрона по прямой</p>
+        </div>
+        <div class="career-indicator">СТАТУС: <span>СТАЖЕР</span></div>
+    </header>
+
+    <!-- Игровая область -->
+    <div class="game-layout">
+        <div class="game-area">
+            <div id="game-canvas"></div>
+        </div>
+
+        <!-- Область программирования -->
+        <div class="code-area">
+            <div class="toolbar">
+                <button id="run-btn" class="run-button">▶ ВЫПОЛНИТЬ КОД</button>
+                <button id="reset-btn" class="reset-button">🔄 СБРОС</button>
+                <button id="hint-btn" class="hint-button">💡 ПОДСКАЗКА</button>
+            </div>
+            <div id="blockly-area"></div>
+        </div>
+    </div>
+
+    <!-- Консоль отладки -->
+    <div class="console-panel">
+        <div class="console-header">КОНСОЛЬ ОТЛАДКИ:</div>
+        <div id="console-output" class="console-output">Система инициализирована...</div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

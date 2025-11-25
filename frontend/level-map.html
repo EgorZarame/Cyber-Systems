@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КиберСистемс - Карта уровней</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="level-map">
+    <!-- Логотип и навигация -->
+    <header class="main-header">
+        <div class="logo">🔷 КИБЕРСИСТЕМС</div>
+        <nav class="main-nav">
+            <button class="nav-btn" onclick="location.href='index.html'">ГЛАВНАЯ</button>
+            <button class="nav-btn active">КАРТА</button>
+            <button class="nav-btn">НАСТРОЙКИ</button>
+            <button class="nav-btn">СПРАВКА</button>
+        </nav>
+    </header>
+
+    <!-- Карта офиса -->
+    <div class="office-map">
+        <!-- Отдел дронов -->
+        <section class="department" id="drones-department">
+            <h2>📦 ОТДЕЛ ДРОНОВ</h2>
+            <div class="levels">
+                <div class="level unlocked" data-level="1.1" onclick="startLevel('1.1')">
+                    <span>Ур. 1.1</span>
+                </div>
+                <div class="level locked" data-level="1.2">
+                    <span>Ур. 1.2</span>
+                </div>
+                <div class="level locked" data-level="1.3">
+                    <span>Ур. 1.3</span>
+                </div>
+                <div class="level boss locked" data-level="1.boss">
+                    <span>БОСС</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Охранные системы -->
+        <section class="department locked" id="security-department">
+            <h2>🔒 ОХРАННЫЕ СИСТЕМЫ</h2>
+            <div class="levels">
+                <div class="level locked" data-level="2.1">
+                    <span>Ур. 2.1</span>
+                </div>
+                <div class="level locked" data-level="2.2">
+                    <span>Ур. 2.2</span>
+                </div>
+                <div class="level locked" data-level="2.3">
+                    <span>Ур. 2.3</span>
+                </div>
+                <div class="level boss locked" data-level="2.boss">
+                    <span>БОСС</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Центральное ядро -->
+        <section class="department locked" id="core-department">
+            <h2>⚡ ЦЕНТРАЛЬНОЕ ЯДРО</h2>
+            <div class="levels">
+                <div class="level locked" data-level="3.1">
+                    <span>Ур. 3.1</span>
+                </div>
+                <div class="level locked" data-level="3.2">
+                    <span>Ур. 3.2</span>
+                </div>
+                <div class="level locked" data-level="3.3">
+                    <span>Ур. 3.3</span>
+                </div>
+                <div class="level boss locked" data-level="3.boss">
+                    <span>БОСС</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="level-map.js"></script>
+</body>
+</html>
