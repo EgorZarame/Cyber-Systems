@@ -5,9 +5,9 @@ const path = require('path');
 // Раздаем статические файлы
 app.use(express.static(__dirname));
 
-// Все маршруты ведут на index.html
+// Все маршруты ведут на главную страницу
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'home', 'index.html'));
 });
 
 const PORT = 3000;

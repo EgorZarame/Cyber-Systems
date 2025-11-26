@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Уровень 1.1: Первые шаги - КиберСистемс</title>
+    <link rel="stylesheet" href="../style.css">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/blockly/blockly.min.css" />
+</head>
+<body class="level-interface block-programming">
+    <!-- Верхняя панель -->
+    <div class="level-header">
+        <button class="back-button" onclick="location.href='../level-map/index.html'">◄ НАЗАД</button>
+        <div class="level-title">
+            <h1>Уровень 1.1: Первые шаги</h1>
+            <span class="level-subtitle">Отдел дронов - Кризис почтовых дронов</span>
+        </div>
+        <button class="help-button">ПОМОЩЬ</button>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="level-content">
+        <!-- Левая часть: игровое поле -->
+        <div class="game-section">
+            <div class="game-field">
+                <div id="game-canvas"></div>
+                <div class="game-overlay">
+                    <div class="hint-text">Дрон готов к программированию</div>
+                </div>
+            </div>
+            
+            <!-- Консоль -->
+            <div class="console-section">
+                <div class="console-header">КОНСОЛЬ СИСТЕМЫ:</div>
+                <div id="console-output" class="console-output">
+                    <div>> Дрон инициализирован</div>
+                    <div>> Система готова к приему команд</div>
+                    <div>> Ожидание программы...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая часть: программирование -->
+        <div class="programming-section">
+            <div class="blockly-container">
+                <div id="blockly-area"></div>
+            </div>
+            
+            <!-- Панель управления -->
+            <div class="control-panel">
+                <button id="run-button" class="control-btn run-btn">
+                    ▶ ЗАПУСТИТЬ ПРОГРАММУ
+                </button>
+                <button id="reset-button" class="control-btn reset-btn">
+                    🔄 СБРОСИТЬ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../game.js"></script>
+</body>
+</html>
+
+

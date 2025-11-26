@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта уровней - КиберСистемс</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            font-family: 'Courier New', monospace;
+            background: #0a0a1a;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        
+        /* Шапка */
+        .main-header {
+            background: #151530;
+            padding: 15px 30px;
+            border-bottom: 2px solid #00ff88;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
+        }
+        
+        .main-nav {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid #00ff88;
+            padding: 8px 16px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover, .nav-btn.active {
+            background: #00ff88;
+            color: #0a0a1a;
+            box-shadow: 0 0 10px #00ff88;
+        }
+        
+        /* Карта офиса */
+        .office-map {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 30px;
+        }
+        
+        .department {
+            margin-bottom: 50px;
+            padding: 20px;
+            border: 2px solid #00ff88;
+            background: #1a1a2e;
+            border-radius: 10px;
+        }
+        
+        .department.locked {
+            opacity: 0.5;
+            border-color: #7a7a7a;
+        }
+        
+        .department h2 {
+            color: #00ff88;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 20px;
+        }
+        
+        .levels {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+        }
+        
+        .level {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #ffd700;
+            background: #151530;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .level.unlocked:hover {
+            background: #ffd700;
+            color: #0a0a1a;
+            box-shadow: 0 0 15px #ffd700;
+            transform: scale(1.1);
+        }
+        
+        .level.locked {
+            border-color: #7a7a7a;
+            color: #7a7a7a;
+            cursor: not-allowed;
+        }
+        
+        .level.boss {
+            border-color: #ff0088;
+            color: #ff0088;
+        }
+        
+        .level.boss.unlocked:hover {
+            background: #ff0088;
+            color: #ffffff;
+            box-shadow: 0 0 20px #ff0088;
+        }
+        
+        .department-title {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+    </style>
+</head>
+</head>
+<body>
+    <!-- Логотип и навигация -->
+    <header class="main-header">
+        <div class="logo">🔷 КИБЕРСИСТЕМС</div>
+        <nav class="main-nav">
+            <button class="nav-btn" onclick="location.href='../home/index.html'">ГЛАВНАЯ</button>
+            <button class="nav-btn active">КАРТА</button>
+            <button class="nav-btn">НАСТРОЙКИ</button>
+            <button class="nav-btn">СПРАВКА</button>
+        </nav>
+    </header>
+
+    <!-- Карта офиса -->
+    <div class="office-map">
+        <!-- Отдел дронов -->
+        <section class="department" id="drones-department">
+            <div class="department-title">📦 ОТДЕЛ ДРОНОВ</div>
+            <h2>Кризис почтовых дронов</h2>
+            <div class="levels">
+                <div class="level unlocked" data-level="1.1" onclick="startLevel('1.1')">
+                    <span>1.1</span>
+                </div>
+                <div class="level unlocked" data-level="1.2" onclick="startLevel('1.2')">
+                    <span>1.2</span>
+                </div>
+                <div class="level unlocked" data-level="1.3" onclick="startLevel('1.3')">
+                    <span>1.3</span>
+                </div>
+                <div class="level boss unlocked" data-level="1.boss" onclick="startLevel('1.boss')">
+                    <span>БОСС</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Охранные системы -->
+        <section class="department unlocked" id="security-department">
+            <div class="department-title">🔒 ОХРАННЫЕ СИСТЕМЫ</div>
+            <h2>Взлом системы безопасности</h2>
+            <div class="levels">
+                <div class="level unlocked" data-level="2.1" onclick="startLevel('2.1')">
+                    <span>2.1</span>
+                </div>
+                <div class="level unlocked" data-level="2.2" onclick="startLevel('2.2')">
+                    <span>2.2</span>
+                </div>
+                <div class="level unlocked" data-level="2.3" onclick="startLevel('2.3')">
+                    <span>2.3</span>
+                </div>
+                <div class="level boss unlocked" data-level="2.boss" onclick="startLevel('2.boss')">
+                    <span>БОСС</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Центральное ядро -->
+        <section class="department unlocked" id="core-department">
+            <div class="department-title">⚡ ЦЕНТРАЛЬНОЕ ЯДРО</div>
+            <h2>Спасение ядра ИИ</h2>
+            <div class="levels">
+                <div class="level unlocked" data-level="3.1" onclick="startLevel('3.1')">
+                    <span>3.1</span>
+                </div>
+                <div class="level unlocked" data-level="3.2" onclick="startLevel('3.2')">
+                    <span>3.2</span>
+                </div>
+                <div class="level unlocked" data-level="3.3" onclick="startLevel('3.3')">
+                    <span>3.3</span>
+                </div>
+                <div class="level boss unlocked" data-level="3.boss" onclick="startLevel('3.boss')">
+                    <span>БОСС</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Логика карты уровней
+        function startLevel(levelId) {
+            console.log('🚀 Запуск уровня:', levelId);
+            
+            // Сохраняем выбранный уровень
+            localStorage.setItem('currentLevel', levelId);
+            
+            // Пока все уровни ведут на страницу уровня 1.1
+            // Позже можно сделать отдельные страницы для каждого уровня
+            window.location.href = '../level-1-1/index.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🗺️ Карта уровней загружена');
+            
+            // Загрузка прогресса
+            const progress = localStorage.getItem('gameProgress') || '1.1';
+            console.log('Текущий прогресс:', progress);
+            
+            // Разблокировка уровней на основе прогресса
+            unlockLevels(progress);
+        });
+
+        function unlockLevels(currentLevel) {
+            const levels = document.querySelectorAll('.level');
+            const currentLevelNum = parseFloat(currentLevel);
+            
+            console.log('Разблокировка уровней до:', currentLevelNum);
+            
+            levels.forEach(level => {
+                const levelNum = parseFloat(level.dataset.level);
+                
+                if (levelNum <= currentLevelNum) {
+                    level.classList.remove('locked');
+                    level.classList.add('unlocked');
+                } else {
+                    level.classList.remove('unlocked');
+                    level.classList.add('locked');
+                }
+            });
+            
+            // Разблокировка отделов
+            if (currentLevelNum >= 1.3) {
+                document.getElementById('security-department')?.classList.remove('locked');
+            }
+            if (currentLevelNum >= 2.3) {
+                document.getElementById('core-department')?.classList.remove('locked');
+            }
+        }
+    </script>
+</body>
+</html>
+
+
