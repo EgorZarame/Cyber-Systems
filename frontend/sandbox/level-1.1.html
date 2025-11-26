@@ -102,30 +102,96 @@
         const game = new Phaser.Game(config);
         let drone;
 
-        function preload() {
-            console.log('🔄 Загрузка ресурсов (старый прототип)...');
-        }
+       // === PHASER: ЗАГРУЗКА РЕСУРСОВ ===
+function preload() {
+    console.log('🖼️ Начало загрузки изображений...');
+    
+    // Определяем базовый путь (работает и с сервером, и без)
+    const basePath = window.location.protocol === 'file:' ? '../' : '/';
+    
+    // Обработчик успешной загрузки
+    this.load.on('filecomplete', function(key, type, data) {
+        console.log('✅ Изображение загружено:', key);
+    });
+    
+    // Обработчик ошибок загрузки
+    this.load.on('loaderror', function(file) {
+        console.error('❌ Ошибка загрузки:', file.key, file.src);
+        updateConsole('> ❌ Ошибка загрузки изображения: ' + file.key);
+        updateConsole('> Проверьте путь: ' + file.src);
+    });
+    
+    // Обработчик завершения загрузки
+    this.load.on('complete', function() {
+        console.log('✅ Все ресурсы загружены');
+    });
+    
+    // Загружаем офисный фон и аватары
+    const bgPath = basePath + 'assets/images/backgrounds/';
+    const avatarPath = basePath + 'assets/images/avatars/';
+    
+    this.load.image('office_bg', bgPath + 'office_bg.png');
+    this.load.image('intern_avatar', avatarPath + 'intern.png');
+    this.load.image('drones_department', bgPath + 'drones-department-bg.png');
+    
+    console.log('📦 Изображения добавлены в очередь загрузки');
+    console.log('📁 Базовый путь:', basePath);
+}
 
-        function create() {
-            // Создаем простую сцену
-            this.add.rectangle(100, 200, 600, 4, 0x00ff88); // дорога
-            this.add.rectangle(100, 200, 30, 30, 0x00ff88); // старт
-            this.add.rectangle(700, 200, 30, 30, 0xff4444); // финиш
-            
-            // Дрон (зеленый квадрат)
-            drone = this.add.rectangle(100, 200, 25, 25, 0x00ff88);
-            
-            updateConsole('> Дрон инициализирован (старый прототип)');
-        }
+// === PHASER: СОЗДАНИЕ СЦЕНЫ ===
+function create() {
+    console.log('🎨 Создание сцены...');
+    
+    // Проверяем, загружены ли изображения
+    const bgTexture = this.textures.get('drones_department');
+    const avatarTexture = this.textures.get('intern_avatar');
+    
+    if (bgTexture && !bgTexture.key.includes('__MISSING')) {
+        console.log('✅ Фон найден, добавляем...');
+        // ДОБАВЛЯЕМ ОФИСНЫЙ ФОН
+        this.add.image(400, 200, 'drones_department').setDisplaySize(800, 400);
+    } else {
+        console.warn('⚠️ Фон не загружен, используем цветной фон');
+        this.add.rectangle(400, 200, 800, 400, 0x1a1a2e);
+    }
+    
+    if (avatarTexture && !avatarTexture.key.includes('__MISSING')) {
+        console.log('✅ Аватар найден, добавляем...');
+        // Добавляем аватар стажера в угол (как наблюдателя)
+        this.add.image(50, 50, 'intern_avatar').setScale(0.3);
+    } else {
+        console.warn('⚠️ Аватар не загружен');
+    }
+    
+    // Остальная логика уровня (дорога, дрон, точки) поверх фона
+    this.add.rectangle(400, 200, 500, 8, 0x00ff88);   // Дорога
+    this.add.rectangle(150, 200, 40, 40, 0x00ff88, 0.3); // Старт
+    this.add.rectangle(650, 200, 40, 40, 0xff4444, 0.3); // Финиш
+    
+    drone = this.add.rectangle(150, 200, 30, 30, 0x00ff88);
+    
+    // Текст с именем игрока и должностью
+    this.add.text(80, 35, 'Стажер Иванов', {
+        fontSize: '12px',
+        fill: '#00ff88',
+        fontFamily: 'Courier New'
+    });
+    
+    console.log('✅ Сцена создана');
+}
 
         function moveDrone() {
+            if (!drone) {
+                updateConsole('> ❌ Дрон не инициализирован');
+                return;
+            }
             updateConsole('> Запуск программы...');
             updateConsole('> Двигаюсь вперед...');
             
             // Анимация движения
             game.scene.scenes[0].tweens.add({
                 targets: drone,
-                x: 700,
+                x: 650,
                 duration: 3000,
                 ease: 'Power2',
                 onComplete: function() {
@@ -140,7 +206,11 @@
         }
 
         function resetDrone() {
-            drone.x = 100;
+            if (!drone) {
+                updateConsole('> ❌ Дрон не инициализирован');
+                return;
+            }
+            drone.x = 150;
             updateConsole('> 🔄 Сброс системы...');
             updateConsole('> Дрон возвращен на старт');
         }

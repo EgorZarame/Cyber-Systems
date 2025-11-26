@@ -14,20 +14,36 @@
         body { 
             font-family: 'Courier New', monospace;
             background: #0a0a1a;
-            color: #00ff88;
+            color: #ffffff;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 26, 0.2);
+            z-index: -1;
         }
         
         /* Шапка */
         .main-header {
-            background: #151530;
+            background: rgba(21, 21, 48, 0);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             padding: 15px 30px;
-            border-bottom: 2px solid #00ff88;
+            border-bottom: 2px solid rgba(0, 255, 136, 0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
+            z-index: 10;
         }
         
         .logo {
@@ -94,17 +110,39 @@
         
         .character-display {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: #1a1a2e;
+            background: rgba(26, 26, 46, 0.8);
             border: 2px solid #ffd700;
-            min-height: 400px;
+            width: 200px;
+            height: 220px;
             border-radius: 10px;
+            position: relative;
+            overflow: visible;
+            padding: 5px;
+            /* ДОБАВЛЕНО: аватар чуть ниже */
+            margin-top: 40px;
+        }
+        
+        .character-avatar {
+            width: 240px;
+            height: 240px;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+        
+        .character-name {
+            font-size: 16px;
+            color: #ffd700;
+            text-align: center;
+            margin-top: 5px;
         }
         
         .character-placeholder {
             font-size: 80px;
             opacity: 0.7;
+            display: none;
         }
         
         .menu-buttons {
@@ -173,7 +211,9 @@
     <!-- Основной контент -->
     <main class="main-content">
         <div class="character-display">
+            <img id="character-avatar" class="character-avatar" alt="Аватар персонажа" onerror="this.style.display='none'; document.querySelector('.character-placeholder').style.display='block';">
             <div class="character-placeholder">👨‍💼</div>
+            <div class="character-name" id="character-name">Стажер</div>
         </div>
 
         <div class="menu-buttons">
@@ -195,6 +235,63 @@
     <script src="../api.js"></script>
     <script>
         let currentProfile = null;
+
+        // ТОЧНО ТАКАЯ ЖЕ ФУНКЦИЯ КАК В КАРТЕ УРОВНЕЙ
+        function setupBackground() {
+            console.log('🖼️ Начало установки фона...');
+            
+            // Пробуем разные пути к фону
+            const possiblePaths = [
+                '../assets/images/backgrounds/office_bg.png',
+                'assets/images/backgrounds/office_bg.png',
+                '../assets/backgrounds/office-bg.png',
+                'assets/backgrounds/office-bg.png',
+                // Добавь сюда реальный путь к твоему файлу
+            ];
+            
+            const body = document.body;
+            
+            // Функция для попытки загрузки фона
+            function tryBackground(pathIndex) {
+                if (pathIndex >= possiblePaths.length) {
+                    console.error('❌ Все пути к фону не работают. Использую CSS фон.');
+                    setCSSBackground();
+                    return;
+                }
+                
+                const bgPath = possiblePaths[pathIndex];
+                console.log(`🔄 Пробуем путь ${pathIndex + 1}:`, bgPath);
+                
+                const bgImg = new Image();
+                bgImg.onload = function() {
+                    console.log('✅ Фон загружен успешно:', bgPath);
+                    body.style.backgroundImage = `url('${bgPath}')`;
+                    body.style.backgroundSize = 'cover';
+                    body.style.backgroundPosition = 'center';
+                    body.style.backgroundRepeat = 'no-repeat';
+                    body.style.backgroundAttachment = 'fixed';
+                };
+                bgImg.onerror = function() {
+                    console.warn('❌ Не удалось загрузить:', bgPath);
+                    tryBackground(pathIndex + 1); // Пробуем следующий путь
+                };
+                bgImg.src = bgPath;
+            }
+            
+            // Функция для CSS фона (если картинки не работают)
+            function setCSSBackground() {
+                body.style.background = `
+                    radial-gradient(circle at 20% 30%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(255, 0, 136, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
+                    linear-gradient(135deg, #0a0a1a 0%, #151530 50%, #1a1a2e 100%)
+                `;
+                console.log('✅ Установлен CSS фон');
+            }
+            
+            // Начинаем попытки загрузки
+            tryBackground(0);
+        }
 
         // Логика главного меню
         async function continueGame() {
@@ -234,20 +331,84 @@
 
         // Загрузка профиля при загрузке страницы
         async function loadProfile() {
-            currentProfile = await fetchProfile();
-            if (currentProfile) {
-                console.log('Профиль загружен:', currentProfile);
-                // Можно отобразить никнейм, если нужно
+            try {
+                currentProfile = await fetchProfile();
+                if (currentProfile) {
+                    console.log('Профиль загружен:', currentProfile);
+                    updateCharacterDisplay(currentProfile);
+                } else {
+                    // Если профиль не загружен, показываем аватар по умолчанию
+                    console.log('Профиль не найден, используем значения по умолчанию');
+                    updateCharacterDisplay({ currentLevelId: '1.1' });
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
+                // В случае ошибки показываем аватар по умолчанию
+                updateCharacterDisplay({ currentLevelId: '1.1' });
             }
             updateCareerProgress();
+        }
+        
+        // Обновление отображения персонажа на основе профиля
+        function updateCharacterDisplay(profile) {
+            const avatarImg = document.getElementById('character-avatar');
+            const characterName = document.getElementById('character-name');
+            
+            if (!avatarImg || !characterName) return;
+            
+            // Определяем базовый путь
+            const basePath = window.location.protocol === 'file:' ? '../' : '/';
+            const avatarBasePath = basePath + 'assets/images/avatars/';
+            
+            // Определяем аватар на основе уровня карьеры
+            let avatarFile = 'intern.png';
+            let characterTitle = 'Стажер';
+            
+            if (profile.currentLevelId) {
+                if (profile.currentLevelId.startsWith('2.')) {
+                    avatarFile = 'junior.png';
+                    characterTitle = 'Junior Developer';
+                } else if (profile.currentLevelId.startsWith('3.')) {
+                    avatarFile = 'developer.png';
+                    characterTitle = 'Developer';
+                } else if (profile.currentLevelId.includes('boss')) {
+                    avatarFile = 'senior.png';
+                    characterTitle = 'Senior Developer';
+                }
+            }
+            
+            const avatarPath = avatarBasePath + avatarFile;
+            console.log('🖼️ Загрузка аватара:', avatarPath);
+            
+            avatarImg.src = avatarPath;
+            characterName.textContent = characterTitle;
+            
+            // Обработка ошибки загрузки изображения
+            avatarImg.onerror = function() {
+                console.error('❌ Ошибка загрузки аватара:', avatarPath);
+                this.style.display = 'none';
+                const placeholder = document.querySelector('.character-placeholder');
+                if (placeholder) {
+                    placeholder.style.display = 'block';
+                }
+            };
+            
+            avatarImg.onload = function() {
+                console.log('✅ Аватар загружен:', avatarPath);
+                this.style.display = 'block';
+                const placeholder = document.querySelector('.character-placeholder');
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+            };
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🏠 Главное меню загружено');
+            console.log('🔧 Вызываю setupBackground...');
+            setupBackground(); // ВЫЗЫВАЕМ ТУ ЖЕ ФУНКЦИЮ ЧТО И В КАРТЕ УРОВНЕЙ
             loadProfile();
         });
     </script>
 </body>
 </html>
-
-
