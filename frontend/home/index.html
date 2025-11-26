@@ -192,33 +192,59 @@
         </div>
     </main>
 
+    <script src="../api.js"></script>
     <script>
+        let currentProfile = null;
+
         // Логика главного меню
-        function continueGame() {
-            const progress = localStorage.getItem('gameProgress');
-            if (progress) {
+        async function continueGame() {
+            const profile = await fetchProfile();
+            if (profile && profile.currentLevelId) {
                 location.href = '../level-map/index.html';
             } else {
                 alert('Нет сохраненной игры. Начни новую игру!');
             }
         }
 
-        // Обновление прогресса карьеры
+        // Обновление прогресса карьеры на основе текущего уровня
         function updateCareerProgress() {
-            const progress = localStorage.getItem('gameProgress') || '1.1';
-            const stages = document.querySelectorAll('.career-stage');
+            if (!currentProfile) return;
             
+            const stages = document.querySelectorAll('.career-stage');
             stages.forEach((stage, index) => {
                 stage.classList.remove('active');
             });
             
-            // Активируем стажер по умолчанию
-            stages[0].classList.add('active');
+            // Определяем стадию карьеры на основе текущего уровня
+            const levelId = currentProfile.currentLevelId;
+            let stageIndex = 0; // СТАЖЕР по умолчанию
+            
+            if (levelId && levelId.startsWith('2.')) {
+                stageIndex = 1; // JUNIOR
+            } else if (levelId && levelId.startsWith('3.')) {
+                stageIndex = 2; // DEVELOPER
+            } else if (levelId && levelId.includes('boss')) {
+                stageIndex = 3; // SENIOR
+            }
+            
+            if (stages[stageIndex]) {
+                stages[stageIndex].classList.add('active');
+            }
+        }
+
+        // Загрузка профиля при загрузке страницы
+        async function loadProfile() {
+            currentProfile = await fetchProfile();
+            if (currentProfile) {
+                console.log('Профиль загружен:', currentProfile);
+                // Можно отобразить никнейм, если нужно
+            }
+            updateCareerProgress();
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🏠 Главное меню загружено');
-            updateCareerProgress();
+            loadProfile();
         });
     </script>
 </body>

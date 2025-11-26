@@ -8,6 +8,37 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/blockly/blockly.min.css" />
+    <script>
+        // Регистрируем генератор сразу после загрузки Blockly (новый API)
+        (function() {
+            function registerGenerator() {
+                if (typeof Blockly !== 'undefined' && Blockly.JavaScript) {
+                    // Старый способ (для совместимости)
+                    Blockly.JavaScript['move_forward'] = function(block) {
+                        return 'moveForward();\n';
+                    };
+                    
+                    // Новый способ через forBlock (для новых версий Blockly)
+                    if (Blockly.JavaScript.forBlock) {
+                        Blockly.JavaScript.forBlock['move_forward'] = function(block) {
+                            return 'moveForward();\n';
+                        };
+                    }
+                    
+                    console.log('✅ Генератор move_forward зарегистрирован (оба способа)');
+                } else {
+                    // Если Blockly ещё не загружен, ждём
+                    setTimeout(registerGenerator, 100);
+                }
+            }
+            // Пытаемся зарегистрировать сразу
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', registerGenerator);
+            } else {
+                registerGenerator();
+            }
+        })();
+    </script>
 </head>
 <body class="level-interface block-programming">
     <!-- Верхняя панель -->
@@ -60,6 +91,7 @@
         </div>
     </div>
 
+    <script src="../api.js"></script>
     <script src="../game.js"></script>
 </body>
 </html>

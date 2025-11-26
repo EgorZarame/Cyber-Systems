@@ -134,7 +134,6 @@
         }
     </style>
 </head>
-</head>
 <body>
     <!-- Логотип и навигация -->
     <header class="main-header">
@@ -210,56 +209,122 @@
         </section>
     </div>
 
+    <script src="../api.js"></script>
     <script>
+        let allLevels = [];
+        let currentProfile = null;
+
         // Логика карты уровней
         function startLevel(levelId) {
             console.log('🚀 Запуск уровня:', levelId);
-            
-            // Сохраняем выбранный уровень
-            localStorage.setItem('currentLevel', levelId);
-            
-            // Пока все уровни ведут на страницу уровня 1.1
-            // Позже можно сделать отдельные страницы для каждого уровня
-            window.location.href = '../level-1-1/index.html';
+            window.location.href = '../level-1-1/index.html?level=' + levelId;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🗺️ Карта уровней загружена');
+        // Загрузка уровней и профиля с бэкенда
+        async function loadGameData() {
+            console.log('🗺️ Загрузка данных игры...');
             
-            // Загрузка прогресса
-            const progress = localStorage.getItem('gameProgress') || '1.1';
-            console.log('Текущий прогресс:', progress);
+            // Загружаем уровни и профиль параллельно
+            [allLevels, currentProfile] = await Promise.all([
+                fetchLevels(),
+                fetchProfile()
+            ]);
             
-            // Разблокировка уровней на основе прогресса
-            unlockLevels(progress);
-        });
+            console.log('Загружено уровней:', allLevels.length);
+            console.log('Текущий профиль:', currentProfile);
+            
+            // Рендерим уровни динамически
+            renderLevels();
+            
+            // Разблокировка на основе прогресса
+            if (currentProfile) {
+                unlockLevels(currentProfile.currentLevelId);
+            } else {
+                unlockLevels('1.1'); // По умолчанию
+            }
+        }
 
-        function unlockLevels(currentLevel) {
-            const levels = document.querySelectorAll('.level');
-            const currentLevelNum = parseFloat(currentLevel);
+        // Рендеринг уровней из API
+        function renderLevels() {
+            // Группируем уровни по отделам
+            const departments = {
+                'DRONES': { element: document.getElementById('drones-department'), levels: [] },
+                'SECURITY': { element: document.getElementById('security-department'), levels: [] },
+                'CORE': { element: document.getElementById('core-department'), levels: [] }
+            };
             
-            console.log('Разблокировка уровней до:', currentLevelNum);
+            allLevels.forEach(level => {
+                const dept = departments[level.type];
+                if (dept) {
+                    dept.levels.push(level);
+                }
+            });
             
-            levels.forEach(level => {
-                const levelNum = parseFloat(level.dataset.level);
+            // Очищаем и заполняем каждый отдел
+            Object.entries(departments).forEach(([type, dept]) => {
+                if (!dept.element) return;
                 
-                if (levelNum <= currentLevelNum) {
-                    level.classList.remove('locked');
-                    level.classList.add('unlocked');
+                const levelsContainer = dept.element.querySelector('.levels');
+                if (!levelsContainer) return;
+                
+                levelsContainer.innerHTML = '';
+                
+                dept.levels.forEach(level => {
+                    const levelDiv = document.createElement('div');
+                    levelDiv.className = `level ${level.difficulty === 'BOSS' ? 'boss' : ''}`;
+                    levelDiv.dataset.level = level.id;
+                    levelDiv.onclick = () => startLevel(level.id);
+                    
+                    const label = level.difficulty === 'BOSS' ? 'БОСС' : level.id;
+                    levelDiv.innerHTML = `<span>${label}</span>`;
+                    
+                    levelsContainer.appendChild(levelDiv);
+                });
+            });
+        }
+
+        function unlockLevels(currentLevelId) {
+            if (!currentProfile && !currentLevelId) return;
+            
+            const currentLevel = allLevels.find(l => l.id === currentLevelId);
+            if (!currentLevel) {
+                console.warn('Уровень не найден:', currentLevelId);
+                return;
+            }
+            
+            const currentOrderIndex = currentLevel.orderIndex;
+            console.log('Разблокировка уровней до orderIndex:', currentOrderIndex);
+            
+            const levelElements = document.querySelectorAll('.level');
+            levelElements.forEach(levelEl => {
+                const levelId = levelEl.dataset.level;
+                const level = allLevels.find(l => l.id === levelId);
+                
+                if (level && level.orderIndex <= currentOrderIndex) {
+                    levelEl.classList.remove('locked');
+                    levelEl.classList.add('unlocked');
                 } else {
-                    level.classList.remove('unlocked');
-                    level.classList.add('locked');
+                    levelEl.classList.remove('unlocked');
+                    levelEl.classList.add('locked');
                 }
             });
             
             // Разблокировка отделов
-            if (currentLevelNum >= 1.3) {
-                document.getElementById('security-department')?.classList.remove('locked');
+            const securityDept = document.getElementById('security-department');
+            const coreDept = document.getElementById('core-department');
+            
+            if (currentOrderIndex >= 4) { // После босса дронов
+                securityDept?.classList.remove('locked');
             }
-            if (currentLevelNum >= 2.3) {
-                document.getElementById('core-department')?.classList.remove('locked');
+            if (currentOrderIndex >= 8) { // После босса безопасности
+                coreDept?.classList.remove('locked');
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🗺️ Карта уровней загружена');
+            loadGameData();
+        });
     </script>
 </body>
 </html>

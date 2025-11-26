@@ -1,6 +1,8 @@
 // ===== ИНИЦИАЛИЗАЦИЯ УРОВНЯ =====
 document.addEventListener('DOMContentLoaded', function() {
-    const levelId = localStorage.getItem('currentLevel') || '1.1';
+    // Получаем levelId из URL параметров
+    const urlParams = new URLSearchParams(window.location.search);
+    const levelId = urlParams.get('level') || '1.1';
     initializeLevel(levelId);
 });
 
@@ -22,6 +24,9 @@ function initializeLevel(levelId) {
 
 // ===== BLOCKLY НАСТРОЙКА =====
 function initBlockly(levelId) {
+    // Регистрируем генератор ДО создания workspace
+    registerCodeGenerators();
+    
     const toolbox = getToolboxForLevel(levelId);
     
     workspace = Blockly.inject('blockly-area', {
@@ -42,6 +47,13 @@ function initBlockly(levelId) {
 
     // Создаем кастомные блоки
     createCustomBlocks();
+    
+    // Регистрируем генератор ПОСЛЕ создания workspace (на всякий случай)
+    registerCodeGenerators();
+    
+    console.log('✅ Blockly workspace инициализирован');
+    console.log('Проверка генератора:', typeof Blockly.JavaScript !== 'undefined' ? 
+        (Blockly.JavaScript['move_forward'] ? '✅ Найден' : '❌ Не найден') : 'Blockly.JavaScript не доступен');
 }
 
 function getToolboxForLevel(levelId) {
@@ -79,19 +91,67 @@ function getToolboxForLevel(levelId) {
     return toolboxes[levelId] || toolboxes['1.1'];
 }
 
-function createCustomBlocks() {
-    Blockly.Blocks['move_forward'] = {
-        init: function() {
-            this.appendDummyInput()
-                .appendField("двигаться вперед");
-            this.setPreviousStatement(true, null);
-            this.setNextStatement(true, null);
-            this.setColour(120);
-            this.setTooltip("Двигает дрона вперед");
-        }
+// Глобальные переменные
+let workspace;
+let game;
+let player;
+
+// ===== РЕГИСТРАЦИЯ БЛОКОВ И ГЕНЕРАТОРОВ =====
+
+// Определение блока "двигаться вперед"
+Blockly.Blocks['move_forward'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("двигаться вперед");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(120);
+        this.setTooltip("Двигает дрона вперед");
+    }
+};
+
+// Функция для регистрации генератора (вызывается после загрузки Blockly)
+function registerCodeGenerators() {
+    // Проверяем разные варианты API Blockly
+    if (typeof Blockly === 'undefined') {
+        console.warn('⚠️ Blockly не загружен');
+        return;
+    }
+    
+    if (!Blockly.JavaScript) {
+        console.warn('⚠️ Blockly.JavaScript не доступен');
+        return;
+    }
+    
+    // Функция генератора
+    const generatorFunction = function(block) {
+        return 'moveForward();\n';
     };
     
-    // Добавь другие блоки по мере необходимости
+    // Способ 1: Прямая регистрация (старый API)
+    Blockly.JavaScript['move_forward'] = generatorFunction;
+    
+    // Способ 2: Через forBlock (новый API Blockly v9+)
+    if (!Blockly.JavaScript.forBlock) {
+        Blockly.JavaScript.forBlock = {};
+    }
+    Blockly.JavaScript.forBlock['move_forward'] = generatorFunction;
+    
+    // Способ 3: Через метод addReservedWords (если есть)
+    if (Blockly.JavaScript.addReservedWords) {
+        // Не нужно, но на всякий случай
+    }
+    
+    console.log('✅ Генератор move_forward зарегистрирован (все способы)');
+    console.log('Проверка:', {
+        direct: typeof Blockly.JavaScript['move_forward'] === 'function',
+        forBlock: typeof Blockly.JavaScript.forBlock?.['move_forward'] === 'function'
+    });
+}
+
+function createCustomBlocks() {
+    // Блоки уже определены выше, эта функция оставлена для совместимости
+    // Здесь можно добавить дополнительные блоки в будущем
 }
 
 // ===== PHASER ИНИЦИАЛИЗАЦИЯ =====
@@ -113,8 +173,8 @@ function initGame(levelId) {
 }
 
 function preload() {
-    // Загрузка ресурсов для уровня
-    this.load.image('drone', 'data:image/png;base64,...'); // временный спрайт
+    // Пока не загружаем изображения, используем простые фигуры
+    // this.load.image('drone', 'data:image/png;base64,...'); // временный спрайт
 }
 
 function create() {
@@ -143,15 +203,61 @@ function setupEventHandlers() {
 function runCode() {
     updateConsole('> Запуск программы...');
     
-    const code = Blockly.JavaScript.workspaceToCode(workspace);
-    console.log('Выполняемый код:', code);
-    
-    if (code.includes('moveForward')) {
-        updateConsole('> Выполняю: двигаться вперед');
-        // Логика движения дрона
-        moveDroneToFinish();
-    } else {
-        updateConsole('> Ошибка: нет команд для выполнения');
+    try {
+        // Убеждаемся, что генератор зарегистрирован
+        registerCodeGenerators();
+        
+        // Проверяем, что генератор действительно зарегистрирован
+        const hasDirect = typeof Blockly.JavaScript['move_forward'] === 'function';
+        const hasForBlock = Blockly.JavaScript.forBlock && typeof Blockly.JavaScript.forBlock['move_forward'] === 'function';
+        
+        console.log('Проверка генератора:', { hasDirect, hasForBlock });
+        
+        if (!hasDirect && !hasForBlock) {
+            // Последняя попытка - регистрируем напрямую
+            Blockly.JavaScript['move_forward'] = function(block) {
+                return 'moveForward();\n';
+            };
+            if (!Blockly.JavaScript.forBlock) {
+                Blockly.JavaScript.forBlock = {};
+            }
+            Blockly.JavaScript.forBlock['move_forward'] = function(block) {
+                return 'moveForward();\n';
+            };
+            console.log('✅ Генератор зарегистрирован в runCode (экстренная регистрация)');
+        }
+        
+        // Генерируем код
+        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        console.log('Выполняемый код:', code);
+        
+        if (!code || code.trim() === '') {
+            updateConsole('> Ошибка: нет команд для выполнения');
+            updateConsole('> Перетащи блок "двигаться вперед" в рабочую область');
+            return;
+        }
+        
+        // Определяем функцию moveForward для выполнения
+        window.moveForward = function() {
+            updateConsole('> Выполняю: двигаться вперед');
+            moveDroneToFinish();
+        };
+        
+        // Выполняем сгенерированный код
+        eval(code);
+        
+    } catch (error) {
+        console.error('Ошибка выполнения кода:', error);
+        updateConsole('> Ошибка выполнения: ' + error.message);
+        
+        // Если ошибка связана с генератором, показываем детали
+        if (error.message.includes('generator does not know')) {
+            console.error('Генератор не найден. Проверяем структуру Blockly.JavaScript:');
+            console.log('Blockly.JavaScript:', Blockly.JavaScript);
+            console.log('forBlock:', Blockly.JavaScript.forBlock);
+            console.log('Прямой доступ:', Blockly.JavaScript['move_forward']);
+            updateConsole('> КРИТИЧЕСКАЯ ОШИБКА: генератор кода не зарегистрирован');
+        }
     }
 }
 
@@ -176,12 +282,29 @@ function resetLevel() {
     updateConsole('> Дрон возвращен на старт');
 }
 
-function completeLevel() {
-    // Логика завершения уровня
-    setTimeout(() => {
-        alert('🎉 Уровень пройден! Возвращаемся на карту...');
-        window.location.href = 'level-map.html';
-    }, 1000);
+async function completeLevel() {
+    // Получаем текущий levelId из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const levelId = urlParams.get('level') || '1.1';
+    
+    updateConsole('> Сохранение прогресса...');
+    
+    // Обновляем прогресс через API
+    const updatedProfile = await updateProgress(levelId);
+    
+    if (updatedProfile) {
+        updateConsole('> Прогресс сохранен!');
+        setTimeout(() => {
+            alert('🎉 Уровень пройден! Возвращаемся на карту...');
+            window.location.href = '../level-map/index.html';
+        }, 1000);
+    } else {
+        updateConsole('> Ошибка сохранения прогресса, но уровень пройден!');
+        setTimeout(() => {
+            alert('🎉 Уровень пройден! (Прогресс не сохранен из-за ошибки)');
+            window.location.href = '../level-map/index.html';
+        }, 1000);
+    }
 }
 
 function showHelp() {
