@@ -3,44 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>КиберСистемс - Уровень 1.1</title>
+    <title>Уровень 1.1: Первые шаги - КиберСистемс</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/blockly/blockly.min.css" />
 </head>
-<body class="game-screen">
+<body class="level-interface block-programming">
     <!-- Верхняя панель -->
-    <header class="game-header">
-        <button class="back-btn" onclick="location.href='level-map.html'">← НАЗАД</button>
-        <div class="level-info">
-            <h2>📦 ОТДЕЛ ДРОНОВ - Уровень 1.1</h2>
-            <p>Задача: Провести дрона по прямой</p>
+    <div class="level-header">
+        <button class="back-button" onclick="location.href='level-map.html'">◄ НАЗАД</button>
+        <div class="level-title">
+            <h1>Уровень 1.1: Первые шаги</h1>
+            <span class="level-subtitle">Отдел дронов - Кризис почтовых дронов</span>
         </div>
-        <div class="career-indicator">СТАТУС: <span>СТАЖЕР</span></div>
-    </header>
-
-    <!-- Игровая область -->
-    <div class="game-layout">
-        <div class="game-area">
-            <div id="game-canvas"></div>
-        </div>
-
-        <!-- Область программирования -->
-        <div class="code-area">
-            <div class="toolbar">
-                <button id="run-btn" class="run-button">▶ ВЫПОЛНИТЬ КОД</button>
-                <button id="reset-btn" class="reset-button">🔄 СБРОС</button>
-                <button id="hint-btn" class="hint-button">💡 ПОДСКАЗКА</button>
-            </div>
-            <div id="blockly-area"></div>
-        </div>
+        <button class="help-button">ПОМОЩЬ</button>
     </div>
 
-    <!-- Консоль отладки -->
-    <div class="console-panel">
-        <div class="console-header">КОНСОЛЬ ОТЛАДКИ:</div>
-        <div id="console-output" class="console-output">Система инициализирована...</div>
+    <!-- Основной контент -->
+    <div class="level-content">
+        <!-- Левая часть: игровое поле -->
+        <div class="game-section">
+            <div class="game-field">
+                <div id="game-canvas"></div>
+                <div class="game-overlay">
+                    <div class="hint-text">Дрон готов к программированию</div>
+                </div>
+            </div>
+            
+            <!-- Консоль -->
+            <div class="console-section">
+                <div class="console-header">КОНСОЛЬ СИСТЕМЫ:</div>
+                <div id="console-output" class="console-output">
+                    <div>> Дрон инициализирован</div>
+                    <div>> Система готова к приему команд</div>
+                    <div>> Ожидание программы...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая часть: программирование -->
+        <div class="programming-section">
+            <div class="blockly-container">
+                <div id="blockly-area"></div>
+            </div>
+            
+            <!-- Панель управления -->
+            <div class="control-panel">
+                <button id="run-button" class="control-btn run-btn">
+                    ▶ ЗАПУСТИТЬ ПРОГРАММУ
+                </button>
+                <button id="reset-button" class="control-btn reset-btn">
+                    🔄 СБРОСИТЬ
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="game.js"></script>

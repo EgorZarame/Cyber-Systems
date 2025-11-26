@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Уровень 1.1 - КиберСистемс</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Courier New', monospace;
+            background: #0a0a1a;
+            color: #00ff88;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: #151530;
+            padding: 15px;
+            border-bottom: 2px solid #00ff88;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            background: transparent;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        #game-canvas {
+            border: 3px solid #00ff88;
+            background: #1a1a2e;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+        .control-btn {
+            padding: 10px 20px;
+            background: #00ff88;
+            color: #0a0a1a;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        .console {
+            background: #000;
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #00ff88;
+            height: 100px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-btn" onclick="location.href='level-map.html'">← НАЗАД</button>
+        <h2>Уровень 1.1: Первые шаги</h2>
+        <button class="back-btn">ПОМОЩЬ</button>
+    </div>
+
+    <div class="game-container">
+        <div id="game-canvas"></div>
+        <div class="controls">
+            <button class="control-btn" onclick="moveDrone()">▶ ЗАПУСТИТЬ</button>
+            <button class="control-btn" onclick="resetDrone()">🔄 СБРОС</button>
+        </div>
+    </div>
+
+    <div class="console" id="console">
+        > Дрон готов к работе<br>
+        > Ожидание команд...
+    </div>
+
+    <script>
+        // Простая Phaser сцена
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 400,
+            parent: 'game-canvas',
+            scene: {
+                preload: preload,
+                create: create
+            }
+        };
+
+        const game = new Phaser.Game(config);
+        let drone;
+
+        function preload() {
+            console.log('🔄 Загрузка ресурсов...');
+        }
+
+        function create() {
+            // Создаем простую сцену
+            this.add.rectangle(100, 200, 600, 4, 0x00ff88); // дорога
+            this.add.rectangle(100, 200, 30, 30, 0x00ff88); // старт
+            this.add.rectangle(700, 200, 30, 30, 0xff4444); // финиш
+            
+            // Дрон (зеленый квадрат)
+            drone = this.add.rectangle(100, 200, 25, 25, 0x00ff88);
+            
+            updateConsole('> Дрон инициализирован');
+        }
+
+        function moveDrone() {
+            updateConsole('> Запуск программы...');
+            updateConsole('> Двигаюсь вперед...');
+            
+            // Анимация движения
+            game.scene.scenes[0].tweens.add({
+                targets: drone,
+                x: 700,
+                duration: 3000,
+                ease: 'Power2',
+                onComplete: function() {
+                    updateConsole('> ✅ Дрон достиг финиша!');
+                    updateConsole('> 🎉 Уровень пройден!');
+                    setTimeout(() => {
+                        alert('Уровень пройден! Возвращаемся на карту...');
+                        location.href = 'level-map.html';
+                    }, 1000);
+                }
+            });
+        }
+
+        function resetDrone() {
+            drone.x = 100;
+            updateConsole('> 🔄 Сброс системы...');
+            updateConsole('> Дрон возвращен на старт');
+        }
+
+        function updateConsole(message) {
+            const consoleElem = document.getElementById('console');
+            consoleElem.innerHTML += '<br>' + message;
+            consoleElem.scrollTop = consoleElem.scrollHeight;
+        }
+
+        console.log('✅ Уровень 1.1 загружен');
+    </script>
+</body>
+</html>
