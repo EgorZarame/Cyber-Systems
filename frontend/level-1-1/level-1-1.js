@@ -1,14 +1,15 @@
-// Конфигурация уровня 1.2 - L-образный маршрут
+// Конфигурация уровня 1.1
 const levelConfig = {
-    id: '1.2',
-    title: 'Повороты',
+    id: '1.1',
+    title: 'Первые шаги',
     gridSizeX: 10,
     gridSizeY: 6,
-    start: { x: 1, y: 1 },
-    finish: { x: 8, y: 4 },
-    obstacles: [
-        { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 4 }, { x: 3, y: 5 },
-        { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 }, { x: 7, y: 3 }, { x: 8, y: 3 }
+    start: { x: 1, y: 3 },
+    finish: { x: 8, y: 3 },
+    path: [
+        { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }, 
+        { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 },
+        { x: 7, y: 3 }, { x: 8, y: 3 }
     ]
 };
 
@@ -26,7 +27,6 @@ function initializeLevel() {
     initializeGameGrid();
     initializeDragAndDrop();
     addConsoleMessage('Дрон готов');
-    addConsoleMessage('Используйте повороты для обхода препятствий');
 }
 
 // Инициализация игрового поля
@@ -45,8 +45,6 @@ function initializeGameGrid() {
                 cell.classList.add('start');
             } else if (x === levelConfig.finish.x && y === levelConfig.finish.y) {
                 cell.classList.add('finish');
-            } else if (levelConfig.obstacles.some(obs => obs.x === x && obs.y === y)) {
-                cell.classList.add('obstacle');
             }
 
             grid.appendChild(cell);
@@ -58,13 +56,11 @@ function initializeGameGrid() {
 
 // Drag and Drop
 function initializeDragAndDrop() {
-    const blocks = document.querySelectorAll('.code-block[draggable="true"]');
+    const block = document.querySelector('.code-block[draggable="true"]');
     const codeArea = document.getElementById('codeArea');
 
-    blocks.forEach(block => {
-        block.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', block.dataset.action);
-        });
+    block.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', 'move');
     });
 
     codeArea.addEventListener('dragover', (e) => {
@@ -73,8 +69,7 @@ function initializeDragAndDrop() {
 
     codeArea.addEventListener('drop', (e) => {
         e.preventDefault();
-        const action = e.dataTransfer.getData('text/plain');
-        addBlockToProgram(action);
+        addBlockToProgram('move');
     });
 }
 
@@ -89,15 +84,8 @@ function addBlockToProgram(action) {
 
     const block = document.createElement('div');
     block.className = 'code-block';
-    block.textContent = getBlockText(action);
+    block.textContent = 'ДВИГАТЬСЯ_ВПЕРЕД()';
     block.dataset.action = action;
-    
-    // Добавляем класс для стилизации
-    if (action === 'move') {
-        block.classList.add('movement');
-    } else {
-        block.classList.add('rotation');
-    }
     
     block.addEventListener('dblclick', () => {
         if (!isExecuting) {
@@ -109,17 +97,6 @@ function addBlockToProgram(action) {
 
     codeArea.appendChild(block);
     programBlocks.push({ action, element: block });
-    
-    addConsoleMessage(`Добавлен блок: ${getBlockText(action)}`);
-}
-
-function getBlockText(action) {
-    switch (action) {
-        case 'move': return 'ДВИГАТЬСЯ_ВПЕРЕД()';
-        case 'left': return 'ПОВЕРНУТЬ_НАЛЕВО()';
-        case 'right': return 'ПОВЕРНУТЬ_НАПРАВО()';
-        default: return 'НЕИЗВЕСТНАЯ_КОМАНДА';
-    }
 }
 
 // Запуск программы
@@ -144,7 +121,8 @@ async function runProgram() {
         if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
             addConsoleMessage('Дрон достиг цели!');
             setTimeout(() => {
-                completeLevel();
+                alert('Уровень пройден!');
+                goToLevelMap();
             }, 1000);
             break;
         }
@@ -158,34 +136,19 @@ async function runProgram() {
 
 // Выполнение действия
 async function executeAction(blockData) {
-    const { action, element } = blockData;
+    const { element } = blockData;
     
-    addConsoleMessage(`Выполняется: ${getBlockText(action)}`);
-
-    switch (action) {
+    switch (blockData.action) {
         case 'move':
             await moveForward();
-            break;
-        case 'left':
-            await turnLeft();
-            break;
-        case 'right':
-            await turnRight();
             break;
     }
 }
 
 // Движение вперед
 async function moveForward() {
-    let newX = drone.x;
+    let newX = drone.x + 1;
     let newY = drone.y;
-
-    switch (drone.direction) {
-        case 'north': newY--; break;
-        case 'east': newX++; break;
-        case 'south': newY++; break;
-        case 'west': newX--; break;
-    }
 
     // Анимация движения
     const droneElement = document.querySelector('.drone');
@@ -195,17 +158,8 @@ async function moveForward() {
 
     await new Promise(resolve => setTimeout(resolve, 400));
 
-    // Проверка препятствий и границ
-    const hasObstacle = levelConfig.obstacles.some(obs => obs.x === newX && obs.y === newY);
-    
-    if (newX >= 0 && newX < levelConfig.gridSizeX && 
-        newY >= 0 && newY < levelConfig.gridSizeY &&
-        !hasObstacle) {
+    if (newX < levelConfig.gridSizeX) {
         drone.x = newX;
-        drone.y = newY;
-        addConsoleMessage(`Успех: перемещение на (${newX}, ${newY})`);
-    } else {
-        addConsoleMessage('Ошибка: препятствие или граница поля');
     }
 
     updateDronePosition();
@@ -215,30 +169,6 @@ async function moveForward() {
             droneElement.classList.remove('drone-moving');
         }, 200);
     }
-}
-
-// Поворот налево
-async function turnLeft() {
-    const directions = ['north', 'west', 'south', 'east'];
-    const currentIndex = directions.indexOf(drone.direction);
-    drone.direction = directions[(currentIndex + 1) % 4];
-    
-    addConsoleMessage(`Поворот налево. Направление: ${drone.direction}`);
-    updateDronePosition();
-    
-    await new Promise(resolve => setTimeout(resolve, 400));
-}
-
-// Поворот направо
-async function turnRight() {
-    const directions = ['north', 'east', 'south', 'west'];
-    const currentIndex = directions.indexOf(drone.direction);
-    drone.direction = directions[(currentIndex + 1) % 4];
-    
-    addConsoleMessage(`Поворот направо. Направление: ${drone.direction}`);
-    updateDronePosition();
-    
-    await new Promise(resolve => setTimeout(resolve, 400));
 }
 
 // Обновление позиции дрона
@@ -273,7 +203,6 @@ function resetProgram() {
 function resetDrone() {
     drone.x = levelConfig.start.x;
     drone.y = levelConfig.start.y;
-    drone.direction = 'east';
     updateDronePosition();
 }
 
@@ -299,34 +228,13 @@ function addConsoleMessage(message) {
     consoleOutput.scrollTop = consoleOutput.scrollHeight;
 }
 
-// Завершение уровня
-async function completeLevel() {
-    isExecuting = false;
-    
-    try {
-        await updateProgress('1.2');
-        addConsoleMessage('Прогресс сохранен');
-    } catch (error) {
-        console.error('Ошибка сохранения прогресса:', error);
-    }
-    
-    setTimeout(() => {
-        alert('🎉 Уровень пройден!\n\nВы освоили повороты дрона!');
-        goToLevelMap();
-    }, 500);
-}
-
 // Навигация
 function goBack() {
     window.location.href = '../level-map/index.html';
 }
 
 function showHelp() {
-    alert('Помощь по уровню 1.2:\n\n' +
-          '1. Используйте ДВИГАТЬСЯ_ВПЕРЕД() для движения\n' +
-          '2. Используйте ПОВЕРНУТЬ_НАЛЕВО() и ПОВЕРНУТЬ_НАПРАВО() для смены направления\n' +
-          '3. Обойдите красные препятствия\n' +
-          '4. Достигните оранжевой клетки');
+    alert('Помощь:\n\nПеретащите блок ДВИГАТЬСЯ_ВПЕРЕД() в область программы\nЗапустите программу чтобы двигать дрона');
 }
 
 function goToLevelMap() {

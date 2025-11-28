@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Уровень 1.2: Повороты</title>
+    <title>Уровень 2.3: Босс - Адаптивный глитч - КиберСистемс</title>
+    <link rel="stylesheet" href="../style.css">
     <style>
         * {
             margin: 0;
@@ -12,573 +13,606 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 20px;
-            height: calc(100vh - 40px);
-        }
-
-        /* Игровая область */
-        .game-area {
-            background: #0f3460;
-            border-radius: 15px;
-            padding: 20px;
-            position: relative;
+            font-family: 'Courier New', monospace;
+            background: #0a0a1a;
+            color: #9C27B0;
+            height: 100vh;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
-        .level-header {
-            text-align: center;
-            margin-bottom: 20px;
+        /* Глитч эффекты */
+        .glitch-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            background: linear-gradient(45deg, transparent 49%, #ff00ff 50%, transparent 51%);
+            background-size: 10px 10px;
+            animation: glitch 0.3s infinite;
         }
 
-        .level-header h1 {
-            font-size: 2em;
-            color: #e94560;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-            margin-bottom: 5px;
-        }
-
-        .level-header .subtitle {
-            color: #8de8ff;
-            font-size: 1.1em;
-        }
-
-        /* Игровое поле */
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(10, 1fr);
-            gap: 2px;
-            background: #1a1a2e;
-            border: 3px solid #e94560;
-            border-radius: 8px;
-            padding: 10px;
-            height: calc(100% - 100px);
-        }
-
-        .grid-cell {
-            background: #1f4068;
-            border-radius: 4px;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .grid-cell.path {
-            background: #2d5b88;
-            box-shadow: inset 0 0 10px rgba(141, 232, 255, 0.3);
-        }
-
-        .grid-cell.obstacle {
-            background: #e94560;
-            background-image: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 5px,
-                rgba(0, 0, 0, 0.1) 5px,
-                rgba(0, 0, 0, 0.1) 10px
-            );
-        }
-
-        .grid-cell.start {
-            background: #4CAF50;
-            background-image: radial-gradient(circle at center, #66ff66, #4CAF50);
-        }
-
-        .grid-cell.finish {
-            background: #FF9800;
-            background-image: radial-gradient(circle at center, #ffcc80, #FF9800);
-        }
-
-        /* Дрон */
-        .drone {
-            width: 70%;
-            height: 70%;
-            background: #8de8ff;
-            border-radius: 50%;
-            position: absolute;
-            top: 15%;
-            left: 15%;
-            transition: all 0.5s ease;
-            box-shadow: 0 0 15px rgba(141, 232, 255, 0.7);
+        /* Верхняя панель */
+        .top-panel {
+            background: #151530;
+            border-bottom: 2px solid #9C27B0;
+            padding: 10px 20px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: #1a1a2e;
+            height: 60px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .level-title {
+            font-size: 1.2em;
             font-weight: bold;
+            color: #9C27B0;
+            text-shadow: 0 0 10px #9C27B0;
+            animation: textGlitch 5s infinite;
         }
 
-        .drone::after {
-            content: '▲';
-            position: absolute;
-            top: -5px;
+        .nav-button {
+            background: transparent;
+            color: #9C27B0;
+            border: 1px solid #9C27B0;
+            padding: 6px 12px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-size: 0.9em;
         }
 
-        .drone.north { transform: rotate(0deg); }
-        .drone.east { transform: rotate(90deg); }
-        .drone.south { transform: rotate(180deg); }
-        .drone.west { transform: rotate(270deg); }
+        .nav-button:hover {
+            background: #9C27B0;
+            color: #0a0a1a;
+        }
 
-        /* Панель инструментов */
-        .toolbar {
-            background: #1a1a2e;
-            border-radius: 15px;
-            padding: 20px;
+        /* Основной контейнер */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            padding: 15px;
+            gap: 15px;
+        }
+
+        /* Левая часть - Система сортировки */
+        .left-panel {
+            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
-        .blocks-panel {
-            background: #0f3460;
-            border-radius: 10px;
+        .sorting-system {
+            flex: 1;
+            background: #1a0a1a;
+            border: 2px solid #9C27B0;
+            border-radius: 5px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .system-label {
+            color: #9C27B0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            text-align: center;
+            text-shadow: 0 0 5px #9C27B0;
+        }
+
+        .conveyor-system {
+            flex: 1;
+            background: #0a1429;
+            border: 2px solid #9C27B0;
+            border-radius: 5px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+
+        .conveyor-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: #2a152a;
+            border-radius: 4px;
+            border: 1px solid #3a253a;
+            position: relative;
+        }
+
+        .section-label {
+            position: absolute;
+            top: -8px;
+            left: 10px;
+            background: #1a0a1a;
+            padding: 0 5px;
+            font-size: 0.7em;
+            color: #9C27B0;
+        }
+
+        .conveyor-label {
+            width: 120px;
+            color: #9C27B0;
+            font-weight: bold;
+        }
+
+        .conveyor-track {
+            flex: 1;
+            height: 40px;
+            background: #3a253a;
+            border-radius: 4px;
+            border: 1px dashed #9C27B0;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 10px;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .conveyor-section {
+            position: absolute;
+            height: 100%;
+            border-left: 1px solid #9C27B0;
+            border-right: 1px solid #9C27B0;
+            opacity: 0.3;
+        }
+
+        .package {
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.7em;
+            color: white;
+            animation: packageAppear 0.5s ease-in;
+            position: relative;
+            z-index: 2;
+        }
+
+        .package.red { background: #f44336; }
+        .package.blue { background: #2196F3; }
+        .package.green { background: #4CAF50; }
+        .package.corrupted {
+            animation: corruption 2s infinite;
+            background: linear-gradient(45deg, #f44336, #9C27B0, #2196F3);
+        }
+
+        .robot-arm {
+            width: 60px;
+            height: 40px;
+            background: #666;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+            border: 2px solid #888;
+            position: relative;
+            z-index: 2;
+        }
+
+        .boss-health {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #9C27B0;
+            font-size: 0.8em;
+        }
+
+        .health-bar {
+            width: 150px;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #9C27B0, #7B1FA2);
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Правая часть - Программирование */
+        .right-panel {
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .programming-section {
+            background: #1a0a1a;
+            border: 2px solid #9C27B0;
+            border-radius: 5px;
             padding: 15px;
         }
 
-        .blocks-panel h3 {
-            color: #e94560;
-            margin-bottom: 15px;
+        .section-title {
+            color: #9C27B0;
+            margin-bottom: 10px;
+            font-size: 1em;
             text-align: center;
+            text-shadow: 0 0 5px #9C27B0;
         }
 
         .blocks-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 5px;
         }
 
-        .block {
-            background: #1f4068;
-            padding: 12px;
-            border-radius: 8px;
+        .code-block {
+            background: #2a152a;
+            padding: 8px;
+            border: 1px solid #9C27B0;
+            border-radius: 4px;
             cursor: grab;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
+            color: white;
             text-align: center;
-            user-select: none;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            position: relative;
         }
 
-        .block:hover {
+        .code-block.condition {
+            border-color: #FF9800;
+            background: #b36b00;
+        }
+
+        .code-block.action {
+            border-color: #4CAF50;
             background: #2d5b88;
-            border-color: #e94560;
-            transform: translateY(-2px);
         }
 
-        .block.movement { background: #4CAF50; }
-        .block.rotation { background: #2196F3; }
+        .code-block.loop {
+            border-color: #2196F3;
+            background: #1565C0;
+        }
 
-        /* Область программирования */
-        .program-area {
-            background: #0f3460;
-            border-radius: 10px;
-            padding: 15px;
-            flex-grow: 1;
+        .code-block.corrupted {
+            animation: blockCorruption 3s infinite;
+            border-color: #ff00ff;
+            background: linear-gradient(45deg, #2a152a, #9C27B0, #2a152a);
+        }
+
+        .condition-content, .loop-content {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            justify-content: center;
         }
 
-        .program-area h3 {
-            color: #e94560;
-            margin-bottom: 15px;
+        .condition-select, .loop-input {
+            background: #1a2a4a;
+            border: 1px solid #FF9800;
+            border-radius: 3px;
+            color: white;
+            padding: 2px 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+        }
+
+        .loop-input {
+            width: 40px;
             text-align: center;
         }
 
-        #code-blocks {
-            background: #1a1a2e;
-            border: 2px dashed #e94560;
-            border-radius: 8px;
-            padding: 15px;
-            flex-grow: 1;
-            min-height: 200px;
+        .code-area {
+            background: #0a0a0a;
+            border: 1px dashed #9C27B0;
+            border-radius: 4px;
+            padding: 10px;
+            min-height: 150px;
+            max-height: 250px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .code-placeholder {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .loop-body {
+            margin-left: 20px;
+            border-left: 2px solid #2196F3;
+            padding-left: 10px;
             display: flex;
             flex-direction: column;
+            gap: 5px;
+        }
+
+        /* Консоль */
+        .console-section {
+            background: #1a0a1a;
+            border: 2px solid #9C27B0;
+            border-radius: 5px;
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .console-output {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid #9C27B0;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            color: #9C27B0;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .console-line {
+            margin: 3px 0;
+        }
+
+        .console-line::before {
+            content: '> ';
+            color: #ff9800;
+        }
+
+        .log-system { color: #9C27B0; }
+        .log-warning { color: #FF9800; }
+        .log-danger { color: #f44336; }
+        .log-success { color: #4CAF50; }
+
+        /* Кнопки управления */
+        .control-buttons {
+            display: flex;
             gap: 8px;
         }
 
-        .block.placeholder {
-            background: transparent;
-            border: 2px dashed #e94560;
-            color: #e94560;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-style: italic;
-            opacity: 0.6;
-        }
-
-        /* Кнопки управления */
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .btn {
+        .control-button {
             flex: 1;
-            padding: 12px;
+            padding: 8px;
             border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: bold;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .btn.run {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
             color: white;
+            font-size: 0.9em;
         }
 
-        .btn.reset {
-            background: linear-gradient(135deg, #e94560, #d43f57);
-            color: white;
+        .control-button.run {
+            background: #4CAF50;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn:active {
-            transform: translateY(0);
+        .control-button.reset {
+            background: #f44336;
         }
 
         /* Анимации */
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        @keyframes glitch {
+            0% { opacity: 0; transform: translateX(0); }
+            50% { opacity: 0.1; transform: translateX(2px); }
+            100% { opacity: 0; transform: translateX(0); }
         }
 
-        .pulse {
-            animation: pulse 0.5s ease-in-out;
+        @keyframes textGlitch {
+            0%, 100% { transform: translateX(0); }
+            95% { transform: translateX(0); }
+            96% { transform: translateX(-2px); }
+            97% { transform: translateX(2px); }
+            98% { transform: translateX(-1px); }
+            99% { transform: translateX(1px); }
         }
 
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-                grid-template-rows: 1fr auto;
-            }
-            
-            .toolbar {
-                order: 2;
-            }
+        @keyframes packageAppear {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes corruption {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(180deg); }
+        }
+
+        @keyframes blockCorruption {
+            0%, 100% { border-color: #2196F3; }
+            33% { border-color: #9C27B0; }
+            66% { border-color: #ff00ff; }
+        }
+
+        .executing {
+            background: #FF9800 !important;
+            color: #000 !important;
+        }
+
+        .loop-executing {
+            border-color: #FF9800 !important;
+            background: #FF9800 !important;
+            color: #000 !important;
+        }
+
+        .glitch-active .conveyor-track {
+            animation: conveyorGlitch 0.5s infinite;
+        }
+
+        @keyframes conveyorGlitch {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(2px); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="game-area">
-            <div class="level-header">
-                <h1>Уровень 1.2: Повороты</h1>
-                <div class="subtitle">Построй L-образный маршрут для дрона</div>
-            </div>
-            
-            <div class="game-grid" id="gameGrid">
-                <!-- Игровое поле генерируется JavaScript -->
+    <!-- Глитч эффект -->
+    <div class="glitch-effect" id="glitchEffect"></div>
+
+    <!-- Верхняя панель -->
+    <div class="top-panel">
+        <button class="nav-button" onclick="goBack()">Назад</button>
+        <div class="level-title">Уровень 2.3: Босс - Адаптивный глитч</div>
+        <button class="nav-button" onclick="showHelp()">Помощь</button>
+    </div>
+
+    <!-- Основной контейнер -->
+    <div class="main-container">
+        <!-- Левая часть - Система сортировки -->
+        <div class="left-panel">
+            <div class="sorting-system">
+                <div class="system-label">АДАПТИВНАЯ СИСТЕМА СОРТИРОВКИ</div>
+                <div class="boss-health">
+                    <div>Стабильность системы: <span id="healthText">100%</span></div>
+                    <div class="health-bar">
+                        <div class="health-fill" id="bossHealth" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="conveyor-system" id="conveyorSystem">
+                    <!-- Секции конвейеров -->
+                    <div class="conveyor-section" style="left: 33.3%; width: 33.3%;"></div>
+                    <div class="conveyor-section" style="left: 66.6%; width: 33.3%;"></div>
+                    
+                    <div class="conveyor-line">
+                        <div class="section-label">Секция 1</div>
+                        <div class="conveyor-label">Входная лента:</div>
+                        <div class="conveyor-track" id="inputConveyor">
+                            <!-- Посылки появляются здесь -->
+                        </div>
+                    </div>
+                    
+                    <div class="conveyor-line">
+                        <div class="section-label">Секция 2</div>
+                        <div class="conveyor-label">Робот-сортировщик:</div>
+                        <div class="robot-arm" id="robotArm">
+                            🤖
+                        </div>
+                    </div>
+
+                    <div class="conveyor-line">
+                        <div class="section-label">Секция 3</div>
+                        <div class="conveyor-label">Красная лента:</div>
+                        <div class="conveyor-track" id="redConveyor">
+                            <!-- Красные посылки -->
+                        </div>
+                    </div>
+
+                    <div class="conveyor-line">
+                        <div class="section-label">Секция 1</div>
+                        <div class="conveyor-label">Синяя лента:</div>
+                        <div class="conveyor-track" id="blueConveyor">
+                            <!-- Синие посылки -->
+                        </div>
+                    </div>
+
+                    <div class="conveyor-line">
+                        <div class="section-label">Секция 2</div>
+                        <div class="conveyor-label">Зеленая лента:</div>
+                        <div class="conveyor-track" id="greenConveyor">
+                            <!-- Зеленые посылки -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="toolbar">
-            <div class="blocks-panel">
-                <h3>Блоки действий</h3>
+        <!-- Правая часть - Программирование и консоль -->
+        <div class="right-panel">
+            <!-- Блоки программирования -->
+            <div class="programming-section">
+                <div class="section-title">БЛОКИ ПРОГРАММИРОВАНИЯ</div>
                 <div class="blocks-container">
-                    <div class="block movement" draggable="true" data-action="move">ДВИГАТЬСЯ_ВПЕРЕД</div>
-                    <div class="block rotation" draggable="true" data-action="left">ПОВЕРНУТЬ_НАЛЕВО</div>
-                    <div class="block rotation" draggable="true" data-action="right">ПОВЕРНУТЬ_НАПРАВО</div>
+                    <div class="code-block loop" draggable="true" data-type="loop">
+                        <div class="loop-content">
+                            повторить(n=
+                            <input type="number" class="loop-input" value="1" min="1" max="3">
+                            ; n &lt; 
+                            <input type="number" class="loop-input" value="3" min="1" max="3">
+                            ; n++)
+                        </div>
+                    </div>
+                    <div class="code-block condition corrupted" draggable="true" data-type="if">
+                        <div class="condition-content">
+                            если(
+                            <select class="condition-select" data-param="section">
+                                <option value="1">секция_1</option>
+                                <option value="2">секция_2</option>
+                                <option value="3">секция_3</option>
+                            </select>
+                            .заполнена != 
+                            <select class="condition-select" data-param="state">
+                                <option value="true">true</option>
+                                <option value="false">false</option>
+                            </select>
+                            )
+                        </div>
+                    </div>
+                    <div class="code-block condition" draggable="true" data-type="ifcolor">
+                        <div class="condition-content">
+                            если(посылка.цвет == 
+                            <select class="condition-select" data-param="color">
+                                <option value="красный">красный</option>
+                                <option value="синий">синий</option>
+                                <option value="зеленый">зеленый</option>
+                            </select>
+                            )
+                        </div>
+                    </div>
+                    <div class="code-block action" draggable="true" data-type="send">
+                        <div class="condition-content">
+                            отправить_на_
+                            <select class="condition-select" data-param="conveyor">
+                                <option value="красный">красный</option>
+                                <option value="синий">синий</option>
+                                <option value="зеленый">зеленый</option>
+                            </select>
+                            _конвейер()
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="program-area">
-                <h3>Программа дрона</h3>
-                <div id="code-blocks">
-                    <div class="block placeholder">Перетащите блоки сюда</div>
+            <!-- Область программы -->
+            <div class="programming-section">
+                <div class="section-title">ПРОГРАММА СТАБИЛИЗАЦИИ</div>
+                <div class="code-area" id="codeArea">
+                    <div class="code-placeholder">Перетащите блоки сюда. Блоков хватит только на одну секцию!</div>
+                </div>
+            </div>
+
+            <!-- Консоль -->
+            <div class="console-section">
+                <div class="section-title">КОНСОЛЬ СИСТЕМЫ</div>
+                <div class="console-output" id="consoleOutput">
+                    <div class="console-line log-system">⚠️ ОБНАРУЖЕН АДАПТИВНЫЙ ГЛИТЧ</div>
+                    <div class="console-line log-warning">⚡ Система нестабильна! Секции конвейеров повреждены</div>
+                    <div class="console-line log-danger">🚨 Стабилизируйте систему до полного отказа!</div>
                 </div>
                 
-                <div class="controls">
-                    <button class="btn run" onclick="runProgram()">Запуск</button>
-                    <button class="btn reset" onclick="resetProgram()">Сброс</button>
+                <div class="control-buttons">
+                    <button class="control-button run" onclick="runProgram()">Запустить стабилизацию</button>
+                    <button class="control-button reset" onclick="resetProgram()">Сбросить</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Конфигурация уровня
-        const levelConfig = {
-            gridSize: 10,
-            start: { x: 1, y: 1 },
-            finish: { x: 8, y: 8 },
-            obstacles: [
-                { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 },
-                { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 },
-                { x: 6, y: 4 }, { x: 6, y: 5 }, { x: 6, y: 6 },
-                { x: 5, y: 6 }, { x: 4, y: 6 }, { x: 3, y: 6 },
-                { x: 3, y: 7 }, { x: 3, y: 8 }
-            ],
-            path: [
-                { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 3 },
-                { x: 2, y: 4 }, { x: 2, y: 5 }, { x: 2, y: 6 }, { x: 2, y: 7 },
-                { x: 2, y: 8 }, { x: 3, y: 8 }, { x: 4, y: 8 }, { x: 5, y: 8 },
-                { x: 6, y: 8 }, { x: 7, y: 8 }, { x: 8, y: 8 }
-            ]
-        };
-
-        let drone = {
-            x: levelConfig.start.x,
-            y: levelConfig.start.y,
-            direction: 'east' // north, east, south, west
-        };
-
-        let programBlocks = [];
-
-        // Инициализация игрового поля
-        function initializeGameGrid() {
-            const grid = document.getElementById('gameGrid');
-            grid.innerHTML = '';
-
-            for (let y = 0; y < levelConfig.gridSize; y++) {
-                for (let x = 0; x < levelConfig.gridSize; x++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'grid-cell';
-                    cell.dataset.x = x;
-                    cell.dataset.y = y;
-
-                    // Проверяем тип клетки
-                    if (x === levelConfig.start.x && y === levelConfig.start.y) {
-                        cell.classList.add('start');
-                    } else if (x === levelConfig.finish.x && y === levelConfig.finish.y) {
-                        cell.classList.add('finish');
-                    } else if (levelConfig.obstacles.some(obs => obs.x === x && obs.y === y)) {
-                        cell.classList.add('obstacle');
-                    } else if (levelConfig.path.some(path => path.x === x && path.y === y)) {
-                        cell.classList.add('path');
-                    }
-
-                    grid.appendChild(cell);
-                }
-            }
-
-            updateDronePosition();
-        }
-
-        // Обновление позиции дрона
-        function updateDronePosition() {
-            // Удаляем старый дрон
-            const oldDrone = document.querySelector('.drone');
-            if (oldDrone) oldDrone.remove();
-
-            // Создаем нового дрона
-            const cell = document.querySelector(`[data-x="${drone.x}"][data-y="${drone.y}"]`);
-            if (cell) {
-                const droneElement = document.createElement('div');
-                droneElement.className = `drone ${drone.direction}`;
-                cell.appendChild(droneElement);
-            }
-        }
-
-        // Drag and Drop функциональность
-        function initializeDragAndDrop() {
-            const blocks = document.querySelectorAll('.block[draggable="true"]');
-            const codeArea = document.getElementById('code-blocks');
-
-            blocks.forEach(block => {
-                block.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', block.dataset.action);
-                    block.classList.add('dragging');
-                });
-
-                block.addEventListener('dragend', () => {
-                    block.classList.remove('dragging');
-                });
-            });
-
-            codeArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                codeArea.classList.add('drag-over');
-            });
-
-            codeArea.addEventListener('dragleave', () => {
-                codeArea.classList.remove('drag-over');
-            });
-
-            codeArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                codeArea.classList.remove('drag-over');
-                
-                const action = e.dataTransfer.getData('text/plain');
-                addBlockToProgram(action);
-            });
-        }
-
-        // Добавление блока в программу
-        function addBlockToProgram(action) {
-            const codeArea = document.getElementById('code-blocks');
-            const placeholder = codeArea.querySelector('.placeholder');
-            
-            if (placeholder) {
-                placeholder.remove();
-            }
-
-            const block = document.createElement('div');
-            block.className = 'block';
-            block.textContent = getBlockText(action);
-            block.dataset.action = action;
-            
-            // Добавляем возможность удаления блока
-            block.addEventListener('dblclick', () => {
-                block.remove();
-                programBlocks = programBlocks.filter(b => b.element !== block);
-                updateProgramState();
-            });
-
-            codeArea.appendChild(block);
-            programBlocks.push({ action, element: block });
-        }
-
-        // Получение текста для блока
-        function getBlockText(action) {
-            switch (action) {
-                case 'move': return 'ДВИГАТЬСЯ_ВПЕРЕД()';
-                case 'left': return 'ПОВЕРНУТЬ_НАЛЕВО()';
-                case 'right': return 'ПОВЕРНУТЬ_НАПРАВО()';
-                default: return 'НЕИЗВЕСТНЫЙ_БЛОК';
-            }
-        }
-
-        // Обновление состояния программы
-        function updateProgramState() {
-            const codeArea = document.getElementById('code-blocks');
-            if (programBlocks.length === 0) {
-                const placeholder = document.createElement('div');
-                placeholder.className = 'block placeholder';
-                placeholder.textContent = 'Перетащите блоки сюда';
-                codeArea.appendChild(placeholder);
-            }
-        }
-
-        // Выполнение программы
-        async function runProgram() {
-            resetDrone();
-            
-            for (const block of programBlocks) {
-                await executeAction(block.action);
-                await new Promise(resolve => setTimeout(resolve, 800));
-                
-                // Проверка достижения финиша
-                if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
-                    showSuccessMessage();
-                    break;
-                }
-            }
-        }
-
-        // Выполнение действия
-        async function executeAction(action) {
-            const block = programBlocks.find(b => b.action === action)?.element;
-            if (block) {
-                block.classList.add('pulse');
-            }
-
-            switch (action) {
-                case 'move':
-                    moveForward();
-                    break;
-                case 'left':
-                    turnLeft();
-                    break;
-                case 'right':
-                    turnRight();
-                    break;
-            }
-
-            updateDronePosition();
-
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            if (block) {
-                block.classList.remove('pulse');
-            }
-        }
-
-        // Движение вперед
-        function moveForward() {
-            let newX = drone.x;
-            let newY = drone.y;
-
-            switch (drone.direction) {
-                case 'north': newY--; break;
-                case 'east': newX++; break;
-                case 'south': newY++; break;
-                case 'west': newX--; break;
-            }
-
-            // Проверка на выход за границы и препятствия
-            if (newX >= 0 && newX < levelConfig.gridSize && 
-                newY >= 0 && newY < levelConfig.gridSize &&
-                !levelConfig.obstacles.some(obs => obs.x === newX && obs.y === newY)) {
-                drone.x = newX;
-                drone.y = newY;
-            }
-        }
-
-        // Поворот налево
-        function turnLeft() {
-            const directions = ['north', 'west', 'south', 'east'];
-            const currentIndex = directions.indexOf(drone.direction);
-            drone.direction = directions[(currentIndex + 1) % 4];
-        }
-
-        // Поворот направо
-        function turnRight() {
-            const directions = ['north', 'east', 'south', 'west'];
-            const currentIndex = directions.indexOf(drone.direction);
-            drone.direction = directions[(currentIndex + 1) % 4];
-        }
-
-        // Сброс программы
-        function resetProgram() {
-            const codeArea = document.getElementById('code-blocks');
-            codeArea.innerHTML = '';
-            programBlocks = [];
-            updateProgramState();
-            resetDrone();
-        }
-
-        // Сброс дрона
-        function resetDrone() {
-            drone.x = levelConfig.start.x;
-            drone.y = levelConfig.start.y;
-            drone.direction = 'east';
-            updateDronePosition();
-        }
-
-        // Показать сообщение об успехе
-        function showSuccessMessage() {
-            alert('🎉 Поздравляем! Дрон успешно достиг цели! 🎉');
-        }
-
-        // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeGameGrid();
-            initializeDragAndDrop();
-        });
-    </script>
+    <script src="level-2-3.js"></script>
 </body>
 </html>

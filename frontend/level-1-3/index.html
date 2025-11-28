@@ -6,160 +6,130 @@
     <title>Уровень 1.3: Босс - Сбойный дрон - КиберСистемс</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        .game-container {
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            height: 100vh;
-            padding: 20px;
-            gap: 20px;
-            background: linear-gradient(135deg, #1a0a0a 0%, #2a1515 100%);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        .level-header {
-            text-align: center;
-            padding: 20px;
-            background: rgba(48, 21, 21, 0.9);
-            border-radius: 10px;
-            border: 3px solid #ff4444;
-            position: relative;
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a1a;
+            color: #00ff88;
+            height: 100vh;
             overflow: hidden;
         }
-        
-        .level-header::before {
-            content: '⚠️';
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            font-size: 2em;
-            animation: pulse 2s infinite;
+
+        /* Верхняя панель */
+        .top-panel {
+            background: #151530;
+            border-bottom: 2px solid #ff4444;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
         }
-        
-        .level-header h1 {
+
+        .level-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ff4444;
+        }
+
+        .nav-button {
+            background: transparent;
+            color: #ff4444;
+            border: 1px solid #ff4444;
+            padding: 6px 12px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .nav-button:hover {
+            background: #ff4444;
+            color: #0a0a1a;
+        }
+
+        /* Основной контейнер */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            padding: 15px;
+            gap: 15px;
+        }
+
+        /* Левая часть - Игровое поле */
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .game-field {
+            flex: 1;
+            background: #1a0a0a;
+            border: 2px solid #ff4444;
+            border-radius: 5px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .field-label {
             color: #ff4444;
             margin-bottom: 10px;
-            font-size: 2em;
-            text-shadow: 0 0 10px #ff0000;
+            font-size: 1.1em;
+            text-align: center;
         }
-        
-        .level-header .subtitle {
-            color: #ff8888;
-            font-size: 1.2em;
-        }
-        
-        .boss-health {
-            margin-top: 15px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
+
+        .pixel-grid {
+            flex: 1;
+            background: #0a1429;
+            border: 2px solid #ff4444;
             border-radius: 5px;
-            border: 1px solid #ff4444;
-        }
-        
-        .health-bar {
-            width: 100%;
-            height: 20px;
-            background: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff0000, #ff4444);
-            width: 100%;
-            transition: width 0.3s ease;
-        }
-        
-        .health-text {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px black;
-        }
-        
-        .game-area {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 20px;
-            height: 100%;
-        }
-        
-        .game-grid {
-            background: #1a0a0a;
-            border-radius: 15px;
-            padding: 20px;
             display: grid;
             grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(10, 1fr);
+            grid-template-rows: repeat(6, 1fr);
             gap: 2px;
-            border: 3px solid #ff4444;
-            position: relative;
-            overflow: hidden;
+            padding: 10px;
         }
-        
-        .game-grid::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(255, 0, 0, 0.1) 2px,
-                rgba(255, 0, 0, 0.1) 4px
-            );
-            pointer-events: none;
-        }
-        
+
         .grid-cell {
             background: #2a1515;
-            border-radius: 4px;
+            border-radius: 3px;
             position: relative;
-            transition: all 0.3s ease;
+            border: 1px solid #3a2525;
         }
-        
-        .grid-cell.path {
-            background: #3a2525;
-            box-shadow: inset 0 0 10px rgba(255, 100, 100, 0.3);
+
+        .grid-cell.start {
+            background: #4CAF50;
         }
-        
+
+        .grid-cell.finish {
+            background: #FF9800;
+            animation: bossPulse 2s infinite;
+        }
+
         .grid-cell.obstacle {
-            background: #ff4444;
+            background: #f44336;
             background-image: repeating-linear-gradient(
                 45deg,
                 transparent,
-                transparent 5px,
-                rgba(0, 0, 0, 0.2) 5px,
-                rgba(0, 0, 0, 0.2) 10px
+                transparent 3px,
+                rgba(0, 0, 0, 0.1) 3px,
+                rgba(0, 0, 0, 0.1) 6px
             );
-            animation: glitch 2s infinite;
         }
-        
-        .grid-cell.start {
-            background: #4CAF50;
-            animation: none;
-        }
-        
-        .grid-cell.finish {
-            background: #FF9800;
-            animation: pulse 2s infinite;
-        }
-        
+
         .grid-cell.boss-area {
             background: #ff0000;
             animation: bossGlow 1.5s infinite alternate;
         }
-        
+
         .drone {
             width: 70%;
             height: 70%;
@@ -168,22 +138,21 @@
             position: absolute;
             top: 15%;
             left: 15%;
-            transition: all 0.5s ease;
-            box-shadow: 0 0 15px rgba(141, 232, 255, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            box-shadow: 0 0 10px rgba(141, 232, 255, 0.7);
+            transition: transform 0.3s ease;
             z-index: 2;
         }
-        
+
         .drone::after {
             content: '▲';
             position: absolute;
             top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
             color: #1a1a2e;
-            font-size: 12px;
+            font-size: 10px;
         }
-        
+
         .boss-drone {
             width: 80%;
             height: 80%;
@@ -192,276 +161,292 @@
             position: absolute;
             top: 10%;
             left: 10%;
-            box-shadow: 0 0 20px #ff0000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            box-shadow: 0 0 15px #ff0000;
             animation: bossFloat 3s infinite ease-in-out;
             z-index: 1;
         }
-        
+
         .boss-drone::after {
             content: '☠️';
             position: absolute;
-            font-size: 16px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
         }
-        
-        .enemy-drone {
-            width: 60%;
-            height: 60%;
-            background: #ff8888;
-            border-radius: 50%;
-            position: absolute;
-            top: 20%;
-            left: 20%;
-            box-shadow: 0 0 10px #ff4444;
-            animation: enemyFloat 2s infinite ease-in-out;
-            z-index: 1;
-        }
-        
+
         .drone.north { transform: rotate(0deg); }
         .drone.east { transform: rotate(90deg); }
         .drone.south { transform: rotate(180deg); }
         .drone.west { transform: rotate(270deg); }
-        
-        .programming-panel {
-            background: rgba(48, 21, 21, 0.9);
-            border-radius: 10px;
-            padding: 20px;
+
+        /* Панель здоровья босса */
+        .boss-health {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ff4444;
+            font-size: 0.8em;
+        }
+
+        .health-bar {
+            width: 150px;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff4444);
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Правая часть - Программирование */
+        .right-panel {
+            width: 300px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
+        }
+
+        .programming-section {
+            background: #1a0a0a;
             border: 2px solid #ff4444;
-        }
-        
-        .blocks-panel {
-            background: #2a1515;
-            border-radius: 8px;
+            border-radius: 5px;
             padding: 15px;
-            border: 1px solid #ff4444;
         }
-        
-        .blocks-panel h3 {
+
+        .section-title {
             color: #ff4444;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            font-size: 1em;
             text-align: center;
         }
-        
+
         .blocks-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 5px;
         }
-        
-        .block {
-            background: #3a2525;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: grab;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-            text-align: center;
-            user-select: none;
-            color: white;
-        }
-        
-        .block:hover {
-            background: #4a3535;
-            border-color: #ff4444;
-            transform: translateY(-2px);
-        }
-        
-        .block.movement { 
-            background: #4CAF50;
-            border-color: #45a049;
-        }
-        
-        .block.rotation { 
-            background: #2196F3;
-            border-color: #1976D2;
-        }
-        
-        .block.attack { 
-            background: #ff4444;
-            border-color: #ff0000;
-            animation: pulse 1.5s infinite;
-        }
-        
-        .code-area {
+
+        .code-block {
             background: #2a1515;
-            border-radius: 8px;
-            padding: 15px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #ff4444;
-        }
-        
-        .code-area h3 {
-            color: #ff4444;
-            margin-bottom: 15px;
+            padding: 8px;
+            border: 1px solid #2196F3;
+            border-radius: 4px;
+            cursor: grab;
+            color: white;
             text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
         }
-        
-        .code-blocks {
+
+        .code-block.movement {
+            border-color: #4CAF50;
+            background: #2d5b88;
+        }
+
+        .code-block.rotation {
+            border-color: #FF9800;
+            background: #b36b00;
+        }
+
+        .code-block.attack {
+            border-color: #ff4444;
+            background: #8b0000;
+            animation: attackPulse 1.5s infinite;
+        }
+
+        .code-area {
+            background: #0a0a0a;
+            border: 1px dashed #ff4444;
+            border-radius: 4px;
+            padding: 10px;
+            min-height: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .code-placeholder {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+        }
+
+        /* Консоль */
+        .console-section {
             background: #1a0a0a;
-            border: 2px dashed #ff4444;
-            border-radius: 8px;
+            border: 2px solid #ff4444;
+            border-radius: 5px;
             padding: 15px;
-            flex-grow: 1;
-            min-height: 200px;
+            flex: 1;
             display: flex;
             flex-direction: column;
+        }
+
+        .console-output {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid #ff4444;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            color: #ff4444;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .console-line {
+            margin: 3px 0;
+        }
+
+        .console-line::before {
+            content: '> ';
+            color: #ff9800;
+        }
+
+        .log-player { color: #8de8ff; }
+        .log-boss { color: #ff4444; }
+        .log-success { color: #4CAF50; }
+
+        /* Кнопки управления */
+        .control-buttons {
+            display: flex;
             gap: 8px;
         }
-        
-        .block.placeholder {
-            background: transparent;
-            border: 2px dashed #ff4444;
-            color: #ff4444;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-style: italic;
-            opacity: 0.6;
-        }
-        
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .btn {
+
+        .control-button {
             flex: 1;
-            padding: 12px;
+            padding: 8px;
             border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: bold;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
             cursor: pointer;
-            transition: all 0.3s ease;
             color: white;
+            font-size: 0.9em;
         }
-        
-        .btn.run {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
+
+        .control-button.run {
+            background: #4CAF50;
         }
-        
-        .btn.reset {
-            background: linear-gradient(135deg, #ff4444, #cc0000);
+
+        .control-button.reset {
+            background: #f44336;
         }
-        
-        .btn.back {
-            background: linear-gradient(135deg, #666, #444);
+
+        /* Анимации */
+        @keyframes droneMove {
+            0% { transform: scale(1) rotate(var(--rotation, 0deg)); }
+            50% { transform: scale(1.05) rotate(var(--rotation, 0deg)); }
+            100% { transform: scale(1) rotate(var(--rotation, 0deg)); }
         }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+
+        @keyframes bossPulse {
+            0%, 100% { box-shadow: 0 0 10px #FF9800; }
+            50% { box-shadow: 0 0 20px #FF9800, 0 0 30px #FF9800; }
         }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
-        }
-        
+
         @keyframes bossGlow {
             0% { box-shadow: inset 0 0 10px #ff0000; }
             100% { box-shadow: inset 0 0 20px #ff4444; }
         }
-        
+
         @keyframes bossFloat {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-5px); }
         }
-        
-        @keyframes enemyFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-5px) rotate(180deg); }
+
+        @keyframes attackPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
-        
-        .combat-log {
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #ff4444;
-            border-radius: 5px;
-            padding: 10px;
-            margin-top: 10px;
-            max-height: 100px;
-            overflow-y: auto;
-            font-size: 0.9em;
+
+        .drone-moving {
+            animation: droneMove 0.3s ease-in-out;
         }
-        
-        .log-entry {
-            margin: 2px 0;
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-        
-        .log-player { background: rgba(0, 255, 0, 0.2); }
-        .log-boss { background: rgba(255, 0, 0, 0.2); }
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <header class="level-header">
-            <h1>Уровень 1.3: Босс - Сбойный дрон</h1>
-            <div class="subtitle">Победите сбойного дрона и восстановите контроль над системой!</div>
-            <div class="boss-health">
-                <div class="health-bar">
-                    <div class="health-fill" id="bossHealth" style="width: 100%"></div>
-                    <div class="health-text" id="healthText">Здоровье босса: 100%</div>
+    <!-- Верхняя панель -->
+    <div class="top-panel">
+        <button class="nav-button" onclick="goBack()">Назад</button>
+        <div class="level-title">Уровень 1.3: Босс - Сбойный дрон</div>
+        <button class="nav-button" onclick="showHelp()">Помощь</button>
+    </div>
+
+    <!-- Основной контейнер -->
+    <div class="main-container">
+        <!-- Левая часть - Игровое поле -->
+        <div class="left-panel">
+            <div class="game-field">
+                <div class="field-label">ИГРОВОЕ ПОЛЕ</div>
+                <div class="boss-health">
+                    <div>Здоровье босса: <span id="healthText">100%</span></div>
+                    <div class="health-bar">
+                        <div class="health-fill" id="bossHealth" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="pixel-grid" id="gameGrid">
+                    <!-- Игровое поле генерируется JavaScript -->
                 </div>
             </div>
-        </header>
-        
-        <div class="game-area">
-            <div class="game-grid" id="gameGrid">
-                <!-- Игровое поле генерируется JavaScript -->
-            </div>
-            
-            <div class="programming-panel">
-                <div class="blocks-panel">
-                    <h3>Боевые команды</h3>
-                    <div class="blocks-container">
-                        <div class="block movement" draggable="true" data-action="move">ДВИГАТЬСЯ_ВПЕРЕД</div>
-                        <div class="block rotation" draggable="true" data-action="left">ПОВЕРНУТЬ_НАЛЕВО</div>
-                        <div class="block rotation" draggable="true" data-action="right">ПОВЕРНУТЬ_НАПРАВО</div>
-                        <div class="block attack" draggable="true" data-action="attack">АТАКОВАТЬ_БОССА</div>
+        </div>
+
+        <!-- Правая часть - Программирование и консоль -->
+        <div class="right-panel">
+            <!-- Блоки программирования -->
+            <div class="programming-section">
+                <div class="section-title">Блоки программирования</div>
+                <div class="blocks-container">
+                    <div class="code-block movement" draggable="true" data-action="move">
+                        ДВИГАТЬСЯ_ВПЕРЕД()
                     </div>
+                    <div class="code-block rotation" draggable="true" data-action="left">
+                        ПОВЕРНУТЬ_НАЛЕВО()
+                    </div>
+                    <div class="code-block rotation" draggable="true" data-action="right">
+                        ПОВЕРНУТЬ_НАПРАВО()
+                    </div>
+                    <div class="code-block attack" draggable="true" data-action="attack">
+                        АТАКОВАТЬ_БОССА()
+                    </div>
+                </div>
+            </div>
+
+            <!-- Область программы -->
+            <div class="programming-section">
+                <div class="section-title">Боевая программа</div>
+                <div class="code-area" id="codeArea">
+                    <div class="code-placeholder">Перетащите блоки сюда</div>
+                </div>
+            </div>
+
+            <!-- Консоль -->
+            <div class="console-section">
+                <div class="section-title">Консоль боя</div>
+                <div class="console-output" id="consoleOutput">
+                    <div class="console-line log-boss">⚠️ Обнаружен сбойный дрон!</div>
+                    <div class="console-line log-boss">⚡ Уничтожьте босса для восстановления системы</div>
                 </div>
                 
-                <div class="code-area">
-                    <h3>Боевая программа</h3>
-                    <div id="codeBlocks" class="code-blocks">
-                        <div class="block placeholder">Перетащите команды сюда</div>
-                    </div>
-                    
-                    <div class="combat-log" id="combatLog">
-                        <div class="log-entry log-boss">⚠️ Сбойный дрон активирован!</div>
-                    </div>
-                    
-                    <div class="controls">
-                        <button class="btn run" onclick="runProgram()">Запуск атаки</button>
-                        <button class="btn reset" onclick="resetProgram()">Сброс</button>
-                        <button class="btn back" onclick="goToLevelMap()">Отступление</button>
-                    </div>
+                <div class="control-buttons">
+                    <button class="control-button run" onclick="runProgram()">Запустить атаку</button>
+                    <button class="control-button reset" onclick="resetProgram()">Сбросить</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="../api.js"></script>
     <script src="level-1-3.js"></script>
 </body>
 </html>

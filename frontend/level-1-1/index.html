@@ -5,93 +5,309 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Уровень 1.1: Первые шаги - КиберСистемс</title>
     <link rel="stylesheet" href="../style.css">
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/blockly/blockly.min.css" />
-    <script>
-        // Регистрируем генератор сразу после загрузки Blockly (новый API)
-        (function() {
-            function registerGenerator() {
-                if (typeof Blockly !== 'undefined' && Blockly.JavaScript) {
-                    // Старый способ (для совместимости)
-                    Blockly.JavaScript['move_forward'] = function(block) {
-                        return 'moveForward();\n';
-                    };
-                    
-                    // Новый способ через forBlock (для новых версий Blockly)
-                    if (Blockly.JavaScript.forBlock) {
-                        Blockly.JavaScript.forBlock['move_forward'] = function(block) {
-                            return 'moveForward();\n';
-                        };
-                    }
-                    
-                    console.log('✅ Генератор move_forward зарегистрирован (оба способа)');
-                } else {
-                    // Если Blockly ещё не загружен, ждём
-                    setTimeout(registerGenerator, 100);
-                }
-            }
-            // Пытаемся зарегистрировать сразу
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', registerGenerator);
-            } else {
-                registerGenerator();
-            }
-        })();
-    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a1a;
+            color: #00ff88;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Верхняя панель */
+        .top-panel {
+            background: #151530;
+            border-bottom: 2px solid #00ff88;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        .level-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .nav-button {
+            background: transparent;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+            padding: 6px 12px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .nav-button:hover {
+            background: #00ff88;
+            color: #0a0a1a;
+        }
+
+        /* Основной контейнер */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            padding: 15px;
+            gap: 15px;
+        }
+
+        /* Левая часть - Игровое поле */
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .game-field {
+            flex: 1;
+            background: #1a1a2e;
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-label {
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .pixel-grid {
+            flex: 1;
+            background: #0a1429;
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 2px;
+            padding: 10px;
+        }
+
+        .grid-cell {
+            background: #1a2a4a;
+            border-radius: 3px;
+            position: relative;
+            border: 1px solid #2a3a5a;
+        }
+
+        .grid-cell.start {
+            background: #4CAF50;
+        }
+
+        .grid-cell.finish {
+            background: #FF9800;
+        }
+
+        .drone {
+            width: 70%;
+            height: 70%;
+            background: #8de8ff;
+            border-radius: 50%;
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            box-shadow: 0 0 10px rgba(141, 232, 255, 0.7);
+        }
+
+        .drone::after {
+            content: '▲';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #1a1a2e;
+            font-size: 10px;
+        }
+
+        /* Правая часть - Программирование */
+        .right-panel {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .programming-section {
+            background: #1a1a2e;
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .section-title {
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        .code-block {
+            background: #0f3460;
+            padding: 8px;
+            border: 1px solid #2196F3;
+            border-radius: 4px;
+            cursor: grab;
+            color: white;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .code-area {
+            background: #0a0a1a;
+            border: 1px dashed #00ff88;
+            border-radius: 4px;
+            padding: 10px;
+            min-height: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .code-placeholder {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+        }
+
+        /* Консоль */
+        .console-section {
+            background: #1a1a2e;
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .console-output {
+            flex: 1;
+            background: #0a0a1a;
+            border: 1px solid #00ff88;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .console-line {
+            margin: 3px 0;
+        }
+
+        .console-line::before {
+            content: '> ';
+            color: #ff9800;
+        }
+
+        /* Кнопки управления */
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .control-button.run {
+            background: #4CAF50;
+        }
+
+        .control-button.reset {
+            background: #f44336;
+        }
+
+        /* Анимации */
+        @keyframes droneMove {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .drone-moving {
+            animation: droneMove 0.3s ease-in-out;
+        }
+    </style>
 </head>
-<body class="level-interface block-programming">
+<body>
     <!-- Верхняя панель -->
-    <div class="level-header">
-        <button class="back-button" onclick="location.href='../level-map/index.html'">◄ НАЗАД</button>
-        <div class="level-title">
-            <h1>Уровень 1.1: Первые шаги</h1>
-            <span class="level-subtitle">Отдел дронов - Кризис почтовых дронов</span>
-        </div>
-        <button class="help-button">ПОМОЩЬ</button>
+    <div class="top-panel">
+        <button class="nav-button" onclick="goBack()">Назад</button>
+        <div class="level-title">Уровень 1.1: Первые шаги</div>
+        <button class="nav-button" onclick="showHelp()">Помощь</button>
     </div>
 
-    <!-- Основной контент -->
-    <div class="level-content">
-        <!-- Левая часть: игровое поле -->
-        <div class="game-section">
+    <!-- Основной контейнер -->
+    <div class="main-container">
+        <!-- Левая часть - Игровое поле -->
+        <div class="left-panel">
             <div class="game-field">
-                <div id="game-canvas"></div>
-                <div class="game-overlay">
-                    <div class="hint-text">Дрон готов к программированию</div>
+                <div class="field-label">ИГРОВОЕ ПОЛЕ</div>
+                <div class="pixel-grid" id="gameGrid">
+                    <!-- Игровое поле генерируется JavaScript -->
                 </div>
             </div>
-            
+        </div>
+
+        <!-- Правая часть - Программирование и консоль -->
+        <div class="right-panel">
+            <!-- Блок программирования -->
+            <div class="programming-section">
+                <div class="section-title">ДВИГАТЬСЯ_ВПЕРЕД()</div>
+                <div class="code-block" draggable="true" data-action="move">
+                    ДВИГАТЬСЯ_ВПЕРЕД()
+                </div>
+            </div>
+
+            <!-- Область программы -->
+            <div class="programming-section">
+                <div class="section-title">Ваша программа</div>
+                <div class="code-area" id="codeArea">
+                    <div class="code-placeholder">Перетащите блоки сюда</div>
+                </div>
+            </div>
+
             <!-- Консоль -->
             <div class="console-section">
-                <div class="console-header">КОНСОЛЬ СИСТЕМЫ:</div>
-                <div id="console-output" class="console-output">
-                    <div>> Дрон инициализирован</div>
-                    <div>> Система готова к приему команд</div>
-                    <div>> Ожидание программы...</div>
+                <div class="section-title">Консоль</div>
+                <div class="console-output" id="consoleOutput">
+                    <div class="console-line">Дрон готов</div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Правая часть: программирование -->
-        <div class="programming-section">
-            <div class="blockly-container">
-                <div id="blockly-area"></div>
-            </div>
-            
-            <!-- Панель управления -->
-            <div class="control-panel">
-                <button id="run-button" class="control-btn run-btn">
-                    ▶ ЗАПУСТИТЬ ПРОГРАММУ
-                </button>
-                <button id="reset-button" class="control-btn reset-btn">
-                    🔄 СБРОСИТЬ
-                </button>
+                
+                <div class="control-buttons">
+                    <button class="control-button run" onclick="runProgram()">Запустить программу</button>
+                    <button class="control-button reset" onclick="resetProgram()">Сбросить</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="../api.js"></script>
-    <script src="../game.js"></script>
+    <script src="level-1-1.js"></script>
 </body>
 </html>

@@ -1,23 +1,16 @@
-// Конфигурация уровня босса
+// Конфигурация уровня 1.3 - Босс
 const levelConfig = {
     id: '1.3',
     title: 'Босс - Сбойный дрон',
-    gridSize: 10,
-    start: { x: 1, y: 1 },
-    finish: { x: 8, y: 8 },
-    bossPosition: { x: 8, y: 8 },
+    gridSizeX: 10,
+    gridSizeY: 6,
+    start: { x: 1, y: 3 },
+    finish: { x: 8, y: 3 },
+    bossPosition: { x: 8, y: 3 },
     bossHealth: 100,
     obstacles: [
         { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 4 }, { x: 3, y: 5 },
-        { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 }, { x: 7, y: 3 },
-        { x: 4, y: 5 }, { x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 },
-        { x: 1, y: 7 }, { x: 2, y: 7 }, { x: 3, y: 7 }, { x: 4, y: 7 },
-        { x: 6, y: 7 }, { x: 7, y: 7 }, { x: 8, y: 7 }
-    ],
-    enemyDrones: [
-        { x: 5, y: 2, active: true },
-        { x: 2, y: 5, active: true },
-        { x: 7, y: 6, active: true }
+        { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 }, { x: 7, y: 3 }
     ]
 };
 
@@ -35,15 +28,15 @@ let boss = {
 };
 
 let programBlocks = [];
-let combatLog = [];
+let isExecuting = false;
 
 // Инициализация уровня
 function initializeLevel() {
-    console.log('🎮 Инициализация уровня босса 1.3');
     initializeGameGrid();
     initializeDragAndDrop();
     updateBossHealth();
-    addCombatLog('⚡ Босс-дрон активирован! Уничтожьте его!', 'boss');
+    addConsoleMessage('🟢 Дрон готов к бою', 'player');
+    addConsoleMessage('🎯 Доберитесь до босса и атакуйте его!', 'player');
 }
 
 // Инициализация игрового поля
@@ -51,8 +44,8 @@ function initializeGameGrid() {
     const grid = document.getElementById('gameGrid');
     grid.innerHTML = '';
 
-    for (let y = 0; y < levelConfig.gridSize; y++) {
-        for (let x = 0; x < levelConfig.gridSize; x++) {
+    for (let y = 0; y < levelConfig.gridSizeY; y++) {
+        for (let x = 0; x < levelConfig.gridSizeX; x++) {
             const cell = document.createElement('div');
             cell.className = 'grid-cell';
             cell.dataset.x = x;
@@ -70,9 +63,8 @@ function initializeGameGrid() {
         }
     }
 
-    // Добавляем босса и вражеских дронов
+    // Добавляем босса
     addBossDrone();
-    addEnemyDrones();
     updateDronePosition();
 }
 
@@ -87,25 +79,10 @@ function addBossDrone() {
     }
 }
 
-// Добавление вражеских дронов
-function addEnemyDrones() {
-    levelConfig.enemyDrones.forEach((enemy, index) => {
-        if (enemy.active) {
-            const enemyCell = document.querySelector(`[data-x="${enemy.x}"][data-y="${enemy.y}"]`);
-            if (enemyCell) {
-                const enemyElement = document.createElement('div');
-                enemyElement.className = 'enemy-drone';
-                enemyElement.id = `enemy-${index}`;
-                enemyCell.appendChild(enemyElement);
-            }
-        }
-    });
-}
-
 // Drag and Drop
 function initializeDragAndDrop() {
-    const blocks = document.querySelectorAll('.block[draggable="true"]');
-    const codeArea = document.getElementById('codeBlocks');
+    const blocks = document.querySelectorAll('.code-block[draggable="true"]');
+    const codeArea = document.getElementById('codeArea');
 
     blocks.forEach(block => {
         block.addEventListener('dragstart', (e) => {
@@ -126,26 +103,39 @@ function initializeDragAndDrop() {
 
 // Добавление блока в программу
 function addBlockToProgram(action) {
-    const codeArea = document.getElementById('codeBlocks');
-    const placeholder = codeArea.querySelector('.placeholder');
+    const codeArea = document.getElementById('codeArea');
+    const placeholder = codeArea.querySelector('.code-placeholder');
     
     if (placeholder) {
         placeholder.remove();
     }
 
     const block = document.createElement('div');
-    block.className = 'block';
+    block.className = 'code-block';
     block.textContent = getBlockText(action);
     block.dataset.action = action;
     
+    // Добавляем класс для стилизации
+    if (action === 'move') {
+        block.classList.add('movement');
+    } else if (action === 'attack') {
+        block.classList.add('attack');
+    } else {
+        block.classList.add('rotation');
+    }
+    
     block.addEventListener('dblclick', () => {
-        block.remove();
-        programBlocks = programBlocks.filter(b => b.element !== block);
-        updateProgramState();
+        if (!isExecuting) {
+            block.remove();
+            programBlocks = programBlocks.filter(b => b.element !== block);
+            updateProgramState();
+        }
     });
 
     codeArea.appendChild(block);
     programBlocks.push({ action, element: block });
+    
+    addConsoleMessage(`Добавлен блок: ${getBlockText(action)}`, 'player');
 }
 
 function getBlockText(action) {
@@ -158,60 +148,61 @@ function getBlockText(action) {
     }
 }
 
-// Выполнение программы
+// Запуск программы
 async function runProgram() {
-    resetDrone();
-    drone.hasAttacked = false;
+    if (isExecuting) return;
     
+    if (programBlocks.length === 0) {
+        addConsoleMessage('❌ Ошибка: программа пуста!', 'player');
+        return;
+    }
+
+    isExecuting = true;
+    resetDrone();
+    addConsoleMessage('⚡ Запуск боевой программы...', 'player');
+
     for (const block of programBlocks) {
-        if (!boss.isActive) break; // Босс побежден
+        if (!isExecuting || !boss.isActive) break;
         
-        await executeAction(block.action);
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Проверка достижения босса
-        if (drone.x === boss.position.x && drone.y === boss.position.y && drone.hasAttacked) {
-            await defeatBoss();
-            break;
-        }
+        await executeAction(block);
+        await new Promise(resolve => setTimeout(resolve, 600));
         
         // Случайная атака босса
-        if (Math.random() < 0.3) {
+        if (boss.isActive && Math.random() < 0.3) {
             await bossAttack();
         }
     }
+    
+    if (isExecuting) {
+        addConsoleMessage('🛑 Программа завершена', 'player');
+        isExecuting = false;
+    }
 }
 
-async function executeAction(action) {
-    const block = programBlocks.find(b => b.action === action)?.element;
-    if (block) {
-        block.classList.add('pulse');
-    }
+// Выполнение действия
+async function executeAction(blockData) {
+    const { action, element } = blockData;
+    
+    addConsoleMessage(`Выполняется: ${getBlockText(action)}`, 'player');
 
     switch (action) {
         case 'move':
-            moveForward();
+            await moveForward();
             break;
         case 'left':
-            turnLeft();
+            await turnLeft();
             break;
         case 'right':
-            turnRight();
+            await turnRight();
             break;
         case 'attack':
             await attackBoss();
             break;
     }
-
-    updateDronePosition();
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    if (block) {
-        block.classList.remove('pulse');
-    }
 }
 
-function moveForward() {
+// Движение вперед
+async function moveForward() {
     let newX = drone.x;
     let newY = drone.y;
 
@@ -222,29 +213,58 @@ function moveForward() {
         case 'west': newX--; break;
     }
 
-    if (newX >= 0 && newX < levelConfig.gridSize && 
-        newY >= 0 && newY < levelConfig.gridSize &&
-        !levelConfig.obstacles.some(obs => obs.x === newX && obs.y === newY)) {
+    // Анимация движения
+    const droneElement = document.querySelector('.drone');
+    if (droneElement) {
+        droneElement.classList.add('drone-moving');
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    // Проверка препятствий и границ
+    const hasObstacle = levelConfig.obstacles.some(obs => obs.x === newX && obs.y === newY);
+    
+    if (newX >= 0 && newX < levelConfig.gridSizeX && 
+        newY >= 0 && newY < levelConfig.gridSizeY &&
+        !hasObstacle) {
         drone.x = newX;
         drone.y = newY;
-        addCombatLog(`➡️ Дрон переместился на (${newX}, ${newY})`, 'player');
+        addConsoleMessage(`✅ Перемещение на (${newX}, ${newY})`, 'player');
     } else {
-        addCombatLog('❌ Невозможно переместиться! Препятствие!', 'player');
+        addConsoleMessage('❌ Препятствие или граница поля', 'player');
+    }
+
+    updateDronePosition();
+    
+    if (droneElement) {
+        setTimeout(() => {
+            droneElement.classList.remove('drone-moving');
+        }, 200);
     }
 }
 
-function turnLeft() {
+// Поворот налево
+async function turnLeft() {
     const directions = ['north', 'west', 'south', 'east'];
     const currentIndex = directions.indexOf(drone.direction);
     drone.direction = directions[(currentIndex + 1) % 4];
-    addCombatLog('↩️ Дрон повернул налево', 'player');
+    
+    addConsoleMessage(`↩️ Поворот налево. Направление: ${drone.direction}`, 'player');
+    updateDronePosition();
+    
+    await new Promise(resolve => setTimeout(resolve, 400));
 }
 
-function turnRight() {
+// Поворот направо
+async function turnRight() {
     const directions = ['north', 'east', 'south', 'west'];
     const currentIndex = directions.indexOf(drone.direction);
     drone.direction = directions[(currentIndex + 1) % 4];
-    addCombatLog('↪️ Дрон повернул направо', 'player');
+    
+    addConsoleMessage(`↪️ Поворот направо. Направление: ${drone.direction}`, 'player');
+    updateDronePosition();
+    
+    await new Promise(resolve => setTimeout(resolve, 400));
 }
 
 // Атака босса
@@ -258,22 +278,25 @@ async function attackBoss() {
         drone.hasAttacked = true;
         
         updateBossHealth();
-        addCombatLog(`💥 Атака по боссу! Нанесено ${damage} урона!`, 'player');
+        addConsoleMessage(`💥 Атака по боссу! Нанесено ${damage} урона!`, 'player');
         
         // Анимация атаки
         const bossElement = document.getElementById('bossDrone');
         if (bossElement) {
             bossElement.style.animation = 'none';
-            bossElement.offsetHeight; // Trigger reflow
-            bossElement.style.animation = 'bossFloat 3s infinite ease-in-out';
+            setTimeout(() => {
+                bossElement.style.animation = 'bossFloat 3s infinite ease-in-out';
+            }, 100);
         }
         
         if (boss.health <= 0) {
             await defeatBoss();
         }
     } else {
-        addCombatLog('❌ Босс слишком далеко для атаки!', 'player');
+        addConsoleMessage('❌ Босс слишком далеко для атаки!', 'player');
     }
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
 }
 
 // Атака босса
@@ -288,7 +311,7 @@ async function bossAttack() {
     ];
     
     const attackText = attacks[Math.floor(Math.random() * attacks.length)];
-    addCombatLog(attackText, 'boss');
+    addConsoleMessage(attackText, 'boss');
     
     // Визуальный эффект атаки босса
     const gameGrid = document.getElementById('gameGrid');
@@ -298,6 +321,8 @@ async function bossAttack() {
             gameGrid.style.borderColor = '#ff4444';
         }
     }, 500);
+    
+    await new Promise(resolve => setTimeout(resolve, 600));
 }
 
 // Победа над боссом
@@ -306,7 +331,7 @@ async function defeatBoss() {
     boss.health = 0;
     updateBossHealth();
     
-    addCombatLog('🎉 БОСС ПОБЕЖДЁН! СИСТЕМА ВОССТАНОВЛЕНА!', 'player');
+    addConsoleMessage('🎉 БОСС ПОБЕЖДЁН! СИСТЕМА ВОССТАНОВЛЕНА!', 'success');
     
     // Анимация победы
     const bossElement = document.getElementById('bossDrone');
@@ -317,19 +342,15 @@ async function defeatBoss() {
         bossElement.innerHTML = '✅';
     }
     
+    isExecuting = false;
+    
     // Сохраняем прогресс
-    setTimeout(async () => {
-        try {
-            await updateProgress('1.boss');
-            alert(`🎊 ПОБЕДА!\n\nВы победили сбойного дрона и восстановили контроль над системой!\n\nПовышение до Junior-программиста!`);
-            goToLevelMap();
-        } catch (error) {
-            console.error('Ошибка сохранения прогресса:', error);
-            alert('🎊 ПОБЕДА! Но произошла ошибка сохранения прогресса.');
-        }
-    }, 2000);
+    setTimeout(() => {
+        completeLevel();
+    }, 1500);
 }
 
+// Обновление здоровья босса
 function updateBossHealth() {
     const healthBar = document.getElementById('bossHealth');
     const healthText = document.getElementById('healthText');
@@ -340,7 +361,7 @@ function updateBossHealth() {
     }
     
     if (healthText) {
-        healthText.textContent = `Здоровье босса: ${healthPercent}%`;
+        healthText.textContent = `${healthPercent}%`;
         
         if (healthPercent <= 25) {
             healthText.style.color = '#ff0000';
@@ -352,8 +373,9 @@ function updateBossHealth() {
     }
 }
 
+// Обновление позиции дрона
 function updateDronePosition() {
-    const oldDrone = document.querySelector('.drone:not(.boss-drone):not(.enemy-drone)');
+    const oldDrone = document.querySelector('.drone');
     if (oldDrone) oldDrone.remove();
 
     const cell = document.querySelector(`[data-x="${drone.x}"][data-y="${drone.y}"]`);
@@ -364,34 +386,23 @@ function updateDronePosition() {
     }
 }
 
-function addCombatLog(message, type) {
-    const combatLog = document.getElementById('combatLog');
-    const logEntry = document.createElement('div');
-    logEntry.className = `log-entry log-${type}`;
-    logEntry.textContent = message;
-    
-    combatLog.appendChild(logEntry);
-    combatLog.scrollTop = combatLog.scrollHeight;
-    
-    // Ограничиваем количество записей в логе
-    const entries = combatLog.querySelectorAll('.log-entry');
-    if (entries.length > 10) {
-        entries[0].remove();
-    }
-}
-
+// Сброс программы
 function resetProgram() {
-    const codeArea = document.getElementById('codeBlocks');
+    if (isExecuting) {
+        isExecuting = false;
+        addConsoleMessage('⚠️ Программа прервана', 'player');
+    }
+    
+    const codeArea = document.getElementById('codeArea');
     codeArea.innerHTML = '';
     programBlocks = [];
     updateProgramState();
     resetDrone();
-    
-    // Очищаем лог боя
-    const combatLog = document.getElementById('combatLog');
-    combatLog.innerHTML = '<div class="log-entry log-boss">⚠️ Сбойный дрон активирован!</div>';
+    resetBoss();
+    addConsoleMessage('🔄 Программа сброшена', 'player');
 }
 
+// Сброс дрона
 function resetDrone() {
     drone.x = levelConfig.start.x;
     drone.y = levelConfig.start.y;
@@ -400,14 +411,71 @@ function resetDrone() {
     updateDronePosition();
 }
 
+// Сброс босса
+function resetBoss() {
+    boss.health = levelConfig.bossHealth;
+    boss.isActive = true;
+    updateBossHealth();
+    
+    const bossElement = document.getElementById('bossDrone');
+    if (bossElement) {
+        bossElement.style.background = '#ff4444';
+        bossElement.style.boxShadow = '0 0 15px #ff0000';
+        bossElement.style.animation = 'bossFloat 3s infinite ease-in-out';
+        bossElement.innerHTML = '☠️';
+    }
+}
+
+// Обновление состояния программы
 function updateProgramState() {
-    const codeArea = document.getElementById('codeBlocks');
+    const codeArea = document.getElementById('codeArea');
     if (programBlocks.length === 0) {
         const placeholder = document.createElement('div');
-        placeholder.className = 'block placeholder';
-        placeholder.textContent = 'Перетащите команды сюда';
+        placeholder.className = 'code-placeholder';
+        placeholder.textContent = 'Перетащите блоки сюда';
         codeArea.appendChild(placeholder);
     }
+}
+
+// Добавление сообщения в консоль
+function addConsoleMessage(message, type = 'player') {
+    const consoleOutput = document.getElementById('consoleOutput');
+    const messageElement = document.createElement('div');
+    messageElement.className = `console-line log-${type}`;
+    messageElement.textContent = message;
+    
+    consoleOutput.appendChild(messageElement);
+    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+}
+
+// Завершение уровня
+function completeLevel() {
+    // Сохраняем прогресс в localStorage
+    localStorage.setItem('cyberSystemsProgress', JSON.stringify({
+        currentLevel: '1.boss',
+        lastCompleted: '1.boss'
+    }));
+    
+    alert('🎊 ПОБЕДА!\n\nВы победили сбойного дрона!\nСистема восстановлена!\n\nПовышение до Junior-программиста!');
+    goToLevelMap();
+}
+
+// Навигация
+function goBack() {
+    window.location.href = '../level-map/index.html';
+}
+
+function showHelp() {
+    alert('Помощь по уровню Босс:\n\n' +
+          '1. Доберитесь до босса (красная клетка)\n' +
+          '2. Используйте АТАКОВАТЬ_БОССА() когда рядом\n' +
+          '3. Уничтожьте босса (100 HP)\n' +
+          '4. Избегайте красных препятствий\n\n' +
+          'Пример решения:\n' +
+          'ДВИГАТЬСЯ_ВПЕРЕД() (x5)\n' +
+          'ПОВЕРНУТЬ_НАПРАВО()\n' +
+          'ДВИГАТЬСЯ_ВПЕРЕД() (x3)\n' +
+          'АТАКОВАТЬ_БОССА() (x4)');
 }
 
 function goToLevelMap() {
