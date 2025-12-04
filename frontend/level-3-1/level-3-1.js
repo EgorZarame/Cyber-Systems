@@ -326,13 +326,15 @@ function addConsoleMessage(message, type = '') {
 }
 
 // Завершение уровня
-function completeLevel() {
+async function completeLevel() {
     isExecuting = false;
     
-    localStorage.setItem('cyberSystemsProgress', JSON.stringify({
-        currentLevel: '3.1',
-        lastCompleted: '3.1'
-    }));
+    try {
+        await updateProgress('3.1');
+    } catch (error) {
+        console.error('Ошибка обновления прогресса (3.1):', error);
+    }
+    syncLocalProfileAfterLevel('3.1');
     
     setTimeout(() => {
         alert('🎊 Уровень пройден!\n\nВы успешно написали свою первую функцию на Python!\nДрон достиг цели!');

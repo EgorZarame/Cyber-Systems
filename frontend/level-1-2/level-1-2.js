@@ -307,8 +307,9 @@ async function completeLevel() {
         await updateProgress('1.2');
         addConsoleMessage('Прогресс сохранен');
     } catch (error) {
-        console.error('Ошибка сохранения прогресса:', error);
+        console.error('Ошибка обновления прогресса (1.2):', error);
     }
+    syncLocalProfileAfterLevel('1.2');
     
     setTimeout(() => {
         alert('🎉 Уровень пройден!\n\nВы освоили повороты дрона!');

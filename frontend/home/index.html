@@ -809,15 +809,20 @@
                 stage.classList.remove('active');
             });
             
-            const levelId = currentProfile.currentLevelId;
-            let stageIndex = 0;
+            const levelId = currentProfile.lastCompleted || currentProfile.currentLevelId;
+            let stageIndex = 0; // Стажер по умолчанию
             
-            if (levelId && levelId.startsWith('2.')) {
-                stageIndex = 1;
-            } else if (levelId && levelId.startsWith('3.')) {
-                stageIndex = 2;
-            } else if (levelId && levelId.includes('boss')) {
+            if (!levelId) {
+                stageIndex = 0;
+            } else if (levelId === '3.boss') {
+                // Финальный босс — SENIOR
                 stageIndex = 3;
+            } else if (levelId === '2.boss' || levelId.startsWith('3.')) {
+                // После второго босса или уровней 3.x — DEVELOPER
+                stageIndex = 2;
+            } else if (levelId === '1.boss' || levelId.startsWith('2.')) {
+                // После первого босса или уровней 2.x — JUNIOR
+                stageIndex = 1;
             }
             
             if (stages[stageIndex]) {
@@ -856,16 +861,18 @@
             let avatarFile = 'intern.png';
             let characterTitle = 'Стажер';
             
-            if (profile.currentLevelId) {
-                if (profile.currentLevelId.startsWith('2.')) {
-                    avatarFile = 'junior.png';
-                    characterTitle = 'Junior Developer';
-                } else if (profile.currentLevelId.startsWith('3.')) {
-                    avatarFile = 'developer.png';
-                    characterTitle = 'Developer';
-                } else if (profile.currentLevelId.includes('boss')) {
+            const levelId = profile.lastCompleted || profile.currentLevelId;
+            
+            if (levelId) {
+                if (levelId === '3.boss') {
                     avatarFile = 'senior.png';
                     characterTitle = 'Senior Developer';
+                } else if (levelId === '2.boss' || levelId.startsWith('3.')) {
+                    avatarFile = 'developer.png';
+                    characterTitle = 'Developer';
+                } else if (levelId === '1.boss' || levelId.startsWith('2.')) {
+                    avatarFile = 'junior.png';
+                    characterTitle = 'Junior Developer';
                 }
             }
             

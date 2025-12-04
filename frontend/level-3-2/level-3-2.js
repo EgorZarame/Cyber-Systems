@@ -585,10 +585,12 @@ async function completeLevel() {
         clearInterval(trafficLightInterval);
     }
     
-    localStorage.setItem('cyberSystemsProgress', JSON.stringify({
-        currentLevel: '3.2',
-        lastCompleted: '3.2'
-    }));
+    try {
+        await updateProgress('3.2');
+    } catch (error) {
+        console.error('Ошибка обновления прогресса (3.2):', error);
+    }
+    syncLocalProfileAfterLevel('3.2');
     
     setTimeout(() => {
         alert('🎊 Уровень пройден!\n\nВы освоили условные операторы и циклы в Python!\nДрон успешно прошел лабиринт со светофором!');

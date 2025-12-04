@@ -542,12 +542,15 @@ function addConsoleMessage(message) {
 }
 
 // Завершение уровня
-function completeLevel() {
-    // Сохраняем прогресс в localStorage
-    localStorage.setItem('cyberSystemsProgress', JSON.stringify({
-        currentLevel: '2.2',
-        lastCompleted: '2.2'
-    }));
+async function completeLevel() {
+    isExecuting = false;
+    
+    try {
+        await updateProgress('2.2');
+    } catch (error) {
+        console.error('Ошибка обновления прогресса (2.2):', error);
+    }
+    syncLocalProfileAfterLevel('2.2');
     
     alert('🎊 Уровень пройден!\n\nВы освоили циклы!\nЭффективное программирование с повторениями!');
     goToLevelMap();

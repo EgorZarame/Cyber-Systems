@@ -408,6 +408,13 @@
         function startLevel(levelId) {
             console.log('🚀 Запуск уровня:', levelId);
             
+            // Не даём заходить на заблокированные уровни
+            const levelElement = document.querySelector(`[data-level="${levelId}"]`);
+            if (levelElement && levelElement.classList.contains('locked')) {
+                alert('Этот уровень ещё заблокирован. Сначала пройди предыдущие уровни!');
+                return;
+            }
+            
             // Определяем путь к уровню на основе его ID
             let levelPath;
             switch(levelId) {
@@ -494,7 +501,6 @@
         // Обновление отображения уровней на основе профиля
         function updateLevelsDisplay() {
             const profile = getProfile();
-            const currentLevelId = profile ? profile.currentLevelId : '1.1';
             
             const levels = [
                 '1.1', '1.2', '1.boss',
@@ -502,15 +508,22 @@
                 '3.1', '3.2', '3.boss'
             ];
             
-            // Преобразуем currentLevelId в индекс для сравнения
-            const currentIndex = levels.indexOf(currentLevelId);
+            // Индекс последнего реально завершённого уровня
+            // -1 означает, что ещё ничего не пройдено
+            let completedIndex = -1;
+            if (profile && profile.lastCompleted) {
+                completedIndex = levels.indexOf(profile.lastCompleted);
+            }
             
             levels.forEach(levelId => {
                 const levelElement = document.querySelector(`[data-level="${levelId}"]`);
                 if (levelElement) {
                     const levelIndex = levels.indexOf(levelId);
                     
-                    if (levelIndex <= currentIndex) {
+                    // Если ещё нет прогресса (completedIndex === -1), открыт только первый уровень
+                    // Иначе открыт последний пройденный и следующий за ним
+                    const maxOpenIndex = completedIndex + 1;
+                    if (levelIndex <= maxOpenIndex) {
                         levelElement.classList.remove('locked');
                         levelElement.classList.add('unlocked');
                     } else {
@@ -525,14 +538,14 @@
             const coreDept = document.getElementById('core-department');
             
             // Разблокируем охранные системы после 1.boss
-            if (currentIndex >= 2) { // После 1.boss
+            if (completedIndex >= 2) { // После 1.boss
                 securityDept?.classList.remove('locked');
             } else {
                 securityDept?.classList.add('locked');
             }
             
             // Разблокируем центральное ядро после 2.boss
-            if (currentIndex >= 5) { // После 2.boss
+            if (completedIndex >= 5) { // После 2.boss
                 coreDept?.classList.remove('locked');
             } else {
                 coreDept?.classList.add('locked');

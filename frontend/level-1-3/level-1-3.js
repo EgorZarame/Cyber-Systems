@@ -459,12 +459,16 @@ function addConsoleMessage(message, type = 'player') {
 }
 
 // Завершение уровня
-function completeLevel() {
-    // Сохраняем прогресс в localStorage
-    localStorage.setItem('cyberSystemsProgress', JSON.stringify({
-        currentLevel: '1.boss',
-        lastCompleted: '1.boss'
-    }));
+async function completeLevel() {
+    isExecuting = false;
+    
+    try {
+        await updateProgress('1.boss');
+        addConsoleMessage('Прогресс обновлён на бэкенде', 'success');
+    } catch (error) {
+        console.error('Ошибка обновления прогресса (1.boss):', error);
+    }
+    syncLocalProfileAfterLevel('1.boss');
     
     alert('🎊 ПОБЕДА!\n\nВы победили сбойного дрона!\nСистема восстановлена!\n\nПовышение до Junior-программиста!');
     goToLevelMap();

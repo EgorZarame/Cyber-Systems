@@ -120,10 +120,7 @@ async function runProgram() {
         
         if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
             addConsoleMessage('Дрон достиг цели!');
-            setTimeout(() => {
-                alert('Уровень пройден!');
-                goToLevelMap();
-            }, 1000);
+            await completeLevel();
             break;
         }
     }
@@ -226,6 +223,24 @@ function addConsoleMessage(message) {
     
     consoleOutput.appendChild(messageElement);
     consoleOutput.scrollTop = consoleOutput.scrollHeight;
+}
+
+// Завершение уровня и сохранение прогресса
+async function completeLevel() {
+    isExecuting = false;
+    
+    try {
+        await updateProgress('1.1');
+        addConsoleMessage('Прогресс сохранен');
+    } catch (error) {
+        console.error('Ошибка обновления прогресса (1.1):', error);
+    }
+    syncLocalProfileAfterLevel('1.1');
+    
+    setTimeout(() => {
+        alert('🎉 Уровень пройден!');
+        goToLevelMap();
+    }, 500);
 }
 
 // Навигация

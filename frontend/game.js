@@ -293,6 +293,41 @@ async function completeLevel() {
     const updatedProfile = await updateProgress(levelId);
     
     if (updatedProfile) {
+        // Синхронизируем локальный профиль с backend-прогрессом
+        try {
+            const profileStr = localStorage.getItem('cyberSystemsProfile');
+            let localProfile = profileStr ? JSON.parse(profileStr) : null;
+            
+            const levelsOrder = [
+                '1.1', '1.2', '1.boss',
+                '2.1', '2.2', '2.boss',
+                '3.1', '3.2', '3.boss'
+            ];
+            
+            if (!localProfile) {
+                localProfile = {
+                    currentLevelId: levelId,
+                    lastCompleted: levelId,
+                    juniorUnlocked: false,
+                    seniorUnlocked: false
+                };
+            } else {
+                // Обновляем только факт последнего завершённого уровня
+                // (карта сама решает, какие уровни открыть дальше)
+                localProfile.currentLevelId = levelId;
+                localProfile.lastCompleted = levelId;
+            }
+            
+            // Обновляем флаги карьерных ступеней (примерная логика)
+            localProfile.juniorUnlocked = localProfile.juniorUnlocked || levelId.startsWith('2.');
+            localProfile.seniorUnlocked = localProfile.seniorUnlocked || levelId.includes('boss');
+            
+            localStorage.setItem('cyberSystemsProfile', JSON.stringify(localProfile));
+            console.log('✅ Локальный профиль обновлён после уровня:', localProfile);
+        } catch (e) {
+            console.error('Ошибка синхронизации локального профиля:', e);
+        }
+
         updateConsole('> Прогресс сохранен!');
         setTimeout(() => {
             alert('🎉 Уровень пройден! Возвращаемся на карту...');

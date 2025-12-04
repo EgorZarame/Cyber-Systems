@@ -726,15 +726,16 @@ function addConsoleMessage(message, type = 'system') {
 }
 
 // Завершение уровня
-function completeLevel() {
+async function completeLevel() {
+    isExecuting = false;
+    
     try {
-        localStorage.setItem('cyberSystemsProgress', JSON.stringify({
-            currentLevel: '2.boss',
-            lastCompleted: '2.boss'
-        }));
-    } catch (e) {
-        console.log('⚠️ Не удалось сохранить прогресс');
+        await updateProgress('2.boss');
+    } catch (error) {
+        console.error('Ошибка обновления прогресса (2.boss):', error);
     }
+    // Переход на стадию Developer произойдет через syncLocalProfileAfterLevel и главную страницу
+    syncLocalProfileAfterLevel('2.boss');
     
     alert('🎊 ПОБЕДА!\n\nВы победили Адаптивный глитч!\nСистема сортировки стабилизирована!\n\nПовышение до Разработчика!');
     goToLevelMap();

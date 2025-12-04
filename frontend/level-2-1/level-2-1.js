@@ -558,12 +558,17 @@ function addConsoleMessage(message) {
 }
 
 // Завершение уровня
-function completeLevel() {
-    // Сохраняем прогресс в localStorage
-    localStorage.setItem('cyberSystemsProgress', JSON.stringify({
-        currentLevel: '2.1',
-        lastCompleted: '2.1'
-    }));
+async function completeLevel() {
+    isExecuting = false;
+    
+    // Обновляем прогресс на бэкенде и в локальном профиле
+    try {
+        await updateProgress('2.1');
+    } catch (error) {
+        console.error('Ошибка обновления прогресса (2.1):', error);
+    }
+    // Синхронизация локального профиля
+    syncLocalProfileAfterLevel('2.1');
     
     alert('🎊 Уровень пройден!\n\nВы освоили условные переменные!\nСистема сортировки работает корректно!');
     goToLevelMap();

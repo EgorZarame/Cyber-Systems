@@ -194,6 +194,50 @@ async function updateProgress(levelId) {
 }
 
 /**
+ * Синхронизация локального профиля (localStorage) после прохождения уровня.
+ * Используется всеми уровнями, чтобы карта и главное меню знали реальный прогресс.
+ */
+function syncLocalProfileAfterLevel(levelId) {
+    try {
+        const profileStr = localStorage.getItem('cyberSystemsProfile');
+        let profile = profileStr ? JSON.parse(profileStr) : null;
+
+        if (!profile) {
+            profile = {
+                currentLevelId: levelId,
+                lastCompleted: levelId,
+                juniorUnlocked: false,
+                seniorUnlocked: false
+            };
+        } else {
+            profile.currentLevelId = levelId;
+            profile.lastCompleted = levelId;
+        }
+
+        // Обновляем карьерные ступени на основе уровня
+        // После первого босса — Junior
+        if (levelId === '1.boss') {
+            profile.juniorUnlocked = true;
+        }
+        // После второго босса — Developer (но не Senior)
+        if (levelId === '2.boss') {
+            profile.juniorUnlocked = true; // Уже Junior
+            // Developer определяется по lastCompleted на главной странице
+        }
+        // Финальный босс 3.boss — Senior
+        if (levelId === '3.boss') {
+            profile.juniorUnlocked = true;
+            profile.seniorUnlocked = true;
+        }
+
+        localStorage.setItem('cyberSystemsProfile', JSON.stringify(profile));
+        console.log('✅ syncLocalProfileAfterLevel:', profile);
+    } catch (error) {
+        console.error('Ошибка синхронизации локального профиля:', error);
+    }
+}
+
+/**
  * Обновляет никнейм игрока
  */
 async function updateNickname(nickname) {

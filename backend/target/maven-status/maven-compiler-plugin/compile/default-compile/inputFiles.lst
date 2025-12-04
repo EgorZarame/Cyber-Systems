@@ -1,6 +1,8 @@
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\api\dto\PlayerProfileDto.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\api\dto\UpdateNicknameRequest.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\api\dto\UpdateProgressRequest.java
+D:\Cyber-Systems\backend\src\main\java\com\cybersystems\api\error\ApiErrorResponse.java
+D:\Cyber-Systems\backend\src\main\java\com\cybersystems\api\error\GlobalExceptionHandler.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\api\GameController.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\CyberSystemsApplication.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\domain\AbstractLevel.java
@@ -13,10 +15,12 @@ D:\Cyber-Systems\backend\src\main\java\com\cybersystems\domain\LevelType.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\domain\PlayerProfile.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\domain\SecurityLevel.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\DefaultLevelFactory.java
+D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\InMemoryPlayerProfileRepository.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\LevelCatalog.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\LevelCatalogService.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\LevelFactory.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\LinearProgressionStrategy.java
+D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\PlayerProfileRepository.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\PlayerProfileService.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\PlayerProfileServiceContract.java
 D:\Cyber-Systems\backend\src\main\java\com\cybersystems\service\ProgressionStrategy.java

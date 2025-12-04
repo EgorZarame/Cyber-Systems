@@ -745,11 +745,12 @@ async function completeLevel() {
         clearInterval(trafficLightInterval);
     }
     
-    localStorage.setItem('cyberSystemsProgress', JSON.stringify({
-        currentLevel: '3.3',
-        lastCompleted: '3.3',
-        seniorUnlocked: true
-    }));
+    try {
+        await updateProgress('3.boss');
+    } catch (error) {
+        console.error('Ошибка обновления прогресса (3.boss):', error);
+    }
+    syncLocalProfileAfterLevel('3.boss');
     
     setTimeout(() => {
         alert('🎊 УРОВЕНЬ ПРОЙДЕН!\n\n' +
