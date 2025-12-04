@@ -47,8 +47,8 @@ function initializeLevel() {
     initializeGameGrid();
     initializeDragAndDrop();
     updateLoopCounter();
-    addConsoleMessage('🟢 Дрон готов к программированию');
-    addConsoleMessage('💡 Используйте циклы для повторяющихся паттернов движения');
+    addConsoleMessage('Дрон готов');
+    addConsoleMessage('Используйте циклы для повторяющихся паттернов');
 }
 
 // Инициализация игрового поля
@@ -117,10 +117,16 @@ function initializeDragAndDrop() {
 
     codeArea.addEventListener('dragover', (e) => {
         e.preventDefault();
+        e.currentTarget.style.backgroundColor = 'rgba(255, 152, 0, 0.1)';
+    });
+
+    codeArea.addEventListener('dragleave', (e) => {
+        e.currentTarget.style.backgroundColor = '';
     });
 
     codeArea.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.currentTarget.style.backgroundColor = '';
         const data = JSON.parse(e.dataTransfer.getData('application/json'));
         addBlockToProgram(data.action, data.count);
     });
@@ -155,7 +161,32 @@ function addBlockToProgram(action, loopCount = 3) {
         const loopBody = document.createElement('div');
         loopBody.className = 'loop-body';
         loopBody.dataset.loopBody = 'true';
+        loopBody.dataset.loopActive = 'true'; // Цикл активен для добавления блоков
         block.appendChild(loopBody);
+        
+        // Кнопка для завершения тела цикла
+        const endLoopBtn = document.createElement('button');
+        endLoopBtn.textContent = 'Завершить тело цикла';
+        endLoopBtn.className = 'end-loop-btn';
+        endLoopBtn.style.cssText = `
+            display: block;
+            margin-top: 5px;
+            margin-left: 20px;
+            background: #9C27B0;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            cursor: pointer;
+        `;
+        endLoopBtn.onclick = function() {
+            loopBody.dataset.loopActive = 'false';
+            this.remove();
+            console.log('Тело цикла завершено. Новые блоки будут добавляться после цикла.');
+        };
+        block.appendChild(endLoopBtn);
+        
     } else {
         if (action === 'move') {
             block.classList.add('movement');
@@ -173,16 +204,19 @@ function addBlockToProgram(action, loopCount = 3) {
         }
     });
 
-    // Если есть активный цикл, добавляем в тело цикла
-    const activeLoopBody = codeArea.querySelector('.loop-body[data-active="true"]');
-    if (activeLoopBody) {
+    // ЛОГИКА ДОБАВЛЕНИЯ БЛОКА
+    const activeLoopBody = codeArea.querySelector('.loop-body[data-loop-active="true"]');
+    
+    if (activeLoopBody && action !== 'loop') {
+        // Добавляем в активное тело цикла
         activeLoopBody.appendChild(block);
     } else {
+        // Добавляем в основную область (вне циклов или это новый цикл)
         codeArea.appendChild(block);
     }
     
     programBlocks.push({ action, count: loopCount, element: block });
-    addConsoleMessage(`Добавлен блок: ${getBlockText(action, loopCount)}`);
+    addConsoleMessage(`+ Блок: ${getBlockText(action, loopCount)}`);
 }
 
 // Обновление счетчика цикла
@@ -213,25 +247,25 @@ async function runProgram() {
     if (isExecuting) return;
     
     if (programBlocks.length === 0) {
-        addConsoleMessage('❌ Ошибка: программа пуста!');
+        addConsoleMessage('Ошибка: программа пуста!');
         return;
     }
 
     isExecuting = true;
     resetDrone();
-    addConsoleMessage('⚡ Запуск программы...');
+    addConsoleMessage('Запуск программы...');
 
     await executeBlocks(programBlocks);
     
     if (isExecuting) {
         if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
-            addConsoleMessage('🎉 Дрон достиг цели!');
+            addConsoleMessage('Дрон достиг цели!');
             setTimeout(() => {
                 completeLevel();
             }, 1000);
         } else {
-            addConsoleMessage('🛑 Программа завершена');
-            addConsoleMessage(`📍 Дрон на позиции (${drone.x}, ${drone.y})`);
+            addConsoleMessage('Программа завершена');
+            addConsoleMessage(`Дрон на (${drone.x}, ${drone.y})`);
         }
         isExecuting = false;
     }
@@ -250,7 +284,7 @@ async function executeBlocks(blocks) {
             await executeAction(block);
         }
         
-        await new Promise(resolve => setTimeout(resolve, 400));
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         // Проверка достижения финиша
         if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
@@ -261,11 +295,11 @@ async function executeBlocks(blocks) {
 
 // Выполнение цикла
 async function executeLoop(loopBlock) {
-    const loopCount = loopBlock.count;
+    const loopCount = loopBlock.count || 3;
     const loopBody = loopBlock.element.querySelector('.loop-body');
     const bodyBlocks = getBlocksInLoopBody(loopBody);
     
-    addConsoleMessage(`🔄 Запуск цикла: ${loopCount} повторений`);
+    addConsoleMessage(`Цикл: ${loopCount} повторений`);
     
     for (let i = 0; i < loopCount; i++) {
         if (!isExecuting) break;
@@ -275,7 +309,7 @@ async function executeLoop(loopBlock) {
         currentLoop.total = loopCount;
         updateLoopCounter();
         
-        addConsoleMessage(`⟳ Итерация ${i + 1}/${loopCount}`);
+        addConsoleMessage(`Итерация ${i + 1}/${loopCount}`);
         
         // Подсветка блока цикла
         loopBlock.element.classList.add('loop-executing');
@@ -284,7 +318,7 @@ async function executeLoop(loopBlock) {
         
         loopBlock.element.classList.remove('loop-executing');
         
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
             break;
@@ -293,13 +327,15 @@ async function executeLoop(loopBlock) {
     
     currentLoop.active = false;
     updateLoopCounter();
-    addConsoleMessage('✅ Цикл завершен');
+    addConsoleMessage('Цикл завершен');
 }
 
 // Получение блоков в теле цикла
 function getBlocksInLoopBody(loopBody) {
     const blocks = [];
-    const childBlocks = loopBody.querySelectorAll('.code-block');
+    
+    // Берем только непосредственные дочерние блоки (не вложенные)
+    const childBlocks = loopBody.querySelectorAll(':scope > .code-block');
     
     childBlocks.forEach(child => {
         const blockIndex = programBlocks.findIndex(b => b.element === child);
@@ -334,7 +370,7 @@ async function executeAction(block) {
     // Снятие подсветки
     setTimeout(() => {
         element.classList.remove('executing');
-    }, 300);
+    }, 200);
 }
 
 // Движение вперед
@@ -355,7 +391,7 @@ async function moveForward() {
         droneElement.classList.add('drone-moving');
     }
 
-    await new Promise(resolve => setTimeout(resolve, 400));
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     // Проверка препятствий и границ
     const hasObstacle = levelConfig.obstacles.some(obs => obs.x === newX && obs.y === newY);
@@ -365,9 +401,9 @@ async function moveForward() {
         !hasObstacle) {
         drone.x = newX;
         drone.y = newY;
-        addConsoleMessage(`✅ Перемещение на (${newX}, ${newY})`);
+        addConsoleMessage(`Перемещение на (${newX}, ${newY})`);
     } else {
-        addConsoleMessage('❌ Препятствие или граница поля');
+        addConsoleMessage('Препятствие или граница поля');
     }
 
     updateDronePosition();
@@ -375,7 +411,7 @@ async function moveForward() {
     if (droneElement) {
         setTimeout(() => {
             droneElement.classList.remove('drone-moving');
-        }, 200);
+        }, 150);
     }
 }
 
@@ -385,10 +421,10 @@ async function turnLeft() {
     const currentIndex = directions.indexOf(drone.direction);
     drone.direction = directions[(currentIndex + 1) % 4];
     
-    addConsoleMessage(`↩️ Поворот налево. Направление: ${drone.direction}`);
+    addConsoleMessage(`Поворот налево. Направление: ${drone.direction}`);
     updateDronePosition();
     
-    await new Promise(resolve => setTimeout(resolve, 400));
+    await new Promise(resolve => setTimeout(resolve, 300));
 }
 
 // Поворот направо
@@ -397,10 +433,10 @@ async function turnRight() {
     const currentIndex = directions.indexOf(drone.direction);
     drone.direction = directions[(currentIndex + 1) % 4];
     
-    addConsoleMessage(`↪️ Поворот направо. Направление: ${drone.direction}`);
+    addConsoleMessage(`Поворот направо. Направление: ${drone.direction}`);
     updateDronePosition();
     
-    await new Promise(resolve => setTimeout(resolve, 400));
+    await new Promise(resolve => setTimeout(resolve, 300));
 }
 
 // Обновление позиции дрона
@@ -435,7 +471,7 @@ function updateLoopCounter() {
 function resetProgram() {
     if (isExecuting) {
         isExecuting = false;
-        addConsoleMessage('⚠️ Программа прервана');
+        addConsoleMessage('Программа прервана');
     }
     
     const codeArea = document.getElementById('codeArea');
@@ -445,7 +481,7 @@ function resetProgram() {
     resetDrone();
     currentLoop.active = false;
     updateLoopCounter();
-    addConsoleMessage('🔄 Программа сброшена');
+    addConsoleMessage('Программа сброшена');
 }
 
 // Сброс дрона
@@ -467,12 +503,39 @@ function updateProgramState() {
     }
 }
 
-// Добавление сообщения в консоль
+// Добавление сообщения в консоль - ОПТИМИЗИРОВАНО
 function addConsoleMessage(message) {
     const consoleOutput = document.getElementById('consoleOutput');
     const messageElement = document.createElement('div');
     messageElement.className = 'console-line';
-    messageElement.textContent = message;
+    
+    // Сокращаем длинные сообщения
+    let shortMessage = message;
+    if (message.length > 50) {
+        shortMessage = message.substring(0, 47) + '...';
+    }
+    
+    // Заменяем длинные тексты на короткие
+    shortMessage = shortMessage
+        .replace('Дрон готов к программированию', 'Дрон готов')
+        .replace('Используйте циклы для повторяющихся паттернов движения', 'Используйте циклы')
+        .replace('Добавлен блок:', '+ Блок:')
+        .replace('Запуск программы...', 'Запуск...')
+        .replace('Выполняется:', '→')
+        .replace('Перемещение на', '→')
+        .replace('Поворот налево', '↰')
+        .replace('Поворот направо', '↱')
+        .replace('Цикл: повторений', 'Цикл:')
+        .replace('Итерация', 'Ит.')
+        .replace('Цикл завершен', 'Цикл ок')
+        .replace('Препятствие или граница поля', 'Столкновение')
+        .replace('Программа завершена', 'Завершено')
+        .replace('Дрон на позиции', 'Позиция')
+        .replace('Дрон достиг цели!', 'Цель достигнута!')
+        .replace('Программа прервана', 'Прервано')
+        .replace('Программа сброшена', 'Сброшено');
+    
+    messageElement.textContent = shortMessage;
     
     consoleOutput.appendChild(messageElement);
     consoleOutput.scrollTop = consoleOutput.scrollHeight;

@@ -32,8 +32,8 @@ let sortedPackages = {
 function initializeLevel() {
     initializeConveyors();
     initializeDragAndDrop();
-    addConsoleMessage('🟢 Система сортировки готова');
-    addConsoleMessage('💡 Запрограммируйте условия для робота-сортировщика');
+    addConsoleMessage('Система готова');
+    addConsoleMessage('Программируйте робота');
 }
 
 // Инициализация конвейеров
@@ -44,10 +44,25 @@ function initializeConveyors() {
 
 // Сброс конвейеров
 function resetConveyors() {
-    document.getElementById('inputConveyor').innerHTML = '';
-    document.getElementById('redConveyor').innerHTML = '';
-    document.getElementById('blueConveyor').innerHTML = '';
-    document.getElementById('greenConveyor').innerHTML = '';
+    console.log('Сброс конвейеров...');
+    
+    // Проверяем, существуют ли элементы конвейеров
+    const inputConveyor = document.getElementById('inputConveyor');
+    const redConveyor = document.getElementById('redConveyor');
+    const blueConveyor = document.getElementById('blueConveyor');
+    const greenConveyor = document.getElementById('greenConveyor');
+    
+    console.log('Конвейеры найдены:', {
+        input: !!inputConveyor,
+        red: !!redConveyor,
+        blue: !!blueConveyor,
+        green: !!greenConveyor
+    });
+    
+    if (inputConveyor) inputConveyor.innerHTML = '';
+    if (redConveyor) redConveyor.innerHTML = '';
+    if (blueConveyor) blueConveyor.innerHTML = '';
+    if (greenConveyor) greenConveyor.innerHTML = '';
     
     sortedPackages = {
         'красный': [],
@@ -55,6 +70,14 @@ function resetConveyors() {
         'зеленый': []
     };
     currentPackageIndex = 0;
+    
+    // Сброс робота
+    const robotArm = document.getElementById('robotArm');
+    if (robotArm) {
+        robotArm.textContent = '🤖';
+        robotArm.classList.remove('executing');
+        console.log('Робот сброшен');
+    }
 }
 
 // Загрузка посылок на входной конвейер
@@ -97,10 +120,16 @@ function initializeDragAndDrop() {
 
     codeArea.addEventListener('dragover', (e) => {
         e.preventDefault();
+        e.currentTarget.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
+    });
+
+    codeArea.addEventListener('dragleave', (e) => {
+        e.currentTarget.style.backgroundColor = '';
     });
 
     codeArea.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.currentTarget.style.backgroundColor = '';
         const data = JSON.parse(e.dataTransfer.getData('application/json'));
         addBlockToProgram(data.type, data.params);
     });
@@ -118,6 +147,8 @@ function addBlockToProgram(type, params) {
     const block = document.createElement('div');
     block.className = 'code-block';
     block.dataset.type = type;
+    
+    // ВАЖНО: сохраняем params как объект, а не JSON строку
     block.dataset.params = JSON.stringify(params);
     
     // Создаем содержимое блока
@@ -127,7 +158,7 @@ function addBlockToProgram(type, params) {
     switch(type) {
         case 'if':
             content.innerHTML = `
-                если(посылка.цвет == 
+                если(цвет == 
                 <select class="condition-select" data-param="color" onchange="updateBlockParams(this)">
                     <option value="красный" ${params.color === 'красный' ? 'selected' : ''}>красный</option>
                     <option value="синий" ${params.color === 'синий' ? 'selected' : ''}>синий</option>
@@ -140,7 +171,7 @@ function addBlockToProgram(type, params) {
             
         case 'elseif':
             content.innerHTML = `
-                иначе если(посылка.цвет == 
+                иначе если(цвет == 
                 <select class="condition-select" data-param="color" onchange="updateBlockParams(this)">
                     <option value="красный" ${params.color === 'красный' ? 'selected' : ''}>красный</option>
                     <option value="синий" ${params.color === 'синий' ? 'selected' : ''}>синий</option>
@@ -158,13 +189,12 @@ function addBlockToProgram(type, params) {
             
         case 'send':
             content.innerHTML = `
-                отправить_на_
+                отправить на 
                 <select class="condition-select" data-param="conveyor" onchange="updateBlockParams(this)">
                     <option value="красный" ${params.conveyor === 'красный' ? 'selected' : ''}>красный</option>
                     <option value="синий" ${params.conveyor === 'синий' ? 'selected' : ''}>синий</option>
                     <option value="зеленый" ${params.conveyor === 'зеленый' ? 'selected' : ''}>зеленый</option>
                 </select>
-                _конвейер()
             `;
             block.classList.add('action');
             break;
@@ -181,29 +211,44 @@ function addBlockToProgram(type, params) {
     });
 
     codeArea.appendChild(block);
-    programBlocks.push({ type, params, element: block });
     
-    addConsoleMessage(`Добавлен блок: ${getBlockText(type, params)}`);
+    // Сохраняем params как объект, а не строку
+    programBlocks.push({ 
+        type, 
+        params: params, // сохраняем как объект
+        element: block 
+    });
+    
+    addConsoleMessage(`+ Блок: ${getBlockText(type, params)}`);
 }
 
 // Обновление параметров блока
 function updateBlockParams(selectElement) {
+    if (isExecuting) return;
+    
     const block = selectElement.closest('.code-block');
+    const type = block.dataset.type;
     const params = JSON.parse(block.dataset.params || '{}');
     params[selectElement.dataset.param] = selectElement.value;
     block.dataset.params = JSON.stringify(params);
+    
+    // Обновляем в массиве programBlocks
+    const blockIndex = programBlocks.findIndex(b => b.element === block);
+    if (blockIndex !== -1) {
+        programBlocks[blockIndex].params = params;
+    }
 }
 
 function getBlockText(type, params) {
     switch(type) {
         case 'if':
-            return `если(посылка.цвет == ${params.color})`;
+            return `если(цвет == ${params.color})`;
         case 'elseif':
-            return `иначе если(посылка.цвет == ${params.color})`;
+            return `иначе если(цвет == ${params.color})`;
         case 'else':
             return 'иначе';
         case 'send':
-            return `отправить_на_${params.conveyor}_конвейер()`;
+            return `отправить на ${params.conveyor}`;
         default:
             return 'НЕИЗВЕСТНЫЙ_БЛОК';
     }
@@ -211,109 +256,166 @@ function getBlockText(type, params) {
 
 // Запуск программы
 async function runProgram() {
-    if (isExecuting) return;
+    console.log('=== НАЧАЛО ВЫПОЛНЕНИЯ ПРОГРАММЫ ===');
+    
+    if (isExecuting) {
+        console.log('Программа уже выполняется');
+        return;
+    }
     
     if (programBlocks.length === 0) {
-        addConsoleMessage('❌ Ошибка: программа пуста!');
+        addConsoleMessage('Ошибка: программа пуста!');
+        console.log('Программа пуста');
         return;
     }
 
     isExecuting = true;
+    console.log(`Блоков в программе: ${programBlocks.length}`);
+    
     resetConveyors();
     loadPackagesToInput();
-    addConsoleMessage('⚡ Запуск программы сортировки...');
+    
+    console.log(`Всего посылок: ${levelConfig.packages.length}`);
+    addConsoleMessage('Запуск программы...');
 
     // Обрабатываем каждую посылку
     for (let i = 0; i < levelConfig.packages.length; i++) {
-        if (!isExecuting) break;
+        if (!isExecuting) {
+            console.log('Выполнение прервано пользователем');
+            addConsoleMessage('Выполнение прервано');
+            break;
+        }
         
         currentPackageIndex = i;
         const currentPackage = levelConfig.packages[i];
         
-        addConsoleMessage(`📦 Обработка посылки ${currentPackage.id} (${currentPackage.color})`);
+        console.log(`\nОбработка посылки ${i+1}/${levelConfig.packages.length}: ID=${currentPackage.id}, цвет=${currentPackage.color}`);
+        addConsoleMessage(`=== Посылка ${currentPackage.id} (${currentPackage.color}) ===`);
         
         // Анимация взятия посылки роботом
         await animateRobotPickup(currentPackage);
         
         // Выполняем программу для текущей посылки
+        console.log('Выполняем программу для посылки...');
         const result = await executeProgramForPackage(currentPackage);
         
         if (result) {
-            addConsoleMessage(`✅ Посылка ${currentPackage.id} отправлена на ${result} конвейер`);
+            console.log(`Посылка ${currentPackage.id} успешно отправлена на ${result} конвейер`);
+            addConsoleMessage(`✅ Отправлена на ${result} конвейер`);
         } else {
-            addConsoleMessage(`❌ Посылка ${currentPackage.id} не была отсортирована`);
+            console.log(`Посылка ${currentPackage.id} не была обработана`);
+            addConsoleMessage(`❌ Не обработана`);
         }
         
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Короткая пауза между посылками
+        await new Promise(resolve => setTimeout(resolve, 300));
     }
     
     if (isExecuting) {
+        console.log('=== ПРОВЕРКА РЕЗУЛЬТАТОВ ===');
         await checkLevelCompletion();
         isExecuting = false;
+        console.log('=== ВЫПОЛНЕНИЕ ЗАВЕРШЕНО ===');
     }
 }
 
 // Анимация взятия посылки роботом
 async function animateRobotPickup(pkg) {
+    console.log(`Берем посылку ${pkg.id} (${pkg.color})`);
+    
     const robotArm = document.getElementById('robotArm');
     const packageElement = document.querySelector(`[data-id="${pkg.id}"]`);
     
+    if (!robotArm) {
+        console.error('Робот не найден!');
+        return;
+    }
+    
     if (packageElement) {
         packageElement.remove();
+        console.log(`Посылка ${pkg.id} удалена с входного конвейера`);
+    } else {
+        console.warn(`Посылка ${pkg.id} не найдена на входном конвейере`);
     }
     
     robotArm.classList.add('executing');
     robotArm.textContent = `📦${pkg.id}`;
     
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 300));
 }
 
 // Выполнение программы для конкретной посылки
 async function executeProgramForPackage(pkg) {
-    let foundAction = false;
+    console.log(`Выполняем программу для посылки ${pkg.id} (${pkg.color})`);
+    
     let conveyorColor = null;
+    let conditionMet = false;
+    let skipToNextCondition = false;
     
     for (let i = 0; i < programBlocks.length; i++) {
         const block = programBlocks[i];
-        const params = JSON.parse(block.params);
+        
+        console.log(`Блок ${i}: type=${block.type}, params=`, block.params);
         
         // Подсветка выполняемого блока
         block.element.classList.add('executing');
+        await new Promise(resolve => setTimeout(resolve, 150));
         
         switch(block.type) {
             case 'if':
-                if (!foundAction && pkg.color === params.color) {
-                    foundAction = true;
-                    addConsoleMessage(`✓ Условие выполнено: посылка.цвет == ${params.color}`);
+                if (!conditionMet && !skipToNextCondition) {
+                    if (pkg.color === block.params.color) {
+                        conditionMet = true;
+                        addConsoleMessage(`✓ Условие "если" выполнено`);
+                    } else {
+                        skipToNextCondition = true;
+                        addConsoleMessage(`✗ Условие "если" не выполнено`);
+                    }
                 }
                 break;
                 
             case 'elseif':
-                if (!foundAction && pkg.color === params.color) {
-                    foundAction = true;
-                    addConsoleMessage(`✓ Условие выполнено: посылка.цвет == ${params.color}`);
+                if (!conditionMet && skipToNextCondition) {
+                    if (pkg.color === block.params.color) {
+                        conditionMet = true;
+                        skipToNextCondition = false;
+                        addConsoleMessage(`✓ Условие "иначе если" выполнено`);
+                    } else {
+                        addConsoleMessage(`✗ Условие "иначе если" не выполнено`);
+                    }
                 }
                 break;
                 
             case 'else':
-                if (!foundAction) {
-                    foundAction = true;
-                    addConsoleMessage('✓ Выполняется блок иначе');
+                if (!conditionMet && skipToNextCondition) {
+                    conditionMet = true;
+                    skipToNextCondition = false;
+                    addConsoleMessage(`✓ Выполняется блок "иначе"`);
                 }
                 break;
                 
             case 'send':
-                if (foundAction && !conveyorColor) {
-                    conveyorColor = params.conveyor;
+                if (conditionMet && !conveyorColor) {
+                    conveyorColor = block.params.conveyor;
+                    addConsoleMessage(`➡️ Отправляем на ${conveyorColor} конвейер`);
                     await sendPackageToConveyor(pkg, conveyorColor);
                 }
                 break;
         }
         
-        await new Promise(resolve => setTimeout(resolve, 300));
         block.element.classList.remove('executing');
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        if (conveyorColor) break;
+        // Если посылка отправлена, выходим
+        if (conveyorColor) {
+            console.log(`Посылка ${pkg.id} отправлена на ${conveyorColor}`);
+            break;
+        }
+    }
+    
+    if (!conveyorColor) {
+        console.log(`Посылка ${pkg.id} не была обработана`);
+        addConsoleMessage(`❌ Не была обработана`);
     }
     
     return conveyorColor;
@@ -321,12 +423,38 @@ async function executeProgramForPackage(pkg) {
 
 // Отправка посылки на конвейер
 async function sendPackageToConveyor(pkg, conveyorColor) {
-    const conveyor = document.getElementById(`${conveyorColor}Conveyor`);
+    console.log(`Отправляем посылку ${pkg.id} на конвейер: ${conveyorColor}`);
+    
+    // Правильно определяем ID конвейера
+    let conveyorId;
+    switch(conveyorColor) {
+        case 'красный':
+            conveyorId = 'redConveyor';
+            break;
+        case 'синий':
+            conveyorId = 'blueConveyor';
+            break;
+        case 'зеленый':
+            conveyorId = 'greenConveyor';
+            break;
+        default:
+            console.error(`Неизвестный цвет конвейера: ${conveyorColor}`);
+            return;
+    }
+    
+    const conveyor = document.getElementById(conveyorId);
+    
+    if (!conveyor) {
+        console.error(`Конвейер с ID "${conveyorId}" не найден!`);
+        addConsoleMessage(`❌ Ошибка: конвейер "${conveyorColor}" не найден`);
+        return;
+    }
+    
     const robotArm = document.getElementById('robotArm');
     
     // Анимация отправки
-    robotArm.textContent = `➡️${conveyorColor}`;
-    await new Promise(resolve => setTimeout(resolve, 400));
+    robotArm.textContent = `→${conveyorColor[0].toUpperCase()}`;
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     // Создаем элемент посылки на целевом конвейере
     const packageElement = document.createElement('div');
@@ -337,22 +465,27 @@ async function sendPackageToConveyor(pkg, conveyorColor) {
     
     // Добавляем в отсортированные
     sortedPackages[conveyorColor].push(pkg);
+    console.log(`Посылка ${pkg.id} добавлена на ${conveyorColor} конвейер. Всего: ${sortedPackages[conveyorColor].length}`);
     
     // Сбрасываем робота
-    robotArm.textContent = '🤖';
-    robotArm.classList.remove('executing');
+    setTimeout(() => {
+        robotArm.textContent = '🤖';
+        robotArm.classList.remove('executing');
+    }, 100);
+    
+    await new Promise(resolve => setTimeout(resolve, 200));
 }
 
 // Проверка завершения уровня
 async function checkLevelCompletion() {
     let isComplete = true;
-    let message = 'Результаты сортировки:\n';
+    let message = 'Результаты:\n';
     
     for (const color in levelConfig.requiredSorting) {
         const required = levelConfig.requiredSorting[color];
         const actual = sortedPackages[color].length;
         
-        message += `• ${color}: ${actual}/${required}\n`;
+        message += `${color}: ${actual}/${required}\n`;
         
         if (actual < required) {
             isComplete = false;
@@ -362,12 +495,12 @@ async function checkLevelCompletion() {
     addConsoleMessage(message);
     
     if (isComplete) {
-        addConsoleMessage('🎉 Все посылки отсортированы правильно!');
+        addConsoleMessage('Все отсортированы!');
         setTimeout(() => {
             completeLevel();
         }, 1000);
     } else {
-        addConsoleMessage('❌ Не все посылки отсортированы правильно');
+        addConsoleMessage('Не все отсортированы');
     }
 }
 
@@ -375,7 +508,7 @@ async function checkLevelCompletion() {
 function resetProgram() {
     if (isExecuting) {
         isExecuting = false;
-        addConsoleMessage('⚠️ Программа прервана');
+        addConsoleMessage('Программа прервана');
     }
     
     const codeArea = document.getElementById('codeArea');
@@ -384,7 +517,7 @@ function resetProgram() {
     updateProgramState();
     resetConveyors();
     loadPackagesToInput();
-    addConsoleMessage('🔄 Программа сброшена');
+    addConsoleMessage('Программа сброшена');
 }
 
 // Обновление состояния программы
@@ -403,7 +536,22 @@ function addConsoleMessage(message) {
     const consoleOutput = document.getElementById('consoleOutput');
     const messageElement = document.createElement('div');
     messageElement.className = 'console-line';
-    messageElement.textContent = message;
+    
+    // Добавляем префиксы для разных типов сообщений
+    let displayMessage = message;
+    if (message.includes('✓') || message.includes('✅') || message.includes('➡️')) {
+        messageElement.style.color = '#4CAF50';
+    } else if (message.includes('✗') || message.includes('❌')) {
+        messageElement.style.color = '#f44336';
+    } else if (message.includes('===') || message.includes('---')) {
+        messageElement.style.color = '#2196F3';
+        messageElement.style.fontWeight = 'bold';
+    } else if (message.includes('Посылка') && message.includes('===')) {
+        messageElement.style.color = '#FF9800';
+        messageElement.style.fontWeight = 'bold';
+    }
+    
+    messageElement.textContent = displayMessage;
     
     consoleOutput.appendChild(messageElement);
     consoleOutput.scrollTop = consoleOutput.scrollHeight;

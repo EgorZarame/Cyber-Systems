@@ -8,7 +8,6 @@ const levelConfig = {
     finish: { x: 13, y: 8 },
     virusCore: { x: 13, y: 8 },
     obstacles: [
-        // Лабиринт к ядру вируса
         { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 },
         { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 },
         { x: 6, y: 4 }, { x: 6, y: 5 }, { x: 6, y: 6 },
@@ -51,12 +50,13 @@ const levelConfig = {
         { x: 13, y: 7 }, { x: 13, y: 8 }
     ],
     trafficLight: {
-        state: 'красный', // 'зеленый' или 'красный'
-        changeInterval: 3000, // Интервал смены светофора
+        state: 'красный',
+        changeInterval: 3000,
         lastChange: 0
     },
     conveyorsFilled: false,
-    virusCoreActivated: false
+    virusCoreActivated: false,
+    itemsMoved: 0 // Счетчик перемещенных предметов
 };
 
 let drone = {
@@ -78,8 +78,10 @@ function initializeLevel() {
     addConsoleMessage('🐍 Python интерпретатор инициализирован', 'info');
     addConsoleMessage('🚨 ОБНАРУЖЕНО ЯДРО ВИРУСА!', 'error');
     addConsoleMessage('💡 Используйте if/else, циклы и функции для восстановления системы', 'info');
-    addConsoleMessage('📦 Переложите предметы с раздатчиков на конвейеры', 'warning');
+    addConsoleMessage('📦 Переложите предметы с раздатчиков на конвейеры (3 предмета)', 'warning');
     addConsoleMessage('🚦 Светофор активирован - следите за цветом!', 'warning');
+    addConsoleMessage(`📍 Стартовая позиция: (${levelConfig.start.x}, ${levelConfig.start.y})`, 'info');
+    addConsoleMessage(`🎯 Ядро вируса: (${levelConfig.virusCore.x}, ${levelConfig.virusCore.y})`, 'info');
 }
 
 // Инициализация игрового поля
@@ -108,16 +110,13 @@ function initializeGameGrid() {
                 cell.classList.add('path');
             }
 
-            // Добавляем предметы на конвейеры
-            const item = levelConfig.items.find(it => it.x === x && it.y === y);
-            if (item) {
-                cell.classList.add(`item-${item.color}`);
-            }
-
             grid.appendChild(cell);
         }
     }
 
+    // Добавляем предметы на конвейеры
+    updateItemsDisplay();
+    
     updateDronePosition();
 }
 
@@ -149,7 +148,6 @@ function updateTrafficLightDisplay() {
         redLight.classList.remove('red', 'light-changing');
     }
     
-    // Убираем анимацию после завершения
     setTimeout(() => {
         redLight.classList.remove('light-changing');
         greenLight.classList.remove('light-changing');
@@ -160,9 +158,8 @@ function updateTrafficLightDisplay() {
 function setupCodeEditor() {
     const codeEditor = document.getElementById('codeEditor');
     
-    // Базовая подсветка синтаксиса при вводе
     codeEditor.addEventListener('input', function() {
-        // В реальном проекте нужно использовать более сложную систему подсветки
+        // Можно добавить подсветку синтаксиса
     });
 }
 
@@ -181,7 +178,6 @@ async function runPythonCode() {
         return;
     }
 
-    // Проверяем наличие функции восстановить_систему
     if (!code.includes('восстановить_систему')) {
         addConsoleMessage('❌ Ошибка: функция восстановить_систему() не найдена!', 'error');
         addConsoleMessage('💡 Используйте: def восстановить_систему():', 'error');
@@ -193,43 +189,54 @@ async function runPythonCode() {
     addConsoleMessage('⚡ Запуск выполнения кода...', 'info');
 
     try {
-        // Имитация выполнения Python кода
-        await executePythonCode(code);
+        // Парсим и выполняем код ОДИН РАЗ
+        await parseAndExecute(code);
     } catch (error) {
         addConsoleMessage(`❌ Ошибка выполнения: ${error.message}`, 'error');
         isExecuting = false;
     }
 }
 
-// Выполнение имитированного Python кода
-async function executePythonCode(code) {
+// Парсинг и выполнение кода ОДИН РАЗ
+async function parseAndExecute(code) {
     const lines = code.split('\n');
     let inFunction = false;
+    let functionIndent = 0;
     let functionBody = [];
     
-    // Парсим код для извлечения тела функции
+    // Парсим тело функции восстановить_систему
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
+        const line = lines[i];
+        const trimmed = line.trim();
         
-        if (line.startsWith('def восстановить_систему():')) {
+        // Находим начало функции
+        if (trimmed.startsWith('def восстановить_систему():')) {
             inFunction = true;
             continue;
         }
         
         if (inFunction) {
-            if (line === '' || line.startsWith('#')) {
-                continue; // Пропускаем пустые строки и комментарии
+            // Определяем отступ
+            const indent = line.search(/\S/);
+            
+            // Если это первая строка тела функции
+            if (functionBody.length === 0 && trimmed !== '' && indent > 0) {
+                functionIndent = indent;
             }
             
-            // Проверяем отступы (должны быть 4 пробела)
-            if (line.startsWith('    ') || line === '') {
-                const command = line.trim();
-                if (command) {
-                    functionBody.push(command);
+            // Если строка в теле функции
+            if (trimmed !== '' && !trimmed.startsWith('#')) {
+                if (indent >= functionIndent) {
+                    functionBody.push({
+                        text: line,
+                        indent: indent,
+                        content: trimmed,
+                        lineNumber: i + 1
+                    });
+                } else {
+                    // Меньший отступ - вышли из функции
+                    break;
                 }
-            } else if (line) {
-                // Если есть код без отступа, значит вышли из функции
-                break;
             }
         }
     }
@@ -238,139 +245,266 @@ async function executePythonCode(code) {
         throw new Error('Тело функции пусто! Добавьте команды с отступами.');
     }
     
-    addConsoleMessage(`📝 Найдено ${functionBody.length} команд в функции`, 'info');
+    addConsoleMessage(`📝 Найдено ${functionBody.length} команд в функции`, 'success');
     
-    // Выполняем команды из тела функции
-    let executionComplete = false;
-    let iterations = 0;
-    const maxIterations = 100; // Защита от бесконечных циклов
+    // Выполняем тело функции последовательно
+    await executeFunctionBody(functionBody);
+}
+
+// Выполнение тела функции
+async function executeFunctionBody(functionBody) {
+    let i = 0;
+    const maxSteps = 200;
+    let stepCount = 0;
     
-    while (!executionComplete && iterations < maxIterations && isExecuting) {
-        iterations++;
+    while (i < functionBody.length && isExecuting && stepCount < maxSteps) {
+        stepCount++;
+        const instruction = functionBody[i];
+        currentLine = instruction.lineNumber;
         
-        for (let i = 0; i < functionBody.length; i++) {
-            if (!isExecuting) break;
-            
-            const command = functionBody[i];
-            currentLine = i + 1;
-            
-            addConsoleMessage(`📄 Строка ${currentLine}: ${command}`, 'info');
-            
-            try {
-                await executeCommand(command);
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Проверка достижения ядра вируса
-                if (drone.x === levelConfig.virusCore.x && drone.y === levelConfig.virusCore.y && levelConfig.conveyorsFilled) {
-                    addConsoleMessage('🎯 Дрон достиг ядра вируса!', 'success');
-                    await activateVirusCore();
-                    executionComplete = true;
-                    await completeLevel();
-                    break;
-                }
-            } catch (error) {
-                addConsoleMessage(`❌ Ошибка в строке ${currentLine}: ${error.message}`, 'error');
-                executionComplete = true;
-                break;
-            }
+        try {
+            await processInstruction(instruction, functionBody, i);
+        } catch (error) {
+            addConsoleMessage(`❌ Ошибка в строке ${currentLine}: ${error.message}`, 'error');
+            break;
         }
         
-        // Если дошли до конца функции, но не достигли цели, продолжаем выполнение
-        if (!executionComplete && iterations >= maxIterations) {
-            addConsoleMessage('⚠️ Достигнут лимит итераций. Проверьте логику программы.', 'warning');
+        // Находим следующую инструкцию
+        i = findNextInstruction(i, functionBody);
+        
+        // Проверка достижения ядра вируса
+        if (drone.x === levelConfig.virusCore.x && drone.y === levelConfig.virusCore.y && levelConfig.conveyorsFilled) {
+            await activateVirusCore();
+            await completeLevel();
+            return;
         }
+        
+        // Небольшая пауза между командами
+        await new Promise(resolve => setTimeout(resolve, 300));
+    }
+    
+    if (stepCount >= maxSteps) {
+        addConsoleMessage('⚠️ Достигнут лимит шагов выполнения', 'warning');
     }
     
     if (isExecuting && !(drone.x === levelConfig.virusCore.x && drone.y === levelConfig.virusCore.y && levelConfig.conveyorsFilled)) {
-        addConsoleMessage('🛑 Выполнение завершено, но система не восстановлена', 'error');
+        addConsoleMessage('🛑 Программа завершена, но система не восстановлена', 'error');
         addConsoleMessage(`📍 Текущая позиция: (${drone.x}, ${drone.y})`, 'error');
         addConsoleMessage(`📦 Конвейеры заполнены: ${levelConfig.conveyorsFilled}`, 'error');
+        addConsoleMessage(`📊 Перемещено предметов: ${levelConfig.itemsMoved}/3`, 'error');
     }
     
     isExecuting = false;
 }
 
-// Выполнение отдельной команды
-async function executeCommand(command) {
-    // Убираем комментарии
-    const cleanCommand = command.split('#')[0].trim();
+// Найти следующую инструкцию
+function findNextInstruction(currentIndex, functionBody) {
+    return currentIndex + 1;
+}
+
+// Обработка инструкции
+async function processInstruction(instruction, functionBody, currentIndex) {
+    const content = instruction.content;
     
-    if (!cleanCommand) return;
+    addConsoleMessage(`📄 Строка ${currentLine}: ${content}`, 'info');
     
-    // Обработка условных операторов
-    if (cleanCommand.startsWith('if ')) {
-        return await executeCondition(cleanCommand);
+    // Обработка while циклов (добавлена поддержка)
+    if (content.startsWith('while ')) {
+        const conditionResult = evaluateCondition(content.replace('while ', 'if '));
+        addConsoleMessage(`🔄 Проверка while условия: ${conditionResult ? 'ИСТИНА' : 'ЛОЖЬ'}`, conditionResult ? 'success' : 'warning');
+        
+        if (conditionResult) {
+            // Выполняем тело while
+            await executeBlock(currentIndex + 1, instruction.indent, functionBody);
+            // Возвращаемся к проверке условия
+            return currentIndex;
+        } else {
+            // Пропускаем тело while
+            return skipBlock(currentIndex + 1, instruction.indent, functionBody);
+        }
     }
-    // Обработка циклов for
-    else if (cleanCommand.startsWith('for ')) {
-        return await executeForLoop(cleanCommand);
+    else if (content.startsWith('if ')) {
+        const conditionResult = evaluateCondition(content);
+        addConsoleMessage(`🔍 Условие if: ${conditionResult ? 'ИСТИНА' : 'ЛОЖЬ'}`, conditionResult ? 'success' : 'warning');
+        
+        if (conditionResult) {
+            // Выполняем тело if
+            await executeBlock(currentIndex + 1, instruction.indent, functionBody);
+        } else {
+            // Пропускаем тело if и ищем else
+            let nextIndex = skipBlock(currentIndex + 1, instruction.indent, functionBody);
+            
+            // Проверяем, есть ли else
+            if (nextIndex < functionBody.length && functionBody[nextIndex].content === 'else:' && 
+                functionBody[nextIndex].indent === instruction.indent) {
+                // Выполняем тело else
+                await executeBlock(nextIndex + 1, instruction.indent, functionBody);
+            }
+            
+            // Возвращаем индекс после всего блока if/else
+            return findNextAfterBlock(currentIndex, instruction.indent, functionBody);
+        }
     }
-    // Обработка else
-    else if (cleanCommand === 'else:') {
-        return; // Обрабатывается в executeCondition
+    else if (content === 'else:') {
+        // else обрабатывается в if, поэтому пропускаем
+        return currentIndex;
     }
-    // Базовые команды
-    else if (cleanCommand === 'двигаться_вперед()') {
-        await moveForward();
-    } else if (cleanCommand === 'повернуть_налево()') {
-        await turnLeft();
-    } else if (cleanCommand === 'повернуть_направо()') {
-        await turnRight();
-    } else if (cleanCommand === 'стой_на_месте()') {
-        await waitInPlace();
-    } else if (cleanCommand === 'переложить_предметы()') {
-        await moveItems();
-    } else if (cleanCommand === 'активировать_ядро()') {
-        await activateVirusCore();
-    } else {
-        throw new Error(`Неизвестная команда: ${cleanCommand}`);
+    else if (content.startsWith('for ')) {
+        await executeForLoop(instruction, currentIndex, functionBody);
+        return findNextAfterBlock(currentIndex, instruction.indent, functionBody);
+    }
+    else {
+        // Обычная команда
+        await executeCommand(content);
     }
 }
 
-// Выполнение условного оператора
-async function executeCondition(conditionLine) {
-    // Простая проверка условий
-    if (conditionLine.includes("светофор == 'зеленый'")) {
+// Оценка условия
+function evaluateCondition(conditionLine) {
+    // Убираем "if " или "while " и ":" в конце
+    const condition = conditionLine.replace(/^(if|while)\s+|\s*:$/g, '');
+    
+    if (condition.includes("светофор == 'зеленый'")) {
         return levelConfig.trafficLight.state === 'зеленый';
-    } else if (conditionLine.includes("светофор == 'красный'")) {
+    } 
+    else if (condition.includes("светофор == 'красный'")) {
         return levelConfig.trafficLight.state === 'красный';
-    } else if (conditionLine.includes('конвейеры_заполнены')) {
+    }
+    else if (condition.includes('конвейеры_заполнены')) {
         return levelConfig.conveyorsFilled;
-    } else if (conditionLine.includes('ядро_активировано')) {
+    }
+    else if (condition.includes('ядро_активировано')) {
         return levelConfig.virusCoreActivated;
     }
     
-    throw new Error(`Неизвестное условие: ${conditionLine}`);
+    return false;
 }
 
-// Выполнение цикла for
-async function executeForLoop(loopLine) {
-    // Простой парсинг range()
-    const rangeMatch = loopLine.match(/range\((\d+)\)/);
-    if (rangeMatch) {
-        const iterations = parseInt(rangeMatch[1]);
-        addConsoleMessage(`🔄 Запуск цикла for на ${iterations} итераций`, 'info');
+// Пропустить блок кода
+function skipBlock(startIndex, baseIndent, functionBody) {
+    let i = startIndex;
+    while (i < functionBody.length && functionBody[i].indent > baseIndent) {
+        i++;
+    }
+    return i;
+}
+
+// Найти следующий индекс после блока
+function findNextAfterBlock(currentIndex, baseIndent, functionBody) {
+    let i = currentIndex + 1;
+    while (i < functionBody.length && functionBody[i].indent > baseIndent) {
+        i++;
+    }
+    return i;
+}
+
+// Выполнить блок кода
+async function executeBlock(startIndex, baseIndent, functionBody) {
+    let i = startIndex;
+    while (i < functionBody.length && functionBody[i].indent > baseIndent) {
+        await processInstruction(functionBody[i], functionBody, i);
+        i++;
         
-        for (let i = 0; i < iterations; i++) {
-            if (!isExecuting) break;
-            addConsoleMessage(`⟳ Итерация ${i + 1}/${iterations}`, 'info');
-            // В реальной реализации здесь нужно выполнять тело цикла
-            await new Promise(resolve => setTimeout(resolve, 300));
+        // Проверка достижения ядра
+        if (drone.x === levelConfig.virusCore.x && drone.y === levelConfig.virusCore.y && levelConfig.conveyorsFilled) {
+            return;
         }
-        
-        addConsoleMessage('✅ Цикл for завершен', 'info');
-        return;
+    }
+}
+
+// Выполнить цикл for
+async function executeForLoop(loopInstruction, currentIndex, functionBody) {
+    const match = loopInstruction.content.match(/for\s+\w+\s+in\s+range\((\d+)\):/);
+    if (!match) {
+        throw new Error('Некорректный синтаксис цикла for');
     }
     
-    throw new Error(`Неизвестный цикл: ${loopLine}`);
+    const iterations = parseInt(match[1]);
+    if (isNaN(iterations) || iterations <= 0) {
+        throw new Error(`Некорректное количество итераций: ${match[1]}`);
+    }
+    
+    addConsoleMessage(`🔄 Запуск цикла for на ${iterations} итераций`, 'info');
+    
+    // Собираем тело цикла
+    const loopBody = [];
+    let nextIndex = currentIndex + 1;
+    while (nextIndex < functionBody.length && functionBody[nextIndex].indent > loopInstruction.indent) {
+        loopBody.push(functionBody[nextIndex]);
+        nextIndex++;
+    }
+    
+    if (loopBody.length === 0) {
+        throw new Error('Тело цикла for пусто');
+    }
+    
+    // Выполняем цикл
+    for (let i = 0; i < iterations && isExecuting; i++) {
+        addConsoleMessage(`⟳ Итерация ${i + 1}/${iterations}`, 'info');
+        
+        for (const bodyLine of loopBody) {
+            if (!isExecuting) break;
+            
+            // Рекурсивно обрабатываем команды в теле цикла
+            if (bodyLine.content.startsWith('if ') || bodyLine.content.startsWith('for ') || bodyLine.content.startsWith('while ')) {
+                await processInstruction(bodyLine, functionBody, functionBody.indexOf(bodyLine));
+            } else {
+                await executeCommand(bodyLine.content);
+            }
+            
+            // Проверка достижения ядра
+            if (drone.x === levelConfig.virusCore.x && drone.y === levelConfig.virusCore.y && levelConfig.conveyorsFilled) {
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+    }
+    
+    addConsoleMessage('✅ Цикл for завершен', 'success');
 }
 
-// Движение вперед
+// Выполнить одну команду
+async function executeCommand(command) {
+    if (command.startsWith('#')) return;
+    
+    if (command === 'двигаться_вперед()') {
+        await moveForward();
+    } else if (command === 'повернуть_налево()') {
+        await turnLeft();
+    } else if (command === 'повернуть_направо()') {
+        await turnRight();
+    } else if (command === 'стой_на_месте()') {
+        await waitInPlace();
+    } else if (command === 'переложить_предметы()') {
+        await moveItems();
+    } else if (command === 'активировать_ядро()') {
+        await activateVirusCore();
+    } else if (command.includes('(') && command.includes(')')) {
+        const funcName = command.split('(')[0];
+        if (funcName && funcName !== 'range') {
+            throw new Error(`Неизвестная команда: ${funcName}`);
+        }
+    }
+}
+
+// Движение вперед с проверкой светофора
 async function moveForward() {
+    // Проверяем светофор
     if (levelConfig.trafficLight.state === 'красный') {
         addConsoleMessage('🚫 Движение запрещено: красный свет!', 'warning');
-        await waitInPlace();
-        return;
+        
+        // Ждем зеленый свет
+        addConsoleMessage('⏳ Ожидание зеленого света...', 'info');
+        
+        // Ждем пока светофор станет зеленым
+        while (levelConfig.trafficLight.state === 'красный' && isExecuting) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        if (!isExecuting) return;
+        
+        addConsoleMessage('✅ Светофор стал зеленым! Продолжаем движение', 'success');
     }
 
     let newX = drone.x;
@@ -401,7 +535,7 @@ async function moveForward() {
         drone.y = newY;
         addConsoleMessage(`✅ Движение вперед на (${newX}, ${newY})`, 'success');
     } else {
-        throw new Error('Невозможно двигаться вперед: препятствие или граница поля');
+        throw new Error(`Невозможно двигаться вперед: препятствие или граница поля. Направление: ${drone.direction}`);
     }
 
     updateDronePosition();
@@ -428,35 +562,63 @@ async function waitInPlace() {
     }
 }
 
-// Перемещение предметов
+// Перемещение предметов - ИСПРАВЛЕННАЯ ВЕРСИЯ
 async function moveItems() {
-    // Проверяем, находится ли дрон рядом с раздатчиком
-    const nearDispenser = levelConfig.dispensers.some(disp => 
-        Math.abs(drone.x - disp.x) <= 1 && Math.abs(drone.y - disp.y) <= 1
+    // Проверяем, находится ли дрон на конвейере
+    const onConveyor = levelConfig.conveyors.some(conv => 
+        drone.x === conv.x && drone.y === conv.y
     );
     
-    if (!nearDispenser) {
-        throw new Error('Дрон должен находиться рядом с раздатчиком для перемещения предметов');
+    if (!onConveyor) {
+        throw new Error('Дрон должен находиться на конвейере для перемещения предметов!');
     }
     
-    addConsoleMessage('📦 Перемещение предметов с раздатчиков на конвейеры...', 'info');
+    // Находим раздатчик, соответствующий этому конвейеру
+    const conveyorIndex = levelConfig.conveyors.findIndex(conv => 
+        drone.x === conv.x && drone.y === conv.y
+    );
+    
+    if (conveyorIndex === -1) {
+        throw new Error('Не найден соответствующий раздатчик!');
+    }
+    
+    const section = levelConfig.conveyors[conveyorIndex].section;
+    const dispenser = levelConfig.dispensers.find(d => {
+        if (section === 1) return d.color === 'red';
+        if (section === 2) return d.color === 'blue';
+        if (section === 3) return d.color === 'green';
+        return false;
+    });
+    
+    if (!dispenser) {
+        throw new Error('Не найден раздатчик для этого конвейера!');
+    }
+    
+    addConsoleMessage(`📦 Перемещение предмета ${dispenser.color} с раздатчика...`, 'info');
     
     // Имитация процесса перемещения
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Помечаем конвейеры как заполненные
-    levelConfig.conveyorsFilled = true;
-    addConsoleMessage('✅ Конвейеры заполнены! Теперь можно активировать ядро вируса', 'success');
+    // Увеличиваем счетчик перемещенных предметов
+    levelConfig.itemsMoved++;
+    
+    // Проверяем, все ли конвейеры заполнены (все 3 предмета перемещены)
+    if (levelConfig.itemsMoved >= 3) {
+        levelConfig.conveyorsFilled = true;
+        addConsoleMessage(`✅ Все конвейеры заполнены! (${levelConfig.itemsMoved}/3 предметов)`, 'success');
+    } else {
+        addConsoleMessage(`📊 Перемещено предметов: ${levelConfig.itemsMoved}/3`, 'info');
+    }
 }
 
-// Активация ядра вируса
+// Активация ядра вируса - ИСПРАВЛЕННАЯ ВЕРСИЯ
 async function activateVirusCore() {
     if (!levelConfig.conveyorsFilled) {
-        throw new Error('Сначала нужно заполнить конвейеры предметами!');
+        throw new Error(`Сначала нужно заполнить все конвейеры предметами! Перемещено: ${levelConfig.itemsMoved}/3`);
     }
     
     if (drone.x !== levelConfig.virusCore.x || drone.y !== levelConfig.virusCore.y) {
-        throw new Error('Дрон должен находиться на ядре вируса для активации!');
+        throw new Error(`Дрон должен находиться на ядре вируса для активации! Текущая позиция: (${drone.x}, ${drone.y}), нужна: (${levelConfig.virusCore.x}, ${levelConfig.virusCore.y})`);
     }
     
     addConsoleMessage('🚀 Активация ядра вируса...', 'info');
@@ -510,6 +672,22 @@ function updateDronePosition() {
     }
 }
 
+// Функция для обновления отображения предметов
+function updateItemsDisplay() {
+    // Удаляем все существующие предметы
+    document.querySelectorAll('.item-red, .item-blue, .item-green').forEach(item => {
+        item.classList.remove('item-red', 'item-blue', 'item-green');
+    });
+    
+    // Добавляем предметы на их позиции
+    levelConfig.items.forEach(item => {
+        const cell = document.querySelector(`[data-x="${item.x}"][data-y="${item.y}"]`);
+        if (cell) {
+            cell.classList.add(`item-${item.color}`);
+        }
+    });
+}
+
 // Сброс программы
 function resetProgram() {
     if (isExecuting) {
@@ -529,10 +707,22 @@ function resetDrone() {
     drone.isMoving = false;
     updateDronePosition();
     
-    // Сбрасываем светофор
+    // Сбрасываем все состояния
     levelConfig.trafficLight.state = 'красный';
     levelConfig.conveyorsFilled = false;
     levelConfig.virusCoreActivated = false;
+    levelConfig.itemsMoved = 0;
+    
+    // Сбрасываем предметы на начальные позиции
+    levelConfig.items = [
+        { x: 1, y: 8, color: 'red' },
+        { x: 5, y: 8, color: 'blue' },
+        { x: 9, y: 8, color: 'green' }
+    ];
+    
+    // Обновляем отображение предметов
+    updateItemsDisplay();
+    
     updateTrafficLightDisplay();
 }
 
@@ -548,15 +738,13 @@ function addConsoleMessage(message, type = '') {
 }
 
 // Завершение уровня
-function completeLevel() {
+async function completeLevel() {
     isExecuting = false;
     
-    // Останавливаем светофор
     if (trafficLightInterval) {
         clearInterval(trafficLightInterval);
     }
     
-    // Сохраняем прогресс в localStorage
     localStorage.setItem('cyberSystemsProgress', JSON.stringify({
         currentLevel: '3.3',
         lastCompleted: '3.3',
@@ -586,19 +774,13 @@ function showHelp() {
           '1. Напишите функцию восстановить_систему() с условиями и циклами\n' +
           '2. Проверяйте состояние светофора: светофор == "зеленый/красный"\n' +
           '3. Используйте переложить_предметы() для заполнения конвейеров\n' +
-          '4. Доберитесь до ядра вируса и используйте активировать_ядро()\n' +
-          '5. Комбинируйте условия, циклы и функции\n\n' +
-          'Пример решения:\n' +
-          'def восстановить_систему():\n' +
-          '    if светофор == "зеленый":\n' +
-          '        for i in range(5):\n' +
-          '            двигаться_вперед()\n' +
-          '        переложить_предметы()\n' +
-          '        while not ядро_активировано:\n' +
-          '            if конвейеры_заполнены:\n' +
-          '                активировать_ядро()\n' +
-          '    else:\n' +
-          '        стой_на_месте()');
+          '   - Дрон должен стоять НА КОНВЕЙЕРЕ (координаты: 1,8 / 5,8 / 9,8)\n' +
+          '4. Доберитесь до ядра вируса (13,8) и используйте активировать_ядро()\n' +
+          '5. Нужно переместить 3 предмета\n\n' +
+          'Координаты:\n' +
+          '- Старт: (1,1)\n' +
+          '- Конвейеры: (1,8), (5,8), (9,8)\n' +
+          '- Ядро вируса: (13,8)');
 }
 
 function goToLevelMap() {

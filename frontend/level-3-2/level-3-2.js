@@ -7,7 +7,6 @@ const levelConfig = {
     start: { x: 1, y: 1 },
     finish: { x: 10, y: 6 },
     obstacles: [
-        // Змейка с препятствиями
         { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 },
         { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 },
         { x: 6, y: 4 }, { x: 6, y: 5 }, { x: 6, y: 6 },
@@ -24,8 +23,8 @@ const levelConfig = {
         { x: 10, y: 4 }, { x: 10, y: 5 }, { x: 10, y: 6 }
     ],
     trafficLight: {
-        state: 'красный', // 'зеленый' или 'красный'
-        changeInterval: 3000, // Интервал смены светофора
+        state: 'красный',
+        changeInterval: 3000,
         lastChange: 0
     }
 };
@@ -108,7 +107,6 @@ function updateTrafficLightDisplay() {
         redLight.classList.remove('red', 'light-changing');
     }
     
-    // Убираем анимацию после завершения
     setTimeout(() => {
         redLight.classList.remove('light-changing');
         greenLight.classList.remove('light-changing');
@@ -119,9 +117,8 @@ function updateTrafficLightDisplay() {
 function setupCodeEditor() {
     const codeEditor = document.getElementById('codeEditor');
     
-    // Базовая подсветка синтаксиса при вводе
     codeEditor.addEventListener('input', function() {
-        // В реальном проекте нужно использовать более сложную систему подсветки
+        // Можно добавить подсветку синтаксиса
     });
 }
 
@@ -140,7 +137,6 @@ async function runPythonCode() {
         return;
     }
 
-    // Проверяем наличие функции движение
     if (!code.includes('движение')) {
         addConsoleMessage('❌ Ошибка: функция движение() не найдена!', 'error');
         addConsoleMessage('💡 Используйте: def движение():', 'error');
@@ -152,43 +148,54 @@ async function runPythonCode() {
     addConsoleMessage('⚡ Запуск выполнения кода...', 'info');
 
     try {
-        // Имитация выполнения Python кода
-        await executePythonCode(code);
+        // Парсим и выполняем код ОДИН РАЗ
+        await parseAndExecute(code);
     } catch (error) {
         addConsoleMessage(`❌ Ошибка выполнения: ${error.message}`, 'error');
         isExecuting = false;
     }
 }
 
-// Выполнение имитированного Python кода
-async function executePythonCode(code) {
+// Парсинг и выполнение кода ОДИН РАЗ
+async function parseAndExecute(code) {
     const lines = code.split('\n');
     let inFunction = false;
+    let functionIndent = 0;
     let functionBody = [];
     
-    // Парсим код для извлечения тела функции
+    // Парсим тело функции движение
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
+        const line = lines[i];
+        const trimmed = line.trim();
         
-        if (line.startsWith('def движение():')) {
+        // Находим начало функции
+        if (trimmed.startsWith('def движение():')) {
             inFunction = true;
             continue;
         }
         
         if (inFunction) {
-            if (line === '' || line.startsWith('#')) {
-                continue; // Пропускаем пустые строки и комментарии
+            // Определяем отступ
+            const indent = line.search(/\S/);
+            
+            // Если это первая строка тела функции
+            if (functionBody.length === 0 && trimmed !== '' && indent > 0) {
+                functionIndent = indent;
             }
             
-            // Проверяем отступы (должны быть 4 пробела)
-            if (line.startsWith('    ') || line === '') {
-                const command = line.trim();
-                if (command) {
-                    functionBody.push(command);
+            // Если строка в теле функции
+            if (trimmed !== '' && !trimmed.startsWith('#')) {
+                if (indent >= functionIndent) {
+                    functionBody.push({
+                        text: line,
+                        indent: indent,
+                        content: trimmed,
+                        lineNumber: i + 1
+                    });
+                } else {
+                    // Меньший отступ - вышли из функции
+                    break;
                 }
-            } else if (line) {
-                // Если есть код без отступа, значит вышли из функции
-                break;
             }
         }
     }
@@ -197,129 +204,251 @@ async function executePythonCode(code) {
         throw new Error('Тело функции пусто! Добавьте команды с отступами.');
     }
     
-    addConsoleMessage(`📝 Найдено ${functionBody.length} команд в функции`, 'info');
+    addConsoleMessage(`📝 Найдено ${functionBody.length} команд в функции`, 'success');
     
-    // Выполняем команды из тела функции
-    let executionComplete = false;
-    let iterations = 0;
-    const maxIterations = 50; // Защита от бесконечных циклов
+    // Выполняем тело функции последовательно
+    await executeFunctionBody(functionBody);
+}
+
+// Выполнение тела функции
+async function executeFunctionBody(functionBody) {
+    let i = 0;
+    const maxSteps = 1000;
+    let stepCount = 0;
     
-    while (!executionComplete && iterations < maxIterations && isExecuting) {
-        iterations++;
+    while (i < functionBody.length && isExecuting && stepCount < maxSteps) {
+        stepCount++;
+        const instruction = functionBody[i];
+        currentLine = instruction.lineNumber;
         
-        for (let i = 0; i < functionBody.length; i++) {
-            if (!isExecuting) break;
-            
-            const command = functionBody[i];
-            currentLine = i + 1;
-            
-            addConsoleMessage(`📄 Строка ${currentLine}: ${command}`, 'info');
-            
-            try {
-                await executeCommand(command);
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Проверка достижения финиша
-                if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
-                    addConsoleMessage('🎉 Дрон достиг цели!', 'success');
-                    executionComplete = true;
-                    await completeLevel();
-                    break;
-                }
-            } catch (error) {
-                addConsoleMessage(`❌ Ошибка в строке ${currentLine}: ${error.message}`, 'error');
-                executionComplete = true;
-                break;
-            }
+        try {
+            await processInstruction(instruction, functionBody, i);
+        } catch (error) {
+            addConsoleMessage(`❌ Ошибка в строке ${currentLine}: ${error.message}`, 'error');
+            break;
         }
         
-        // Если дошли до конца функции, но не достигли финиша, продолжаем выполнение
-        if (!executionComplete && iterations >= maxIterations) {
-            addConsoleMessage('⚠️ Достигнут лимит итераций. Проверьте логику программы.', 'warning');
+        // Находим следующую инструкцию
+        i = findNextInstruction(i, functionBody);
+        
+        // Проверка достижения финиша
+        if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
+            await completeLevel();
+            return;
         }
+        
+        // Небольшая пауза между командами
+        await new Promise(resolve => setTimeout(resolve, 300));
     }
     
-    if (isExecuting && drone.x !== levelConfig.finish.x && drone.y !== levelConfig.finish.y) {
-        addConsoleMessage('🛑 Выполнение завершено, но дрон не достиг цели', 'error');
+    if (stepCount >= maxSteps) {
+        addConsoleMessage('⚠️ Достигнут лимит шагов выполнения', 'warning');
+    }
+    
+    if (isExecuting && (drone.x !== levelConfig.finish.x || drone.y !== levelConfig.finish.y)) {
+        addConsoleMessage('🛑 Программа завершена, но дрон не достиг цели', 'error');
         addConsoleMessage(`📍 Текущая позиция: (${drone.x}, ${drone.y})`, 'error');
     }
     
     isExecuting = false;
 }
 
-// Выполнение отдельной команды
-async function executeCommand(command) {
-    // Убираем комментарии
-    const cleanCommand = command.split('#')[0].trim();
+// Найти следующую инструкцию
+function findNextInstruction(currentIndex, functionBody) {
+    // По умолчанию следующая строка
+    return currentIndex + 1;
+}
+
+// Обработка инструкции
+async function processInstruction(instruction, functionBody, currentIndex) {
+    const content = instruction.content;
     
-    if (!cleanCommand) return;
+    addConsoleMessage(`📄 Строка ${currentLine}: ${content}`, 'info');
     
-    // Обработка условных операторов
-    if (cleanCommand.startsWith('if ')) {
-        return await executeCondition(cleanCommand);
+    if (content.startsWith('if ')) {
+        const conditionResult = evaluateCondition(content);
+        addConsoleMessage(`🔍 Условие: ${conditionResult ? 'ИСТИНА' : 'ЛОЖЬ'}`, conditionResult ? 'success' : 'warning');
+        
+        if (conditionResult) {
+            // Выполняем тело if
+            await executeBlock(currentIndex + 1, instruction.indent, functionBody);
+        } else {
+            // Пропускаем тело if и ищем else
+            let nextIndex = skipBlock(currentIndex + 1, instruction.indent, functionBody);
+            
+            // Проверяем, есть ли else
+            if (nextIndex < functionBody.length && functionBody[nextIndex].content === 'else:' && 
+                functionBody[nextIndex].indent === instruction.indent) {
+                // Выполняем тело else
+                await executeBlock(nextIndex + 1, instruction.indent, functionBody);
+            }
+            
+            // Возвращаем индекс после всего блока if/else
+            return findNextAfterBlock(currentIndex, instruction.indent, functionBody);
+        }
     }
-    // Обработка циклов for
-    else if (cleanCommand.startsWith('for ')) {
-        return await executeForLoop(cleanCommand);
+    else if (content === 'else:') {
+        // else обрабатывается в if, поэтому пропускаем
+        return currentIndex;
     }
-    // Обработка else
-    else if (cleanCommand === 'else:') {
-        return; // Обрабатывается в executeCondition
+    else if (content.startsWith('for ')) {
+        await executeForLoop(instruction, currentIndex, functionBody);
+        return findNextAfterBlock(currentIndex, instruction.indent, functionBody);
     }
-    // Базовые команды
-    else if (cleanCommand === 'двигаться_вперед()') {
-        await moveForward();
-    } else if (cleanCommand === 'повернуть_налево()') {
-        await turnLeft();
-    } else if (cleanCommand === 'повернуть_направо()') {
-        await turnRight();
-    } else if (cleanCommand === 'стой_на_месте()') {
-        await waitInPlace();
-    } else {
-        throw new Error(`Неизвестная команда: ${cleanCommand}`);
+    else if (content.startsWith('while ')) {
+        addConsoleMessage('⚠️ while циклы пока не поддерживаются', 'warning');
+        return findNextAfterBlock(currentIndex, instruction.indent, functionBody);
+    }
+    else {
+        // Обычная команда
+        await executeCommand(content);
     }
 }
 
-// Выполнение условного оператора
-async function executeCondition(conditionLine) {
-    // Простая проверка условий
-    if (conditionLine.includes("светофор == 'зеленый'")) {
+// Оценка условия
+function evaluateCondition(conditionLine) {
+    const condition = conditionLine.replace(/^if\s+|\s*:$/g, '');
+    
+    if (condition.includes("светофор == 'зеленый'")) {
         return levelConfig.trafficLight.state === 'зеленый';
-    } else if (conditionLine.includes("светофор == 'красный'")) {
+    } 
+    else if (condition.includes("светофор == 'красный'")) {
         return levelConfig.trafficLight.state === 'красный';
     }
-    
-    throw new Error(`Неизвестное условие: ${conditionLine}`);
-}
-
-// Выполнение цикла for
-async function executeForLoop(loopLine) {
-    // Простой парсинг range()
-    const rangeMatch = loopLine.match(/range\((\d+)\)/);
-    if (rangeMatch) {
-        const iterations = parseInt(rangeMatch[1]);
-        addConsoleMessage(`🔄 Запуск цикла for на ${iterations} итераций`, 'info');
-        
-        for (let i = 0; i < iterations; i++) {
-            if (!isExecuting) break;
-            addConsoleMessage(`⟳ Итерация ${i + 1}/${iterations}`, 'info');
-            // В реальной реализации здесь нужно выполнять тело цикла
-            await new Promise(resolve => setTimeout(resolve, 300));
+    else if (condition.includes("светофор == ")) {
+        const match = condition.match(/светофор ==\s*['"]([^'"]+)['"]/);
+        if (match) {
+            return match[1] === levelConfig.trafficLight.state;
         }
-        
-        addConsoleMessage('✅ Цикл for завершен', 'info');
-        return;
     }
     
-    throw new Error(`Неизвестный цикл: ${loopLine}`);
+    return false;
 }
 
-// Движение вперед
+// Пропустить блок кода
+function skipBlock(startIndex, baseIndent, functionBody) {
+    let i = startIndex;
+    while (i < functionBody.length && functionBody[i].indent > baseIndent) {
+        i++;
+    }
+    return i;
+}
+
+// Найти следующий индекс после блока
+function findNextAfterBlock(currentIndex, baseIndent, functionBody) {
+    let i = currentIndex + 1;
+    while (i < functionBody.length && functionBody[i].indent > baseIndent) {
+        i++;
+    }
+    return i;
+}
+
+// Выполнить блок кода
+async function executeBlock(startIndex, baseIndent, functionBody) {
+    let i = startIndex;
+    while (i < functionBody.length && functionBody[i].indent > baseIndent) {
+        await processInstruction(functionBody[i], functionBody, i);
+        i++;
+        
+        // Проверка достижения финиша
+        if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
+            return;
+        }
+    }
+}
+
+// Выполнить цикл for
+async function executeForLoop(loopInstruction, currentIndex, functionBody) {
+    const match = loopInstruction.content.match(/for\s+\w+\s+in\s+range\((\d+)\):/);
+    if (!match) {
+        throw new Error('Некорректный синтаксис цикла for');
+    }
+    
+    const iterations = parseInt(match[1]);
+    if (isNaN(iterations) || iterations <= 0) {
+        throw new Error(`Некорректное количество итераций: ${match[1]}`);
+    }
+    
+    addConsoleMessage(`🔄 Запуск цикла for на ${iterations} итераций`, 'info');
+    
+    // Собираем тело цикла
+    const loopBody = [];
+    let nextIndex = currentIndex + 1;
+    while (nextIndex < functionBody.length && functionBody[nextIndex].indent > loopInstruction.indent) {
+        loopBody.push(functionBody[nextIndex]);
+        nextIndex++;
+    }
+    
+    if (loopBody.length === 0) {
+        throw new Error('Тело цикла for пусто');
+    }
+    
+    // Выполняем цикл
+    for (let i = 0; i < iterations && isExecuting; i++) {
+        addConsoleMessage(`⟳ Итерация ${i + 1}/${iterations}`, 'info');
+        
+        for (const bodyLine of loopBody) {
+            if (!isExecuting) break;
+            
+            // Рекурсивно обрабатываем команды в теле цикла
+            if (bodyLine.content.startsWith('if ') || bodyLine.content.startsWith('for ')) {
+                await processInstruction(bodyLine, functionBody, functionBody.indexOf(bodyLine));
+            } else {
+                await executeCommand(bodyLine.content);
+            }
+            
+            // Проверка достижения финиша
+            if (drone.x === levelConfig.finish.x && drone.y === levelConfig.finish.y) {
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+    }
+    
+    addConsoleMessage('✅ Цикл for завершен', 'success');
+}
+
+// Выполнить одну команду
+async function executeCommand(command) {
+    if (command.startsWith('#')) return;
+    
+    if (command === 'двигаться_вперед()') {
+        await moveForward();
+    } else if (command === 'повернуть_налево()') {
+        await turnLeft();
+    } else if (command === 'повернуть_направо()') {
+        await turnRight();
+    } else if (command === 'стой_на_месте()') {
+        await waitInPlace();
+    } else if (command.includes('(') && command.includes(')')) {
+        const funcName = command.split('(')[0];
+        if (funcName && funcName !== 'range') {
+            throw new Error(`Неизвестная команда: ${funcName}`);
+        }
+    }
+}
+
+// Движение вперед с проверкой светофора
 async function moveForward() {
+    // Проверяем светофор
     if (levelConfig.trafficLight.state === 'красный') {
         addConsoleMessage('🚫 Движение запрещено: красный свет!', 'warning');
-        await waitInPlace();
-        return;
+        
+        // Ждем зеленый свет
+        addConsoleMessage('⏳ Ожидание зеленого света...', 'info');
+        
+        // Запоминаем текущее состояние выполнения
+        const wasExecuting = isExecuting;
+        
+        // Ждем пока светофор станет зеленым
+        while (levelConfig.trafficLight.state === 'красный' && isExecuting) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        if (!isExecuting) return;
+        
+        addConsoleMessage('✅ Светофор стал зеленым! Продолжаем движение', 'success');
     }
 
     let newX = drone.x;
@@ -433,7 +562,6 @@ function resetDrone() {
     drone.isMoving = false;
     updateDronePosition();
     
-    // Сбрасываем светофор
     levelConfig.trafficLight.state = 'красный';
     updateTrafficLightDisplay();
 }
@@ -450,15 +578,13 @@ function addConsoleMessage(message, type = '') {
 }
 
 // Завершение уровня
-function completeLevel() {
+async function completeLevel() {
     isExecuting = false;
     
-    // Останавливаем светофор
     if (trafficLightInterval) {
         clearInterval(trafficLightInterval);
     }
     
-    // Сохраняем прогресс в localStorage
     localStorage.setItem('cyberSystemsProgress', JSON.stringify({
         currentLevel: '3.2',
         lastCompleted: '3.2'
@@ -480,17 +606,19 @@ function goBack() {
 
 function showHelp() {
     alert('Помощь по уровню 3.2:\n\n' +
-          '1. Напишите функцию движение() с условиями и циклами\n' +
-          '2. Проверяйте состояние светофора: светофор == "зеленый/красный"\n' +
-          '3. Используйте циклы for для повторяющихся действий\n' +
-          '4. Двигайтесь только на зеленый свет\n' +
-          '5. Используйте стой_на_месте() для ожидания\n\n' +
+          '1. Программа выполняется ОДИН РАЗ от начала до конца\n' +
+          '2. Дрон автоматически ждет зеленый свет перед движением\n' +
+          '3. Используйте if/else для проверки условий\n' +
+          '4. Используйте for для повторяющихся действий\n\n' +
           'Пример решения:\n' +
           'def движение():\n' +
           '    if светофор == "зеленый":\n' +
           '        for i in range(2):\n' +
           '            двигаться_вперед()\n' +
           '        повернуть_направо()\n' +
+          '        for i in range(5):\n' +
+          '            двигаться_вперед()\n' +
+          '        # ... продолжайте путь\n' +
           '    else:\n' +
           '        стой_на_месте()');
 }

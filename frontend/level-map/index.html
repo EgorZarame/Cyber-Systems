@@ -150,6 +150,100 @@
             margin-bottom: 10px;
             color: #ffd700;
         }
+
+        /* Модальное окно для справки */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: #1a1a2e;
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #00ff88;
+            padding-bottom: 10px;
+        }
+        
+        .modal-title {
+            color: #00ff88;
+            font-size: 24px;
+        }
+        
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+        
+        .modal-close:hover {
+            color: #f44336;
+        }
+        
+        .help-section {
+            margin-bottom: 20px;
+        }
+        
+        .help-section h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .help-section p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .help-section ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .help-section li {
+            margin-bottom: 5px;
+        }
+        
+        .keyboard-shortcuts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .shortcut-item {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #00ff88;
+        }
+        
+        .shortcut-key {
+            color: #ffd700;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -159,8 +253,7 @@
         <nav class="main-nav">
             <button class="nav-btn" onclick="location.href='../home/index.html'">ГЛАВНАЯ</button>
             <button class="nav-btn active">КАРТА</button>
-            <button class="nav-btn">НАСТРОЙКИ</button>
-            <button class="nav-btn">СПРАВКА</button>
+            <button class="nav-btn" onclick="showHelp()">СПРАВКА</button>
         </nav>
     </header>
 
@@ -218,177 +311,238 @@
         </section>
     </div>
 
-    <script src="../api.js"></script>
+    <!-- Модальное окно справки -->
+    <div id="helpModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📘 СПРАВКА ПО ИГРЕ</h2>
+                <button class="modal-close" onclick="closeHelp()">×</button>
+            </div>
+            
+            <div class="help-section">
+                <h3>🎮 Цель игры</h3>
+                <p>Вы - программист-стажер в компании "КиберСистемс". Ваша задача - пройти путь от стажера до senior-разработчика, решая задачи по программированию и восстанавливая систему от вирусов.</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>📊 Уровни карьеры</h3>
+                <ul>
+                    <li><strong>СТАЖЕР</strong> - основы Python, простые алгоритмы</li>
+                    <li><strong>JUNIOR</strong> - условия, циклы, функции</li>
+                    <li><strong>DEVELOPER</strong> - продвинутые алгоритмы, работа с данными</li>
+                    <li><strong>SENIOR</strong> - сложные системы, оптимизация, финальный босс</li>
+                </ul>
+            </div>
+            
+            <div class="help-section">
+                <h3>💻 Основные команды</h3>
+                <div class="keyboard-shortcuts">
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">двигаться_вперед()</span> - движение дрона вперед
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">повернуть_налево()</span> - поворот налево
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">повернуть_направо()</span> - поворот направо
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">стой_на_месте()</span> - ожидание на месте
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">переложить_предметы()</span> - работа с предметами
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">активировать_ядро()</span> - активация ядра вируса
+                    </div>
+                </div>
+            </div>
+            
+            <div class="help-section">
+                <h3>🎯 Как играть</h3>
+                <p>1. Выберите уровень на карте офиса</p>
+                <p>2. Решайте задачи, используя Python-подобный синтаксис</p>
+                <p>3. Прогресс автоматически сохраняется</p>
+                <p>4. Используйте "Продолжить" на главной чтобы вернуться к последнему уровню</p>
+                <p>5. Следите за светофором и избегайте препятствий</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>📋 Система уровней</h3>
+                <ul>
+                    <li><strong>Отдел дронов</strong> - обучение основам Python</li>
+                    <li><strong>Охранные системы</strong> - условия и циклы</li>
+                    <li><strong>Центральное ядро</strong> - сложные алгоритмы</li>
+                </ul>
+            </div>
+            
+            <div class="help-section">
+                <h3>🛠️ Советы</h3>
+                <ul>
+                    <li>Всегда проверяйте цвет светофора перед движением</li>
+                    <li>Используйте циклы для повторяющихся действий</li>
+                    <li>Применяйте условия для принятия решений</li>
+                    <li>Тщательно планируйте маршрут на карте</li>
+                    <li>Не забывайте перемещать предметы на конвейеры</li>
+                </ul>
+            </div>
+            
+            <div class="help-section">
+                <h3>📞 Поддержка</h3>
+                <p>Если возникли проблемы или есть вопросы:</p>
+                <ul>
+                    <li>Проверьте правильность синтаксиса кода</li>
+                    <li>Убедитесь, что используете правильные команды</li>
+                    <li>Следуйте подсказкам в консоли выполнения</li>
+                    <li>Вернитесь на более простые уровни для повторения</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allLevels = [];
         let currentProfile = null;
 
         // Логика карты уровней
         function startLevel(levelId) {
-    console.log('🚀 Запуск уровня:', levelId);
-    
-    // Определяем путь к уровню на основе его ID
-    let levelPath;
-    switch(levelId) {
-        case '1.1':
-            levelPath = '../level-1-1/index.html';
-            break;
-        case '1.2':
-            levelPath = '../level-1-2/index.html';
-            break;
-        case '1.boss':
-            levelPath = '../level-1-3/index.html';
-            break;
-        case '2.1':
-            levelPath = '../level-2-1/index.html';
-            break;
-        case '2.2':
-            levelPath = '../level-2-2/index.html';
-            break;
-        case '2.boss':
-            levelPath = '../level-2-3/index.html';
-            break;
-        case '3.1':
-            levelPath = '../level-3-1/index.html';
-            break;
-        case '3.2':
-            levelPath = '../level-3-2/index.html';
-            break;
-        case '3.boss':
-            levelPath = '../level-3-3/index.html';
-            break;
-        default:
-            levelPath = '../level-1-1/index.html'; // fallback
-    }
-    
-    // Сохраняем выбранный уровень в localStorage
-    localStorage.setItem('currentLevel', levelId);
-    
-    // Переход к уровню
-    window.location.href = levelPath + '?level=' + levelId;
-}
+            console.log('🚀 Запуск уровня:', levelId);
+            
+            // Определяем путь к уровню на основе его ID
+            let levelPath;
+            switch(levelId) {
+                case '1.1':
+                    levelPath = '../level-1-1/index.html';
+                    break;
+                case '1.2':
+                    levelPath = '../level-1-2/index.html';
+                    break;
+                case '1.boss':
+                    levelPath = '../level-1-3/index.html';
+                    break;
+                case '2.1':
+                    levelPath = '../level-2-1/index.html';
+                    break;
+                case '2.2':
+                    levelPath = '../level-2-2/index.html';
+                    break;
+                case '2.boss':
+                    levelPath = '../level-2-3/index.html';
+                    break;
+                case '3.1':
+                    levelPath = '../level-3-1/index.html';
+                    break;
+                case '3.2':
+                    levelPath = '../level-3-2/index.html';
+                    break;
+                case '3.boss':
+                    levelPath = '../level-3-3/index.html';
+                    break;
+                default:
+                    levelPath = '../level-1-1/index.html'; // fallback
+            }
+            
+            // Сохраняем выбранный уровень в localStorage
+            localStorage.setItem('currentLevel', levelId);
+            
+            // Переход к уровню
+            window.location.href = levelPath + '?level=' + levelId;
+        }
 
-        // Загрузка уровней и профиля с бэкенда
-        async function loadGameData() {
-            console.log('🗺️ Загрузка данных игры...');
-            
-            // Загружаем уровни и профиль параллельно
-            [allLevels, currentProfile] = await Promise.all([
-                fetchLevels(),
-                fetchProfile()
-            ]);
-            
-            console.log('Загружено уровней:', allLevels.length);
-            console.log('Текущий профиль:', currentProfile);
-            
-            // Рендерим уровни динамически
-            renderLevels();
-            
-            // Разблокировка на основе прогресса
-            if (currentProfile) {
-                unlockLevels(currentProfile.currentLevelId);
-            } else {
-                unlockLevels('1.1'); // По умолчанию
+        // Показать справку
+        function showHelp() {
+            const modal = document.getElementById('helpModal');
+            if (modal) {
+                modal.style.display = 'flex';
             }
         }
 
-        // Рендеринг уровней из API
-        function renderLevels() {
-            // Группируем уровни по отделам
-            const departments = {
-                'DRONES': { element: document.getElementById('drones-department'), levels: [] },
-                'SECURITY': { element: document.getElementById('security-department'), levels: [] },
-                'CORE': { element: document.getElementById('core-department'), levels: [] }
-            };
+        // Закрыть справку
+        function closeHelp() {
+            const modal = document.getElementById('helpModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Закрыть по клику на оверлей
+        document.addEventListener('click', function(event) {
+            const helpModal = document.getElementById('helpModal');
+            if (helpModal && helpModal.style.display === 'flex' && event.target === helpModal) {
+                closeHelp();
+            }
+        });
+
+        // Закрыть по ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeHelp();
+            }
+        });
+
+        // Простая функция загрузки профиля из localStorage
+        function getProfile() {
+            try {
+                const profile = localStorage.getItem('cyberSystemsProfile');
+                return profile ? JSON.parse(profile) : null;
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
+                return null;
+            }
+        }
+
+        // Обновление отображения уровней на основе профиля
+        function updateLevelsDisplay() {
+            const profile = getProfile();
+            const currentLevelId = profile ? profile.currentLevelId : '1.1';
             
-            allLevels.forEach(level => {
-                const dept = departments[level.type];
-                if (dept) {
-                    dept.levels.push(level);
+            const levels = [
+                '1.1', '1.2', '1.boss',
+                '2.1', '2.2', '2.boss', 
+                '3.1', '3.2', '3.boss'
+            ];
+            
+            // Преобразуем currentLevelId в индекс для сравнения
+            const currentIndex = levels.indexOf(currentLevelId);
+            
+            levels.forEach(levelId => {
+                const levelElement = document.querySelector(`[data-level="${levelId}"]`);
+                if (levelElement) {
+                    const levelIndex = levels.indexOf(levelId);
+                    
+                    if (levelIndex <= currentIndex) {
+                        levelElement.classList.remove('locked');
+                        levelElement.classList.add('unlocked');
+                    } else {
+                        levelElement.classList.remove('unlocked');
+                        levelElement.classList.add('locked');
+                    }
                 }
             });
             
-            // Очищаем и заполняем каждый отдел
-            Object.entries(departments).forEach(([type, dept]) => {
-                if (!dept.element) return;
-                
-                const levelsContainer = dept.element.querySelector('.levels');
-                if (!levelsContainer) return;
-                
-                levelsContainer.innerHTML = '';
-                
-                dept.levels.forEach(level => {
-                    // ПРОПУСКАЕМ УРОВЕНЬ 1.3, 2.3, 3.3
-                    if (level.id === '1.3' || level.id === '2.3' || level.id === '3.3') {
-                        return; // пропускаем этот уровень
-                    }
-                    
-                    const levelDiv = document.createElement('div');
-                    levelDiv.className = `level ${level.difficulty === 'BOSS' ? 'boss' : ''}`;
-                    levelDiv.dataset.level = level.id;
-                    levelDiv.onclick = () => startLevel(level.id);
-                    
-                    const label = level.difficulty === 'BOSS' ? 'БОСС' : level.id;
-                    levelDiv.innerHTML = `<span>${label}</span>`;
-                    
-                    levelsContainer.appendChild(levelDiv);
-                });
-            });
+            // Разблокировка отделов
+            const securityDept = document.getElementById('security-department');
+            const coreDept = document.getElementById('core-department');
+            
+            // Разблокируем охранные системы после 1.boss
+            if (currentIndex >= 2) { // После 1.boss
+                securityDept?.classList.remove('locked');
+            } else {
+                securityDept?.classList.add('locked');
+            }
+            
+            // Разблокируем центральное ядро после 2.boss
+            if (currentIndex >= 5) { // После 2.boss
+                coreDept?.classList.remove('locked');
+            } else {
+                coreDept?.classList.add('locked');
+            }
         }
-
-        function unlockLevels(currentLevelId) {
-    if (!currentLevelId) {
-        console.warn('Текущий уровень не указан');
-        return;
-    }
-    
-    const currentLevel = allLevels.find(l => l.id === currentLevelId);
-    if (!currentLevel) {
-        console.warn('Уровень не найден:', currentLevelId);
-        // Разблокируем только первый уровень
-        const firstLevel = allLevels.find(l => l.id === '1.1');
-        if (firstLevel) {
-            unlockLevels('1.1');
-        }
-        return;
-    }
-    
-    const currentOrderIndex = currentLevel.orderIndex;
-    console.log('Разблокировка уровней до orderIndex:', currentOrderIndex);
-    
-    const levelElements = document.querySelectorAll('.level');
-    levelElements.forEach(levelEl => {
-        const levelId = levelEl.dataset.level;
-        const level = allLevels.find(l => l.id === levelId);
-        
-        if (level && level.orderIndex <= currentOrderIndex) {
-            levelEl.classList.remove('locked');
-            levelEl.classList.add('unlocked');
-        } else {
-            levelEl.classList.remove('unlocked');
-            levelEl.classList.add('locked');
-        }
-    });
-    
-    // Разблокировка отделов
-    const securityDept = document.getElementById('security-department');
-    const coreDept = document.getElementById('core-department');
-    
-    // После 1.2 разблокируем охранные системы
-    if (currentOrderIndex >= 2) { // После уровня 1.2
-        securityDept?.classList.remove('locked');
-    }
-    // После 2.2 разблокируем центральное ядро
-    if (currentOrderIndex >= 6) { // После уровня 2.2
-        coreDept?.classList.remove('locked');
-    }
-}
 
         // Установка фона офиса
         function setupBackground() {
             console.log('🖼️ Начало установки фона...');
             
-            // Пробуем разные пути к фону
             const possiblePaths = [
                 '../assets/images/backgrounds/office_bg.png',
                 'assets/images/backgrounds/office_bg.png',
@@ -398,7 +552,6 @@
             
             const body = document.body;
             
-            // Функция для попытки загрузки фона
             function tryBackground(pathIndex) {
                 if (pathIndex >= possiblePaths.length) {
                     console.error('❌ Все пути к фону не работают. Использую CSS фон.');
@@ -420,12 +573,11 @@
                 };
                 bgImg.onerror = function() {
                     console.warn('❌ Не удалось загрузить:', bgPath);
-                    tryBackground(pathIndex + 1); // Пробуем следующий путь
+                    tryBackground(pathIndex + 1);
                 };
                 bgImg.src = bgPath;
             }
             
-            // Функция для CSS фона (если картинки не работают)
             function setCSSBackground() {
                 body.style.background = `
                     radial-gradient(circle at 20% 30%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
@@ -436,7 +588,6 @@
                 console.log('✅ Установлен CSS фон');
             }
             
-            // Начинаем попытки загрузки
             tryBackground(0);
         }
         
@@ -444,7 +595,7 @@
             console.log('🗺️ Карта уровней загружена');
             console.log('🔧 Вызываю setupBackground...');
             setupBackground();
-            loadGameData();
+            updateLevelsDisplay();
         });
     </script>
 </body>

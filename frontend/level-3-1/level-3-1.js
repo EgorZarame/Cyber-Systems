@@ -31,6 +31,9 @@ function initializeLevel() {
     setupCodeEditor();
     addConsoleMessage('🐍 Python интерпретатор инициализирован');
     addConsoleMessage('💡 Напишите функцию пройти_лабиринт() для движения дрона');
+    
+    const consoleOutput = document.getElementById('consoleOutput');
+    consoleOutput.scrollTop = consoleOutput.scrollHeight;
 }
 
 // Инициализация игрового поля
@@ -63,21 +66,15 @@ function initializeGameGrid() {
 // Настройка редактора кода
 function setupCodeEditor() {
     const codeEditor = document.getElementById('codeEditor');
-    
-    // Базовая подсветка синтаксиса при вводе
-    codeEditor.addEventListener('input', function() {
-        // Простая подсветка ключевых слов
-        let code = this.value;
-        
-        // Подсветка ключевых слов Python
-        code = code.replace(/\b(def|if|else|for|while|return)\b/g, '<span class="syntax-keyword">$1</span>');
-        // Подсветка функций
-        code = code.replace(/\b(пройти_лабиринт|двигаться_вперед|повернуть_налево|повернуть_направо)\b/g, '<span class="syntax-function">$1</span>');
-        // Подсветка комментариев
-        code = code.replace(/(#.*$)/gm, '<span class="syntax-comment">$1</span>');
-        
-        // В реальном проекте нужно использовать более сложную систему подсветки
-    });
+    codeEditor.value = `def пройти_лабиринт():
+    # Ваш код здесь
+    двигаться_вперед()
+    двигаться_вперед()
+    повернуть_направо()
+    двигаться_вперед()
+    двигаться_вперед()
+    повернуть_налево()
+    двигаться_вперед()`;
 }
 
 // Выполнение Python кода
@@ -107,7 +104,6 @@ async function runPythonCode() {
     addConsoleMessage('⚡ Запуск выполнения кода...');
 
     try {
-        // Имитация выполнения Python кода
         await executePythonCode(code);
     } catch (error) {
         addConsoleMessage(`❌ Ошибка выполнения: ${error.message}`, 'error');
@@ -123,36 +119,47 @@ async function executePythonCode(code) {
     
     // Парсим код для извлечения тела функции
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
+        const line = lines[i];
+        const trimmedLine = line.trim();
         
-        if (line.startsWith('def пройти_лабиринт():')) {
+        if (trimmedLine.startsWith('def пройти_лабиринт():')) {
             inFunction = true;
             continue;
         }
         
         if (inFunction) {
-            if (line === '' || line.startsWith('#')) {
-                continue; // Пропускаем пустые строки и комментарии
+            // Если находимся в функции и строка не пустая
+            if (trimmedLine === '' || trimmedLine.startsWith('#')) {
+                // Пустые строки и комментарии пропускаем, но остаемся в функции
+                continue;
             }
             
-            // Проверяем отступы (должны быть 4 пробела)
-            if (line.startsWith('    ') || line === '') {
-                const command = line.trim();
-                if (command) {
+            // Проверяем, что строка имеет отступ или содержит команду
+            if (line.length > 0 && (line[0] === ' ' || line[0] === '\t' || 
+                trimmedLine.includes('двигаться') || trimmedLine.includes('повернуть'))) {
+                const command = trimmedLine;
+                if (command && !command.startsWith('def ')) {
                     functionBody.push(command);
                 }
-            } else if (line) {
-                // Если есть код без отступа, значит вышли из функции
+            } else if (trimmedLine !== '' && !trimmedLine.startsWith('#')) {
+                // Если нашли непустую строку без отступа и это не комментарий, выходим из функции
                 break;
             }
         }
     }
     
     if (functionBody.length === 0) {
-        throw new Error('Тело функции пусто! Добавьте команды с отступами.');
+        // Проверяем простейший случай - функция в одну строку
+        const simpleMatch = code.match(/def пройти_лабиринт\(\):\s*(.+)/);
+        if (simpleMatch && simpleMatch[1]) {
+            functionBody.push(simpleMatch[1].trim());
+        } else {
+            throw new Error('Тело функции пусто! Добавьте команды с отступами.');
+        }
     }
     
     addConsoleMessage(`📝 Найдено ${functionBody.length} команд в функции`);
+    addConsoleMessage('🔍 Начинаю выполнение...');
     
     // Выполняем команды из тела функции
     for (let i = 0; i < functionBody.length; i++) {
@@ -182,6 +189,7 @@ async function executePythonCode(code) {
     if (isExecuting && drone.x !== levelConfig.finish.x && drone.y !== levelConfig.finish.y) {
         addConsoleMessage('🛑 Выполнение завершено, но дрон не достиг цели', 'error');
         addConsoleMessage(`📍 Текущая позиция: (${drone.x}, ${drone.y})`, 'error');
+        addConsoleMessage('💡 Проверьте свой маршрут и попробуйте снова');
     }
     
     isExecuting = false;
@@ -194,13 +202,15 @@ async function executeCommand(command) {
     
     if (!cleanCommand) return;
     
-    // Проверяем синтаксис команды
     if (cleanCommand === 'двигаться_вперед()') {
         await moveForward();
     } else if (cleanCommand === 'повернуть_налево()') {
         await turnLeft();
     } else if (cleanCommand === 'повернуть_направо()') {
         await turnRight();
+    } else if (cleanCommand.startsWith('#')) {
+        // Это комментарий, пропускаем
+        return;
     } else {
         throw new Error(`Неизвестная команда: ${cleanCommand}`);
     }
@@ -319,7 +329,6 @@ function addConsoleMessage(message, type = '') {
 function completeLevel() {
     isExecuting = false;
     
-    // Сохраняем прогресс в localStorage
     localStorage.setItem('cyberSystemsProgress', JSON.stringify({
         currentLevel: '3.1',
         lastCompleted: '3.1'
@@ -340,7 +349,7 @@ function showHelp() {
     alert('Помощь по уровню 3.1:\n\n' +
           '1. Напишите функцию пройти_лабиринт() на Python\n' +
           '2. Используйте команды движения внутри функции\n' +
-          '3. Не забудьте про отступы (4 пробела)\n' +
+          '3. Не забудьте про отступы (4 пробела или табуляция)\n' +
           '4. Проведите дрона от зеленой к оранжевой клетке\n\n' +
           'Пример решения:\n' +
           'def пройти_лабиринт():\n' +
@@ -350,7 +359,8 @@ function showHelp() {
           '    двигаться_вперед()\n' +
           '    двигаться_вперед()\n' +
           '    повернуть_налево()\n' +
-          '    двигаться_вперед()');
+          '    двигаться_вперед()\n\n' +
+          'Внимание: Все команды должны быть с отступами!');
 }
 
 function goToLevelMap() {

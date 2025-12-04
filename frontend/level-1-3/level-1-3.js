@@ -92,10 +92,16 @@ function initializeDragAndDrop() {
 
     codeArea.addEventListener('dragover', (e) => {
         e.preventDefault();
+        e.currentTarget.style.backgroundColor = 'rgba(255, 68, 68, 0.1)';
+    });
+
+    codeArea.addEventListener('dragleave', (e) => {
+        e.currentTarget.style.backgroundColor = '';
     });
 
     codeArea.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.currentTarget.style.backgroundColor = '';
         const action = e.dataTransfer.getData('text/plain');
         addBlockToProgram(action);
     });
@@ -217,6 +223,10 @@ async function moveForward() {
     const droneElement = document.querySelector('.drone');
     if (droneElement) {
         droneElement.classList.add('drone-moving');
+        droneElement.style.setProperty('--rotation', 
+            drone.direction === 'north' ? '0deg' :
+            drone.direction === 'east' ? '90deg' :
+            drone.direction === 'south' ? '180deg' : '270deg');
     }
 
     await new Promise(resolve => setTimeout(resolve, 400));

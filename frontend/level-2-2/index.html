@@ -29,6 +29,7 @@
             justify-content: space-between;
             align-items: center;
             height: 60px;
+            flex-shrink: 0;
         }
 
         .level-title {
@@ -58,6 +59,7 @@
             height: calc(100vh - 60px);
             padding: 15px;
             gap: 15px;
+            min-height: 0;
         }
 
         /* Левая часть - Игровое поле */
@@ -66,6 +68,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            min-height: 0;
         }
 
         .game-field {
@@ -76,13 +79,15 @@
             padding: 15px;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         .field-label {
             color: #FF9800;
             margin-bottom: 10px;
-            font-size: 1.1em;
+            font-size: 1em;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .pixel-grid {
@@ -95,6 +100,7 @@
             grid-template-rows: repeat(8, 1fr);
             gap: 2px;
             padding: 10px;
+            min-height: 0;
         }
 
         .grid-cell {
@@ -167,34 +173,42 @@
             border-radius: 5px;
             border: 1px solid #FF9800;
             font-size: 0.8em;
+            z-index: 2;
+            flex-shrink: 0;
         }
 
         /* Правая часть - Программирование */
         .right-panel {
-            width: 350px;
+            width: 500px; /* Увеличено */
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
+            min-height: 0;
         }
 
         .programming-section {
             background: #1a1a2e;
             border: 2px solid #FF9800;
             border-radius: 5px;
-            padding: 15px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
         .section-title {
             color: #FF9800;
-            margin-bottom: 10px;
-            font-size: 1em;
+            margin-bottom: 8px;
+            font-size: 0.9em;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .blocks-container {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
+            flex-shrink: 0;
         }
 
         .code-block {
@@ -206,7 +220,9 @@
             color: white;
             text-align: center;
             font-family: 'Courier New', monospace;
-            font-size: 0.9em;
+            font-size: 0.85em;
+            flex-shrink: 0;
+            word-break: break-word;
         }
 
         .code-block.movement {
@@ -248,9 +264,10 @@
             border: 1px dashed #FF9800;
             border-radius: 4px;
             padding: 10px;
-            min-height: 150px;
-            max-height: 250px;
+            min-height: 120px;
+            max-height: 180px;
             overflow-y: auto;
+            flex-shrink: 0;
         }
 
         .code-placeholder {
@@ -258,6 +275,7 @@
             font-style: italic;
             text-align: center;
             padding: 10px;
+            font-size: 0.9em;
         }
 
         .loop-body {
@@ -269,15 +287,16 @@
             gap: 5px;
         }
 
-        /* Консоль */
+        /* Консоль - ИСПРАВЛЕНО */
         .console-section {
             background: #1a1a2e;
             border: 2px solid #FF9800;
             border-radius: 5px;
-            padding: 15px;
+            padding: 12px;
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         .console-output {
@@ -290,33 +309,42 @@
             color: #FF9800;
             overflow-y: auto;
             margin-bottom: 10px;
-            font-size: 0.9em;
+            font-size: 0.82em;
+            min-height: 0;
+            word-break: break-word;
+            white-space: pre-wrap;
+            line-height: 1.4;
         }
 
         .console-line {
-            margin: 3px 0;
+            margin: 2px 0;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255, 152, 0, 0.1);
         }
 
         .console-line::before {
             content: '> ';
             color: #ff9800;
+            margin-right: 4px;
         }
 
         /* Кнопки управления */
         .control-buttons {
             display: flex;
-            gap: 8px;
+            gap: 6px;
+            flex-shrink: 0;
         }
 
         .control-button {
             flex: 1;
-            padding: 8px;
+            padding: 10px 5px;
             border: none;
             border-radius: 4px;
             font-family: 'Courier New', monospace;
             cursor: pointer;
             color: white;
-            font-size: 0.9em;
+            font-size: 0.85em;
+            min-height: 35px;
         }
 
         .control-button.run {
@@ -369,7 +397,7 @@
         <div class="left-panel">
             <div class="game-field">
                 <div class="field-label">ЛАБИРИНТ С ПОВТОРЯЮЩИМИСЯ ПРЕПЯТСТВИЯМИ</div>
-                <div class="loop-counter" id="loopCounter">
+                <div class="loop-counter" id="loopCounter" style="display: none;">
                     Цикл: <span id="currentLoop">0</span>/<span id="totalLoops">0</span>
                 </div>
                 <div class="pixel-grid" id="gameGrid">
