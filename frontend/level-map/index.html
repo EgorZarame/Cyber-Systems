@@ -513,6 +513,7 @@
             let completedIndex = -1;
             if (profile && profile.lastCompleted) {
                 completedIndex = levels.indexOf(profile.lastCompleted);
+                console.log('📊 Обновление карты уровней. lastCompleted:', profile.lastCompleted, 'completedIndex:', completedIndex);
             }
             
             levels.forEach(levelId => {
@@ -526,9 +527,11 @@
                     if (levelIndex <= maxOpenIndex) {
                         levelElement.classList.remove('locked');
                         levelElement.classList.add('unlocked');
+                        console.log(`✅ Уровень ${levelId} разблокирован (index: ${levelIndex}, maxOpen: ${maxOpenIndex})`);
                     } else {
                         levelElement.classList.remove('unlocked');
                         levelElement.classList.add('locked');
+                        console.log(`🔒 Уровень ${levelId} заблокирован (index: ${levelIndex}, maxOpen: ${maxOpenIndex})`);
                     }
                 }
             });
@@ -603,6 +606,20 @@
             
             tryBackground(0);
         }
+        
+        // Обновление карты при возврате на страницу
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                console.log('🔄 Страница стала видимой, обновляем карту уровней');
+                updateLevelsDisplay();
+            }
+        });
+        
+        // Обновление карты при фокусе на окне
+        window.addEventListener('focus', function() {
+            console.log('🔄 Окно получило фокус, обновляем карту уровней');
+            updateLevelsDisplay();
+        });
         
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🗺️ Карта уровней загружена');

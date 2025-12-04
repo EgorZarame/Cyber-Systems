@@ -210,8 +210,10 @@ function syncLocalProfileAfterLevel(levelId) {
                 seniorUnlocked: false
             };
         } else {
+            // ВСЕГДА обновляем lastCompleted на новый уровень
             profile.currentLevelId = levelId;
             profile.lastCompleted = levelId;
+            console.log(`🔄 Обновление lastCompleted: ${profile.lastCompleted} -> ${levelId}`);
         }
 
         // Обновляем карьерные ступени на основе уровня
@@ -230,10 +232,23 @@ function syncLocalProfileAfterLevel(levelId) {
             profile.seniorUnlocked = true;
         }
 
+        // ВАЖНО: Сохраняем ПЕРЕД проверкой, чтобы убедиться, что данные записались
         localStorage.setItem('cyberSystemsProfile', JSON.stringify(profile));
-        console.log('✅ syncLocalProfileAfterLevel:', profile);
+        
+        // Проверяем, что данные действительно сохранились
+        const verifyProfile = JSON.parse(localStorage.getItem('cyberSystemsProfile'));
+        if (verifyProfile.lastCompleted !== levelId) {
+            console.error('❌ ОШИБКА: lastCompleted не обновился! Ожидалось:', levelId, 'Получено:', verifyProfile.lastCompleted);
+            // Пытаемся еще раз
+            verifyProfile.lastCompleted = levelId;
+            verifyProfile.currentLevelId = levelId;
+            localStorage.setItem('cyberSystemsProfile', JSON.stringify(verifyProfile));
+        }
+        
+        console.log('✅ syncLocalProfileAfterLevel завершено. Профиль:', profile);
+        console.log('✅ Проверка сохранения. lastCompleted в localStorage:', verifyProfile.lastCompleted);
     } catch (error) {
-        console.error('Ошибка синхронизации локального профиля:', error);
+        console.error('❌ Ошибка синхронизации локального профиля:', error);
     }
 }
 
