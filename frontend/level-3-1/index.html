@@ -4,248 +4,100 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Уровень 3.1: Функция движения - КиберСистемс</title>
+    
+    <!-- Наследуем стили из родительских классов -->
+    <link rel="stylesheet" href="../levels-common.css">
+    <link rel="stylesheet" href="../levels-common2.css">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* Расширяем родительские стили для уровня 3.1 */
+        :root {
+            --level-color: #00ff88;
+            --level2-1-color: #00ff88;
+            --game-field-bg: #1a1a2e;
+            --code-area-bg: #0a0a1a;
+            --cell-bg: #1a2a4a;
+            --cell-border: #2a3a5a;
         }
 
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
-
+        /* Основные стили, наследуемые из levels-common.css */
         body {
-            font-family: 'Courier New', monospace;
-            background: #0a0a1a;
-            color: #00ff88;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Верхняя панель */
-        .top-panel {
-            background: #151530;
-            border-bottom: 2px solid #00ff88;
-            padding: 8px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 50px;
-            flex-shrink: 0;
-        }
-
-        .level-title {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #00ff88;
-        }
-
-        .nav-button {
-            background: transparent;
-            color: #00ff88;
-            border: 1px solid #00ff88;
-            padding: 5px 10px;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            font-size: 0.85em;
-        }
-
-        .nav-button:hover {
-            background: #00ff88;
-            color: #0a0a1a;
-        }
-
-        /* Основной контейнер */
-        .main-container {
-            display: flex;
-            flex: 1;
-            padding: 10px;
-            gap: 10px;
+            height: 100vh;
             overflow: hidden;
-            min-height: 0;
         }
 
-        /* Левая часть - Игровое поле */
-        .left-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-width: 0;
-            min-height: 0;
+        .main-container {
+            height: calc(100vh - 60px);
+            padding: 15px;
+            gap: 15px;
         }
 
-        .game-field {
-            flex: 1;
-            background: #1a1a2e;
-            border: 2px solid #00ff88;
-            border-radius: 5px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        .field-label {
-            color: #00ff88;
-            margin-bottom: 8px;
-            font-size: 1em;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .pixel-grid {
-            flex: 1;
-            background: #0a1429;
-            border: 2px solid #00ff88;
-            border-radius: 5px;
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            gap: 2px;
-            padding: 8px;
-            min-height: 0;
-        }
-
-        .grid-cell {
-            background: #1a2a4a;
-            border-radius: 3px;
-            position: relative;
-            border: 1px solid #2a3a5a;
-        }
-
-        .grid-cell.start {
-            background: #4CAF50;
-        }
-
-        .grid-cell.finish {
-            background: #FF9800;
-            animation: finishPulse 2s infinite;
-        }
-
-        .grid-cell.obstacle {
-            background: #f44336;
-            background-image: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 3px,
-                rgba(0, 0, 0, 0.1) 3px,
-                rgba(0, 0, 0, 0.1) 6px
-            );
-        }
-
-        .drone {
-            width: 70%;
-            height: 70%;
-            background: #8de8ff;
-            border-radius: 50%;
-            position: absolute;
-            top: 15%;
-            left: 15%;
-            box-shadow: 0 0 10px rgba(141, 232, 255, 0.7);
-            transition: transform 0.3s ease;
-        }
-
-        .drone::after {
-            content: '▲';
-            position: absolute;
-            top: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #1a1a2e;
-            font-size: 10px;
-        }
-
-        .drone.north { transform: rotate(0deg); }
-        .drone.east { transform: rotate(90deg); }
-        .drone.south { transform: rotate(180deg); }
-        .drone.west { transform: rotate(270deg); }
-
-        /* Правая часть */
         .right-panel {
             width: 450px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            min-width: 0;
-            min-height: 0;
         }
 
-        /* Редактор кода */
-        .code-editor-section {
-            background: #1a1a2e;
-            border: 2px solid #00ff88;
+        /* Python редактор кода */
+        .python-editor {
+            background: var(--game-field-bg);
+            border: 2px solid var(--level-color);
             border-radius: 5px;
-            padding: 10px;
-            flex: 4;
+            padding: 15px;
+            flex: 1;
             display: flex;
             flex-direction: column;
             min-height: 0;
-        }
-
-        .section-title {
-            color: #00ff88;
-            margin-bottom: 8px;
-            font-size: 0.9em;
-            text-align: center;
-            flex-shrink: 0;
+            overflow: hidden;
         }
 
         .code-header {
             background: #0f3460;
-            padding: 6px 8px;
+            padding: 8px;
             border-radius: 4px 4px 0 0;
-            border: 1px solid #00ff88;
+            border: 1px solid var(--level-color);
             border-bottom: none;
             font-family: 'Courier New', monospace;
-            font-size: 0.85em;
+            font-size: 0.9em;
             flex-shrink: 0;
         }
 
-        .code-area {
+        .code-editor {
             flex: 1;
-            background: #0a0a1a;
-            border: 1px solid #00ff88;
+            background: var(--code-area-bg);
+            border: 1px solid var(--level-color);
             border-radius: 0 0 4px 4px;
-            padding: 10px;
+            padding: 15px;
             font-family: 'Courier New', monospace;
-            font-size: 0.85em;
-            color: #00ff88;
+            font-size: 0.9em;
+            color: var(--level-color);
             resize: none;
             outline: none;
-            line-height: 1.3;
-            overflow: auto;
+            line-height: 1.4;
             min-height: 0;
+            overflow-y: auto;
             white-space: pre;
             tab-size: 4;
         }
 
-        .code-area::placeholder {
+        .code-editor::placeholder {
             color: #666;
             font-style: italic;
         }
 
         /* Подсказки */
-        .hints-section {
-            background: #1a1a2e;
-            border: 2px solid #00ff88;
+        .hints-panel {
+            background: var(--game-field-bg);
+            border: 2px solid var(--level-color);
             border-radius: 5px;
-            padding: 10px;
-            flex: 2;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            min-height: 200px;
+            padding: 15px;
+            flex-shrink: 0;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .hints-container {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            flex: 1;
-            overflow: auto;
         }
 
         .hint-item {
@@ -254,85 +106,72 @@
             border-radius: 4px;
             border-left: 3px solid #ff9800;
             font-size: 0.8em;
-            flex-shrink: 0;
         }
 
         .code-example {
-            background: #0a0a1a;
-            padding: 6px;
+            background: var(--code-area-bg);
+            padding: 5px;
             border-radius: 3px;
-            margin-top: 6px;
+            margin-top: 5px;
             font-family: 'Courier New', monospace;
-            color: #00ff88;
-            font-size: 0.85em;
+            color: var(--level-color);
+            font-size: 0.9em;
             white-space: pre-wrap;
-            line-height: 1.3;
+            line-height: 1.4;
         }
 
-        /* Консоль */
-        .console-section {
-            background: #1a1a2e;
-            border: 2px solid #00ff88;
+        /* Консоль Python */
+        .python-console {
+            background: var(--game-field-bg);
+            border: 2px solid var(--level-color);
             border-radius: 5px;
-            padding: 10px;
-            flex: 3;
+            padding: 15px;
+            flex: 1;
             display: flex;
             flex-direction: column;
             min-height: 0;
+            overflow: hidden;
         }
 
-        .console-output {
+        .console-output.python {
             flex: 1;
-            background: #0a0a1a;
-            border: 1px solid #00ff88;
+            background: var(--code-area-bg);
+            border: 1px solid var(--level-color);
             border-radius: 4px;
-            padding: 8px;
+            padding: 10px;
             font-family: 'Courier New', monospace;
-            color: #00ff88;
+            color: var(--level-color);
             overflow-y: auto;
-            overflow-x: hidden;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-size: 0.85em;
-            white-space: pre-wrap;
-            word-wrap: break-word;
             min-height: 0;
-        }
-
-        .console-line {
-            margin: 2px 0;
+            max-height: 200px;
             word-break: break-word;
-            line-height: 1.2;
         }
 
-        .console-line::before {
-            content: '> ';
-            color: #ff9800;
-        }
-
-        .log-error {
-            color: #f44336;
-        }
-
-        .log-success {
-            color: #4CAF50;
-        }
+        /* Синтаксические классы */
+        .syntax-keyword { color: #ff9800; }
+        .syntax-function { color: #8de8ff; }
+        .syntax-condition { color: #9C27B0; }
+        .syntax-loop { color: #2196F3; }
+        .syntax-comment { color: #666; font-style: italic; }
 
         /* Кнопки управления */
         .control-buttons {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
         .control-button {
             flex: 1;
-            padding: 6px;
+            padding: 8px;
             border: none;
             border-radius: 4px;
             font-family: 'Courier New', monospace;
             cursor: pointer;
             color: white;
-            font-size: 0.85em;
+            font-size: 0.9em;
         }
 
         .control-button.run {
@@ -344,11 +183,6 @@
         }
 
         /* Анимации */
-        @keyframes finishPulse {
-            0%, 100% { box-shadow: 0 0 10px #FF9800; }
-            50% { box-shadow: 0 0 20px #FF9800, 0 0 30px #FF9800; }
-        }
-
         @keyframes droneMove {
             0% { transform: scale(1) rotate(var(--rotation, 0deg)); }
             50% { transform: scale(1.05) rotate(var(--rotation, 0deg)); }
@@ -359,44 +193,10 @@
             animation: droneMove 0.3s ease-in-out;
         }
 
-        /* Стили для скроллбара */
-        .console-output::-webkit-scrollbar,
-        .code-area::-webkit-scrollbar,
-        .hints-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .console-output::-webkit-scrollbar-track,
-        .code-area::-webkit-scrollbar-track,
-        .hints-container::-webkit-scrollbar-track {
-            background: #0a0a1a;
-            border-radius: 3px;
-        }
-
-        .console-output::-webkit-scrollbar-thumb,
-        .code-area::-webkit-scrollbar-thumb,
-        .hints-container::-webkit-scrollbar-thumb {
-            background: #00ff88;
-            border-radius: 3px;
-        }
-
-        .console-output::-webkit-scrollbar-thumb:hover,
-        .code-area::-webkit-scrollbar-thumb:hover,
-        .hints-container::-webkit-scrollbar-thumb:hover {
-            background: #00cc66;
-        }
-
-        .syntax-keyword {
-            color: #ff9800;
-        }
-
-        .syntax-function {
-            color: #8de8ff;
-        }
-
-        .syntax-comment {
-            color: #666;
-            font-style: italic;
+        /* Адаптивность */
+        @media (max-height: 700px) {
+            .hints-panel { max-height: 150px; }
+            .console-output.python { max-height: 150px; }
         }
     </style>
 </head>
@@ -414,25 +214,26 @@
         <div class="left-panel">
             <div class="game-field">
                 <div class="field-label">ЛАБИРИНТ ДВИЖЕНИЯ</div>
-                <div class="pixel-grid" id="gameGrid">
+                
+                <div class="pixel-grid" id="gameGrid" style="grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(8, 1fr);">
                     <!-- Игровое поле генерируется JavaScript -->
                 </div>
             </div>
         </div>
 
-        <!-- Правая часть - Редактор кода и консоль -->
+        <!-- Правая часть - Python программирование -->
         <div class="right-panel">
-            <!-- Редактор кода -->
-            <div class="code-editor-section">
+            <!-- Редактор Python кода -->
+            <div class="python-editor">
                 <div class="section-title">РЕДАКТОР PYTHON КОДА</div>
                 <div class="code-header">
                     <span class="syntax-keyword">def</span> <span class="syntax-function">пройти_лабиринт</span>():
                 </div>
-                <textarea class="code-area" id="codeEditor" placeholder="# Напишите здесь код для движения дрона&#10;# Используйте команды:&#10;# - двигаться_вперед()&#10;# - повернуть_налево()&#10;# - повернуть_направо()&#10;&#10;# Пример:&#10;двигаться_вперед()&#10;повернуть_направо()&#10;двигаться_вперед()"></textarea>
+                <textarea class="code-editor" id="codeEditor" placeholder="# Напишите здесь код для движения дрона&#10;# Используйте команды:&#10;# - двигаться_вперед()&#10;# - повернуть_налево()&#10;# - повернуть_направо()&#10;&#10;# Пример:&#10;двигаться_вперед()&#10;повернуть_направо()&#10;двигаться_вперед()"></textarea>
             </div>
 
             <!-- Подсказки -->
-            <div class="hints-section">
+            <div class="hints-panel">
                 <div class="section-title">ПОДСКАЗКИ И ПРИМЕРЫ КОДА</div>
                 <div class="hints-container">
                     <div class="hint-item">
@@ -462,10 +263,10 @@
             </div>
 
             <!-- Консоль -->
-            <div class="console-section">
+            <div class="python-console">
                 <div class="section-title">КОНСОЛЬ ВЫПОЛНЕНИЯ</div>
-                <div class="console-output" id="consoleOutput">
-                    <div class="console-line">🐍 Python интерпретатор готов</div>
+                <div class="console-output python" id="consoleOutput">
+                    <div class="console-line log-info">🐍 Python интерпретатор готов</div>
                     <div class="console-line">💡 Напишите функцию пройти_лабиринт()</div>
                     <div class="console-line">📍 Проведите дрона от зеленой к оранжевой клетке</div>
                 </div>
@@ -478,10 +279,26 @@
         </div>
     </div>
 
-    <!-- Вся логика уровня находится в level-3-1.js -->
-    
-    <!-- API-клиент и логика уровня -->
+    <!-- API-клиент и ООП-логика уровня -->
     <script src="../api.js"></script>
-    <script src="level-3-1.js"></script>
+    <script src="../LevelBase.js"></script>
+    <script src="../LevelBase3.js"></script>
+    <script src="../level-3-1/level-3-1.js"></script>
+    
+    <script>
+    let level3_1;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        level3_1 = new Level3_1();
+        level3_1.initialize();
+        
+        // Глобальные функции для вызова из HTML
+        window.runPythonCode = () => level3_1.runPythonCode();
+        window.resetProgram = () => level3_1.resetProgram();
+        window.goBack = () => level3_1.goBack();
+        window.showHelp = () => level3_1.showHelp();
+        window.goToLevelMap = () => level3_1.goToLevelMap();
+    });
+    </script>
 </body>
 </html>

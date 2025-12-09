@@ -1,0 +1,274 @@
+/* frontend/css/levels2-common.css */
+:root {
+    --level2-1-color: #2196F3;
+    --level2-2-color: #FF9800;
+    --level2-3-color: #9C27B0;
+}
+
+/* Общие стили для уровней сортировки (2.1 и 2.3) */
+.sorting-system {
+    flex: 1;
+    background: var(--game-field-bg, #1a1a2e);
+    border: 2px solid var(--level-color, #00ff88);
+    border-radius: 5px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 0;
+}
+
+.conveyor-system {
+    flex: 1;
+    background: #0a1429;
+    border: 2px solid var(--level-color, #00ff88);
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.conveyor-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: var(--conveyor-line-bg, #1a2a4a);
+    border-radius: 4px;
+    border: 1px solid var(--conveyor-line-border, #2a3a5a);
+    position: relative;
+    flex-shrink: 0;
+    min-height: 45px;
+}
+
+.conveyor-label {
+    width: 110px;
+    color: var(--level-color, #00ff88);
+    font-weight: bold;
+    font-size: 0.9em;
+    flex-shrink: 0;
+}
+
+.conveyor-track {
+    flex: 1;
+    height: 35px;
+    background: var(--conveyor-track-bg, #2d5b88);
+    border-radius: 4px;
+    border: 1px dashed var(--level-color, #00ff88);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 8px;
+    overflow-x: auto;
+    position: relative;
+    min-width: 0;
+}
+
+.package {
+    width: 25px;
+    height: 25px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8em;
+    color: white;
+    animation: packageAppear 0.5s ease-in;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.package.red { background: #f44336; }
+.package.blue { background: #2196F3; }
+.package.green { background: #4CAF50; }
+.package.corrupted {
+    animation: corruption 2s infinite;
+    background: linear-gradient(45deg, #f44336, #9C27B0, #2196F3);
+}
+
+.robot-arm {
+    width: 55px;
+    height: 35px;
+    background: #666;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8em;
+    border: 2px solid #888;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+/* Стили для 2.3 */
+.conveyor-section {
+    position: absolute;
+    height: 100%;
+    border-left: 1px solid var(--level-color, #00ff88);
+    border-right: 1px solid var(--level-color, #00ff88);
+    opacity: 0.3;
+}
+
+.section-label {
+    position: absolute;
+    top: -8px;
+    left: 10px;
+    background: var(--game-field-bg, #1a1a2e);
+    padding: 0 5px;
+    font-size: 0.7em;
+    color: var(--level-color, #00ff88);
+}
+
+.boss-health {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--level-color, #00ff88);
+    font-size: 0.8em;
+    flex-shrink: 0;
+}
+
+.health-bar {
+    width: 120px;
+    height: 10px;
+    background: #333;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--level-color, #9C27B0), #7B1FA2);
+    width: 100%;
+    transition: width 0.3s ease;
+}
+
+/* Анимации */
+@keyframes packageAppear {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes corruption {
+    0%, 100% { filter: hue-rotate(0deg); }
+    50% { filter: hue-rotate(180deg); }
+}
+
+@keyframes blockCorruption {
+    0%, 100% { border-color: #2196F3; }
+    33% { border-color: #9C27B0; }
+    66% { border-color: #ff00ff; }
+}
+
+.code-block.corrupted {
+    animation: blockCorruption 3s infinite;
+    border-color: #ff00ff;
+    background: linear-gradient(45deg, #2a152a, #9C27B0, #2a152a);
+}
+
+.executing {
+    background: #FF9800 !important;
+    color: #000 !important;
+    transition: all 0.3s ease;
+}
+
+.loop-executing {
+    border-color: #FF9800 !important;
+    background: #FF9800 !important;
+    color: #000 !important;
+    transition: all 0.3s ease;
+}
+
+.glitch-active .conveyor-track {
+    animation: conveyorGlitch 0.5s infinite;
+}
+
+@keyframes conveyorGlitch {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(2px); }
+}
+
+/* Глитч эффекты */
+.glitch-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    background: linear-gradient(45deg, transparent 49%, #ff00ff 50%, transparent 51%);
+    background-size: 10px 10px;
+    animation: glitch 0.3s infinite;
+}
+
+@keyframes glitch {
+    0% { opacity: 0; transform: translateX(0); }
+    50% { opacity: 0.1; transform: translateX(2px); }
+    100% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes textGlitch {
+    0%, 100% { transform: translateX(0); }
+    95% { transform: translateX(0); }
+    96% { transform: translateX(-2px); }
+    97% { transform: translateX(2px); }
+    98% { transform: translateX(-1px); }
+    99% { transform: translateX(1px); }
+}
+
+.level-title {
+    animation: textGlitch 5s infinite;
+}
+
+/* Стили для циклов (2.2) */
+.loop-body {
+    margin-left: 20px;
+    border-left: 2px solid var(--loop-color, #9C27B0);
+    padding-left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.end-loop-btn {
+    display: block;
+    margin-top: 8px;
+    margin-left: 20px;
+    background: var(--loop-color, #9C27B0);
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.loop-counter {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--level-color, #FF9800);
+    font-size: 0.8em;
+    z-index: 2;
+    flex-shrink: 0;
+}

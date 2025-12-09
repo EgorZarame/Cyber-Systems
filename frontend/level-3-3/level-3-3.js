@@ -1,5 +1,5 @@
-// Конфигурация уровня 3.3 - Финальный босс - Ядро вируса
-const levelConfig = {
+// Конфигурация уровня 3.3
+const level3_3_config = {
     id: '3.3',
     title: 'Финальный босс - Ядро вируса',
     gridSizeX: 15,
@@ -51,745 +51,915 @@ const levelConfig = {
     ],
     trafficLight: {
         state: 'красный',
-        changeInterval: 3000,
-        lastChange: 0
-    },
-    conveyorsFilled: false,
-    virusCoreActivated: false,
-    itemsMoved: 0 // Счетчик перемещенных предметов
+        changeInterval: 3000
+    }
 };
 
-let drone = {
-    x: levelConfig.start.x,
-    y: levelConfig.start.y,
-    direction: 'east',
-    isMoving: false
-};
+class Level3_3 extends LevelBase3 {
+    constructor() {
+        super(level3_3_config);
+        this.functionBody = [];
+        this.conveyorsFilled = false;
+        this.virusCoreActivated = false;
+        this.itemsMoved = 0;
+        this.trafficLightInterval = null;
+    }
 
-let isExecuting = false;
-let currentLine = 0;
-let trafficLightInterval;
+    initialize() {
+        super.initialize();
+        this.initializeGameGrid();
+        this.startTrafficLight();
+        
+        // Отладочная информация
+        this.debugLocalStorage();
+        
+        this.addConsoleMessage('🚨 ОБНАРУЖЕНО ЯДРО ВИРУСА!', 'error');
+        this.addConsoleMessage('💡 Используйте условия, циклы и функции для восстановления системы', 'info');
+        this.addConsoleMessage('📦 Переложите предметы с раздатчиков на конвейеры (3 предмета)', 'warning');
+        this.addConsoleMessage('🚦 Светофор активирован - следите за цветом!', 'warning');
+    }
 
-// Инициализация уровня
-function initializeLevel() {
-    initializeGameGrid();
-    setupCodeEditor();
-    startTrafficLight();
-    addConsoleMessage('🐍 Python интерпретатор инициализирован', 'info');
-    addConsoleMessage('🚨 ОБНАРУЖЕНО ЯДРО ВИРУСА!', 'error');
-    addConsoleMessage('💡 Используйте if/else, циклы и функции для восстановления системы', 'info');
-    addConsoleMessage('📦 Переложите предметы с раздатчиков на конвейеры (3 предмета)', 'warning');
-    addConsoleMessage('🚦 Светофор активирован - следите за цветом!', 'warning');
-    addConsoleMessage(`📍 Стартовая позиция: (${levelConfig.start.x}, ${levelConfig.start.y})`, 'info');
-    addConsoleMessage(`🎯 Ядро вируса: (${levelConfig.virusCore.x}, ${levelConfig.virusCore.y})`, 'info');
-}
+    debugLocalStorage() {
+        console.group('=== DEBUG LOCALSTORAGE ===');
+        console.log('1. cyberSystemsProfile:', JSON.parse(localStorage.getItem('cyberSystemsProfile') || '{}'));
+        console.log('2. cyberProfile:', JSON.parse(localStorage.getItem('cyberProfile') || '{}'));
+        console.log('3. Уровни:');
+        ['1.1', '1.2', '1.boss', '2.1', '2.2', '2.boss', '3.1', '3.2', '3.boss'].forEach(level => {
+            console.log(`   - ${level}:`, 
+                localStorage.getItem(`level_${level}_completed`) || 
+                localStorage.getItem(`level_${level.replace('.', '_')}_completed`) || 
+                'не пройден'
+            );
+        });
+        console.groupEnd();
+    }
 
-// Инициализация игрового поля
-function initializeGameGrid() {
-    const grid = document.getElementById('gameGrid');
-    grid.innerHTML = '';
+    getWelcomeMessage() {
+        return 'Уровень 3.3: Финальный босс - Ядро вируса - восстановите систему!';
+    }
 
-    for (let y = 0; y < levelConfig.gridSizeY; y++) {
-        for (let x = 0; x < levelConfig.gridSizeX; x++) {
-            const cell = document.createElement('div');
-            cell.className = 'grid-cell';
-            cell.dataset.x = x;
-            cell.dataset.y = y;
+    validatePythonCode(code) {
+        if (!code.includes('восстановить_систему')) {
+            this.addConsoleMessage('❌ Ошибка: функция восстановить_систему() не найдена!', 'error');
+            this.addConsoleMessage('💡 Используйте: def восстановить_систему():', 'error');
+            return false;
+        }
+        return true;
+    }
 
-            if (x === levelConfig.start.x && y === levelConfig.start.y) {
-                cell.classList.add('start');
-            } else if (x === levelConfig.virusCore.x && y === levelConfig.virusCore.y) {
-                cell.classList.add('virus-core');
-            } else if (levelConfig.obstacles.some(obs => obs.x === x && obs.y === y)) {
-                cell.classList.add('obstacle');
-            } else if (levelConfig.conveyors.some(conv => conv.x === x && conv.y === y)) {
-                cell.classList.add('conveyor');
-            } else if (levelConfig.dispensers.some(disp => disp.x === x && disp.y === y)) {
-                cell.classList.add('dispenser');
-            } else if (levelConfig.path.some(point => point.x === x && point.y === y)) {
-                cell.classList.add('path');
-            }
+    async runPythonCode() {
+        if (this.isExecuting) {
+            this.addConsoleMessage('⚠️ Код уже выполняется', 'error');
+            return;
+        }
 
-            grid.appendChild(cell);
+        const codeEditor = document.getElementById('codeEditor');
+        const code = codeEditor.value.trim();
+        
+        if (!code) {
+            this.addConsoleMessage('❌ Ошибка: код пуст!', 'error');
+            return;
+        }
+
+        if (!this.validatePythonCode(code)) {
+            return;
+        }
+
+        this.isExecuting = true;
+        this.resetDrone();
+        this.addConsoleMessage('⚡ Запуск выполнения кода...', 'info');
+
+        try {
+            await this.executePythonCode(code);
+        } catch (error) {
+            this.addConsoleMessage(`❌ Ошибка выполнения: ${error.message}`, 'error');
+            this.isExecuting = false;
         }
     }
 
-    // Добавляем предметы на конвейеры
-    updateItemsDisplay();
-    
-    updateDronePosition();
-}
-
-// Запуск светофора
-function startTrafficLight() {
-    updateTrafficLightDisplay();
-    
-    trafficLightInterval = setInterval(() => {
-        levelConfig.trafficLight.state = levelConfig.trafficLight.state === 'зеленый' ? 'красный' : 'зеленый';
-        updateTrafficLightDisplay();
-        addConsoleMessage(`🚦 Светофор сменился на: ${levelConfig.trafficLight.state}`, 'warning');
-    }, levelConfig.trafficLight.changeInterval);
-}
-
-// Обновление отображения светофора
-function updateTrafficLightDisplay() {
-    const redLight = document.getElementById('redLight');
-    const greenLight = document.getElementById('greenLight');
-    
-    if (levelConfig.trafficLight.state === 'красный') {
-        redLight.classList.remove('inactive');
-        redLight.classList.add('red', 'light-changing');
-        greenLight.classList.add('inactive');
-        greenLight.classList.remove('green', 'light-changing');
-    } else {
-        greenLight.classList.remove('inactive');
-        greenLight.classList.add('green', 'light-changing');
-        redLight.classList.add('inactive');
-        redLight.classList.remove('red', 'light-changing');
-    }
-    
-    setTimeout(() => {
-        redLight.classList.remove('light-changing');
-        greenLight.classList.remove('light-changing');
-    }, 500);
-}
-
-// Настройка редактора кода
-function setupCodeEditor() {
-    const codeEditor = document.getElementById('codeEditor');
-    
-    codeEditor.addEventListener('input', function() {
-        // Можно добавить подсветку синтаксиса
-    });
-}
-
-// Выполнение Python кода
-async function runPythonCode() {
-    if (isExecuting) {
-        addConsoleMessage('⚠️ Код уже выполняется', 'error');
-        return;
-    }
-
-    const codeEditor = document.getElementById('codeEditor');
-    const code = codeEditor.value.trim();
-    
-    if (!code) {
-        addConsoleMessage('❌ Ошибка: код пуст!', 'error');
-        return;
-    }
-
-    if (!code.includes('восстановить_систему')) {
-        addConsoleMessage('❌ Ошибка: функция восстановить_систему() не найдена!', 'error');
-        addConsoleMessage('💡 Используйте: def восстановить_систему():', 'error');
-        return;
-    }
-
-    isExecuting = true;
-    resetDrone();
-    addConsoleMessage('⚡ Запуск выполнения кода...', 'info');
-
-    try {
-        // Парсим и выполняем код ОДИН РАЗ
-        await parseAndExecute(code);
-    } catch (error) {
-        addConsoleMessage(`❌ Ошибка выполнения: ${error.message}`, 'error');
-        isExecuting = false;
-    }
-}
-
-// Парсинг и выполнение кода ОДИН РАЗ
-async function parseAndExecute(code) {
-    const lines = code.split('\n');
-    let inFunction = false;
-    let functionIndent = 0;
-    let functionBody = [];
-    
-    // Парсим тело функции восстановить_систему
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const trimmed = line.trim();
+    async executePythonCode(code) {
+        this.parseFunctionBody(code);
         
-        // Находим начало функции
-        if (trimmed.startsWith('def восстановить_систему():')) {
-            inFunction = true;
-            continue;
+        if (this.functionBody.length === 0) {
+            throw new Error('Тело функции пусто! Добавьте команды с отступами.');
         }
         
-        if (inFunction) {
-            // Определяем отступ
-            const indent = line.search(/\S/);
+        this.addConsoleMessage(`📝 Найдено ${this.functionBody.length} команд в функции`, 'success');
+        
+        await this.executeFunctionBody();
+    }
+
+    parseFunctionBody(code) {
+        const lines = code.split('\n');
+        let inFunction = false;
+        let functionIndent = 0;
+        this.functionBody = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
             
-            // Если это первая строка тела функции
-            if (functionBody.length === 0 && trimmed !== '' && indent > 0) {
-                functionIndent = indent;
+            if (trimmed.startsWith('def восстановить_систему():')) {
+                inFunction = true;
+                continue;
             }
             
-            // Если строка в теле функции
-            if (trimmed !== '' && !trimmed.startsWith('#')) {
-                if (indent >= functionIndent) {
-                    functionBody.push({
-                        text: line,
-                        indent: indent,
-                        content: trimmed,
-                        lineNumber: i + 1
-                    });
-                } else {
-                    // Меньший отступ - вышли из функции
-                    break;
+            if (inFunction) {
+                const indent = line.search(/\S/);
+                
+                if (this.functionBody.length === 0 && trimmed !== '' && indent > 0) {
+                    functionIndent = indent;
+                }
+                
+                if (trimmed !== '' && !trimmed.startsWith('#')) {
+                    if (indent >= functionIndent) {
+                        this.functionBody.push({
+                            text: line,
+                            indent: indent,
+                            content: trimmed,
+                            lineNumber: i + 1
+                        });
+                    } else {
+                        break;
+                    }
                 }
             }
         }
     }
-    
-    if (functionBody.length === 0) {
-        throw new Error('Тело функции пусто! Добавьте команды с отступами.');
-    }
-    
-    addConsoleMessage(`📝 Найдено ${functionBody.length} команд в функции`, 'success');
-    
-    // Выполняем тело функции последовательно
-    await executeFunctionBody(functionBody);
-}
 
-// Выполнение тела функции
-async function executeFunctionBody(functionBody) {
-    let i = 0;
-    const maxSteps = 200;
-    let stepCount = 0;
-    
-    while (i < functionBody.length && isExecuting && stepCount < maxSteps) {
-        stepCount++;
-        const instruction = functionBody[i];
-        currentLine = instruction.lineNumber;
+    async executeFunctionBody() {
+        let i = 0;
+        const maxSteps = 200;
+        let stepCount = 0;
         
-        try {
-            await processInstruction(instruction, functionBody, i);
-        } catch (error) {
-            addConsoleMessage(`❌ Ошибка в строке ${currentLine}: ${error.message}`, 'error');
-            break;
-        }
-        
-        // Находим следующую инструкцию
-        i = findNextInstruction(i, functionBody);
-        
-        // Проверка достижения ядра вируса
-        if (drone.x === levelConfig.virusCore.x && drone.y === levelConfig.virusCore.y && levelConfig.conveyorsFilled) {
-            await activateVirusCore();
-            await completeLevel();
-            return;
-        }
-        
-        // Небольшая пауза между командами
-        await new Promise(resolve => setTimeout(resolve, 300));
-    }
-    
-    if (stepCount >= maxSteps) {
-        addConsoleMessage('⚠️ Достигнут лимит шагов выполнения', 'warning');
-    }
-    
-    if (isExecuting && !(drone.x === levelConfig.virusCore.x && drone.y === levelConfig.virusCore.y && levelConfig.conveyorsFilled)) {
-        addConsoleMessage('🛑 Программа завершена, но система не восстановлена', 'error');
-        addConsoleMessage(`📍 Текущая позиция: (${drone.x}, ${drone.y})`, 'error');
-        addConsoleMessage(`📦 Конвейеры заполнены: ${levelConfig.conveyorsFilled}`, 'error');
-        addConsoleMessage(`📊 Перемещено предметов: ${levelConfig.itemsMoved}/3`, 'error');
-    }
-    
-    isExecuting = false;
-}
-
-// Найти следующую инструкцию
-function findNextInstruction(currentIndex, functionBody) {
-    return currentIndex + 1;
-}
-
-// Обработка инструкции
-async function processInstruction(instruction, functionBody, currentIndex) {
-    const content = instruction.content;
-    
-    addConsoleMessage(`📄 Строка ${currentLine}: ${content}`, 'info');
-    
-    // Обработка while циклов (добавлена поддержка)
-    if (content.startsWith('while ')) {
-        const conditionResult = evaluateCondition(content.replace('while ', 'if '));
-        addConsoleMessage(`🔄 Проверка while условия: ${conditionResult ? 'ИСТИНА' : 'ЛОЖЬ'}`, conditionResult ? 'success' : 'warning');
-        
-        if (conditionResult) {
-            // Выполняем тело while
-            await executeBlock(currentIndex + 1, instruction.indent, functionBody);
-            // Возвращаемся к проверке условия
-            return currentIndex;
-        } else {
-            // Пропускаем тело while
-            return skipBlock(currentIndex + 1, instruction.indent, functionBody);
-        }
-    }
-    else if (content.startsWith('if ')) {
-        const conditionResult = evaluateCondition(content);
-        addConsoleMessage(`🔍 Условие if: ${conditionResult ? 'ИСТИНА' : 'ЛОЖЬ'}`, conditionResult ? 'success' : 'warning');
-        
-        if (conditionResult) {
-            // Выполняем тело if
-            await executeBlock(currentIndex + 1, instruction.indent, functionBody);
-        } else {
-            // Пропускаем тело if и ищем else
-            let nextIndex = skipBlock(currentIndex + 1, instruction.indent, functionBody);
+        while (i < this.functionBody.length && this.isExecuting && stepCount < maxSteps) {
+            stepCount++;
+            const instruction = this.functionBody[i];
+            this.currentLine = instruction.lineNumber;
             
-            // Проверяем, есть ли else
-            if (nextIndex < functionBody.length && functionBody[nextIndex].content === 'else:' && 
-                functionBody[nextIndex].indent === instruction.indent) {
-                // Выполняем тело else
-                await executeBlock(nextIndex + 1, instruction.indent, functionBody);
+            try {
+                const result = await this.processInstruction(instruction, i);
+                i = result;
+            } catch (error) {
+                this.addConsoleMessage(`❌ Ошибка в строке ${this.currentLine}: ${error.message}`, 'error');
+                break;
             }
             
-            // Возвращаем индекс после всего блока if/else
-            return findNextAfterBlock(currentIndex, instruction.indent, functionBody);
-        }
-    }
-    else if (content === 'else:') {
-        // else обрабатывается в if, поэтому пропускаем
-        return currentIndex;
-    }
-    else if (content.startsWith('for ')) {
-        await executeForLoop(instruction, currentIndex, functionBody);
-        return findNextAfterBlock(currentIndex, instruction.indent, functionBody);
-    }
-    else {
-        // Обычная команда
-        await executeCommand(content);
-    }
-}
-
-// Оценка условия
-function evaluateCondition(conditionLine) {
-    // Убираем "if " или "while " и ":" в конце
-    const condition = conditionLine.replace(/^(if|while)\s+|\s*:$/g, '');
-    
-    if (condition.includes("светофор == 'зеленый'")) {
-        return levelConfig.trafficLight.state === 'зеленый';
-    } 
-    else if (condition.includes("светофор == 'красный'")) {
-        return levelConfig.trafficLight.state === 'красный';
-    }
-    else if (condition.includes('конвейеры_заполнены')) {
-        return levelConfig.conveyorsFilled;
-    }
-    else if (condition.includes('ядро_активировано')) {
-        return levelConfig.virusCoreActivated;
-    }
-    
-    return false;
-}
-
-// Пропустить блок кода
-function skipBlock(startIndex, baseIndent, functionBody) {
-    let i = startIndex;
-    while (i < functionBody.length && functionBody[i].indent > baseIndent) {
-        i++;
-    }
-    return i;
-}
-
-// Найти следующий индекс после блока
-function findNextAfterBlock(currentIndex, baseIndent, functionBody) {
-    let i = currentIndex + 1;
-    while (i < functionBody.length && functionBody[i].indent > baseIndent) {
-        i++;
-    }
-    return i;
-}
-
-// Выполнить блок кода
-async function executeBlock(startIndex, baseIndent, functionBody) {
-    let i = startIndex;
-    while (i < functionBody.length && functionBody[i].indent > baseIndent) {
-        await processInstruction(functionBody[i], functionBody, i);
-        i++;
-        
-        // Проверка достижения ядра
-        if (drone.x === levelConfig.virusCore.x && drone.y === levelConfig.virusCore.y && levelConfig.conveyorsFilled) {
-            return;
-        }
-    }
-}
-
-// Выполнить цикл for
-async function executeForLoop(loopInstruction, currentIndex, functionBody) {
-    const match = loopInstruction.content.match(/for\s+\w+\s+in\s+range\((\d+)\):/);
-    if (!match) {
-        throw new Error('Некорректный синтаксис цикла for');
-    }
-    
-    const iterations = parseInt(match[1]);
-    if (isNaN(iterations) || iterations <= 0) {
-        throw new Error(`Некорректное количество итераций: ${match[1]}`);
-    }
-    
-    addConsoleMessage(`🔄 Запуск цикла for на ${iterations} итераций`, 'info');
-    
-    // Собираем тело цикла
-    const loopBody = [];
-    let nextIndex = currentIndex + 1;
-    while (nextIndex < functionBody.length && functionBody[nextIndex].indent > loopInstruction.indent) {
-        loopBody.push(functionBody[nextIndex]);
-        nextIndex++;
-    }
-    
-    if (loopBody.length === 0) {
-        throw new Error('Тело цикла for пусто');
-    }
-    
-    // Выполняем цикл
-    for (let i = 0; i < iterations && isExecuting; i++) {
-        addConsoleMessage(`⟳ Итерация ${i + 1}/${iterations}`, 'info');
-        
-        for (const bodyLine of loopBody) {
-            if (!isExecuting) break;
-            
-            // Рекурсивно обрабатываем команды в теле цикла
-            if (bodyLine.content.startsWith('if ') || bodyLine.content.startsWith('for ') || bodyLine.content.startsWith('while ')) {
-                await processInstruction(bodyLine, functionBody, functionBody.indexOf(bodyLine));
-            } else {
-                await executeCommand(bodyLine.content);
-            }
-            
-            // Проверка достижения ядра
-            if (drone.x === levelConfig.virusCore.x && drone.y === levelConfig.virusCore.y && levelConfig.conveyorsFilled) {
+            // Проверка завершения уровня
+            if (this.checkLevelComplete()) {
+                await this.completeLevel();
                 return;
             }
             
             await new Promise(resolve => setTimeout(resolve, 300));
         }
-    }
-    
-    addConsoleMessage('✅ Цикл for завершен', 'success');
-}
-
-// Выполнить одну команду
-async function executeCommand(command) {
-    if (command.startsWith('#')) return;
-    
-    if (command === 'двигаться_вперед()') {
-        await moveForward();
-    } else if (command === 'повернуть_налево()') {
-        await turnLeft();
-    } else if (command === 'повернуть_направо()') {
-        await turnRight();
-    } else if (command === 'стой_на_месте()') {
-        await waitInPlace();
-    } else if (command === 'переложить_предметы()') {
-        await moveItems();
-    } else if (command === 'активировать_ядро()') {
-        await activateVirusCore();
-    } else if (command.includes('(') && command.includes(')')) {
-        const funcName = command.split('(')[0];
-        if (funcName && funcName !== 'range') {
-            throw new Error(`Неизвестная команда: ${funcName}`);
-        }
-    }
-}
-
-// Движение вперед с проверкой светофора
-async function moveForward() {
-    // Проверяем светофор
-    if (levelConfig.trafficLight.state === 'красный') {
-        addConsoleMessage('🚫 Движение запрещено: красный свет!', 'warning');
         
-        // Ждем зеленый свет
-        addConsoleMessage('⏳ Ожидание зеленого света...', 'info');
-        
-        // Ждем пока светофор станет зеленым
-        while (levelConfig.trafficLight.state === 'красный' && isExecuting) {
-            await new Promise(resolve => setTimeout(resolve, 500));
+        if (stepCount >= maxSteps) {
+            this.addConsoleMessage('⚠️ Достигнут лимит шагов выполнения', 'warning');
         }
         
-        if (!isExecuting) return;
+        if (this.isExecuting && !this.checkLevelComplete()) {
+            this.addConsoleMessage('🛑 Программа завершена, но система не восстановлена', 'error');
+            this.addConsoleMessage(`📍 Текущая позиция: (${this.drone.x}, ${this.drone.y})`, 'error');
+            this.addConsoleMessage(`📦 Конвейеры заполнены: ${this.conveyorsFilled}`, 'error');
+            this.addConsoleMessage(`📊 Перемещено предметов: ${this.itemsMoved}/3`, 'error');
+        }
         
-        addConsoleMessage('✅ Светофор стал зеленым! Продолжаем движение', 'success');
+        this.isExecuting = false;
     }
 
-    let newX = drone.x;
-    let newY = drone.y;
-
-    switch (drone.direction) {
-        case 'north': newY--; break;
-        case 'east': newX++; break;
-        case 'south': newY++; break;
-        case 'west': newX--; break;
+    async processInstruction(instruction, currentIndex) {
+        const content = instruction.content;
+        
+        this.addConsoleMessage(`📄 Строка ${this.currentLine}: ${content}`, 'info');
+        
+        if (content.startsWith('while ')) {
+            const conditionResult = this.evaluateCondition(content.replace('while ', 'if '));
+            this.addConsoleMessage(`🔄 Проверка while условия: ${conditionResult ? 'ИСТИНА' : 'ЛОЖЬ'}`, conditionResult ? 'success' : 'warning');
+            
+            if (conditionResult) {
+                await this.executeBlock(currentIndex + 1, instruction.indent);
+                return currentIndex; // Возвращаемся к проверке условия
+            } else {
+                return this.skipBlock(currentIndex + 1, instruction.indent);
+            }
+        }
+        else if (content.startsWith('if ')) {
+            const conditionResult = this.evaluateCondition(content);
+            this.addConsoleMessage(`🔍 Условие if: ${conditionResult ? 'ИСТИНА' : 'ЛОЖЬ'}`, conditionResult ? 'success' : 'warning');
+            
+            if (conditionResult) {
+                await this.executeBlock(currentIndex + 1, instruction.indent);
+                return this.findNextAfterBlock(currentIndex, instruction.indent);
+            } else {
+                let nextIndex = this.skipBlock(currentIndex + 1, instruction.indent);
+                
+                if (nextIndex < this.functionBody.length && 
+                    this.functionBody[nextIndex].content === 'else:' && 
+                    this.functionBody[nextIndex].indent === instruction.indent) {
+                    await this.executeBlock(nextIndex + 1, instruction.indent);
+                }
+                
+                return this.findNextAfterBlock(currentIndex, instruction.indent);
+            }
+        }
+        else if (content === 'else:') {
+            return currentIndex;
+        }
+        else if (content.startsWith('for ')) {
+            await this.executeForLoop(instruction, currentIndex);
+            return this.findNextAfterBlock(currentIndex, instruction.indent);
+        }
+        else {
+            await this.executeCommand(content);
+            return currentIndex + 1;
+        }
     }
 
-    // Анимация движения
-    const droneElement = document.querySelector('.drone');
-    if (droneElement) {
-        droneElement.classList.add('drone-moving');
+    async executeCommand(command) {
+        if (command.startsWith('#')) return;
+        
+        if (command === 'двигаться_вперед()') {
+            await this.moveForward();
+        } else if (command === 'повернуть_налево()') {
+            await this.turnLeft();
+        } else if (command === 'повернуть_направо()') {
+            await this.turnRight();
+        } else if (command === 'стой_на_месте()') {
+            await this.waitInPlace();
+        } else if (command === 'переложить_предметы()') {
+            await this.moveItems();
+        } else if (command === 'активировать_ядро()') {
+            await this.activateVirusCore();
+        } else if (command.includes('(') && command.includes(')')) {
+            const funcName = command.split('(')[0];
+            if (funcName && funcName !== 'range') {
+                throw new Error(`Неизвестная команда: ${funcName}`);
+            }
+        }
     }
 
-    await new Promise(resolve => setTimeout(resolve, 400));
-
-    // Проверка препятствий и границ
-    const hasObstacle = levelConfig.obstacles.some(obs => obs.x === newX && obs.y === newY);
-    
-    if (newX >= 0 && newX < levelConfig.gridSizeX && 
-        newY >= 0 && newY < levelConfig.gridSizeY &&
-        !hasObstacle) {
-        drone.x = newX;
-        drone.y = newY;
-        addConsoleMessage(`✅ Движение вперед на (${newX}, ${newY})`, 'success');
-    } else {
-        throw new Error(`Невозможно двигаться вперед: препятствие или граница поля. Направление: ${drone.direction}`);
-    }
-
-    updateDronePosition();
-    
-    if (droneElement) {
-        setTimeout(() => {
-            droneElement.classList.remove('drone-moving');
-        }, 200);
-    }
-}
-
-// Ожидание на месте
-async function waitInPlace() {
-    const droneElement = document.querySelector('.drone');
-    if (droneElement) {
-        droneElement.classList.add('waiting');
-    }
-    
-    addConsoleMessage('⏳ Ожидание на месте...', 'warning');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (droneElement) {
-        droneElement.classList.remove('waiting');
-    }
-}
-
-// Перемещение предметов - ИСПРАВЛЕННАЯ ВЕРСИЯ
-async function moveItems() {
-    // Проверяем, находится ли дрон на конвейере
-    const onConveyor = levelConfig.conveyors.some(conv => 
-        drone.x === conv.x && drone.y === conv.y
-    );
-    
-    if (!onConveyor) {
-        throw new Error('Дрон должен находиться на конвейере для перемещения предметов!');
-    }
-    
-    // Находим раздатчик, соответствующий этому конвейеру
-    const conveyorIndex = levelConfig.conveyors.findIndex(conv => 
-        drone.x === conv.x && drone.y === conv.y
-    );
-    
-    if (conveyorIndex === -1) {
-        throw new Error('Не найден соответствующий раздатчик!');
-    }
-    
-    const section = levelConfig.conveyors[conveyorIndex].section;
-    const dispenser = levelConfig.dispensers.find(d => {
-        if (section === 1) return d.color === 'red';
-        if (section === 2) return d.color === 'blue';
-        if (section === 3) return d.color === 'green';
+    evaluateCondition(conditionLine) {
+        const condition = conditionLine.replace(/^(if|while)\s+|\s*:$/g, '');
+        
+        if (condition.includes("светофор == 'зеленый'")) {
+            return this.config.trafficLight.state === 'зеленый';
+        } 
+        else if (condition.includes("светофор == 'красный'")) {
+            return this.config.trafficLight.state === 'красный';
+        }
+        else if (condition.includes('конвейеры_заполнены')) {
+            return this.conveyorsFilled;
+        }
+        else if (condition.includes('ядро_активировано')) {
+            return this.virusCoreActivated;
+        }
+        
         return false;
-    });
-    
-    if (!dispenser) {
-        throw new Error('Не найден раздатчик для этого конвейера!');
     }
-    
-    addConsoleMessage(`📦 Перемещение предмета ${dispenser.color} с раздатчика...`, 'info');
-    
-    // Имитация процесса перемещения
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Увеличиваем счетчик перемещенных предметов
-    levelConfig.itemsMoved++;
-    
-    // Проверяем, все ли конвейеры заполнены (все 3 предмета перемещены)
-    if (levelConfig.itemsMoved >= 3) {
-        levelConfig.conveyorsFilled = true;
-        addConsoleMessage(`✅ Все конвейеры заполнены! (${levelConfig.itemsMoved}/3 предметов)`, 'success');
-    } else {
-        addConsoleMessage(`📊 Перемещено предметов: ${levelConfig.itemsMoved}/3`, 'info');
-    }
-}
 
-// Активация ядра вируса - ИСПРАВЛЕННАЯ ВЕРСИЯ
-async function activateVirusCore() {
-    if (!levelConfig.conveyorsFilled) {
-        throw new Error(`Сначала нужно заполнить все конвейеры предметами! Перемещено: ${levelConfig.itemsMoved}/3`);
-    }
-    
-    if (drone.x !== levelConfig.virusCore.x || drone.y !== levelConfig.virusCore.y) {
-        throw new Error(`Дрон должен находиться на ядре вируса для активации! Текущая позиция: (${drone.x}, ${drone.y}), нужна: (${levelConfig.virusCore.x}, ${levelConfig.virusCore.y})`);
-    }
-    
-    addConsoleMessage('🚀 Активация ядра вируса...', 'info');
-    
-    // Анимация активации
-    const coreCell = document.querySelector(`[data-x="${levelConfig.virusCore.x}"][data-y="${levelConfig.virusCore.y}"]`);
-    if (coreCell) {
-        coreCell.style.animation = 'virusPulse 0.5s infinite';
-    }
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    levelConfig.virusCoreActivated = true;
-    addConsoleMessage('✅ Ядро вируса активировано! Система восстанавливается...', 'success');
-}
-
-// Поворот налево
-async function turnLeft() {
-    const directions = ['north', 'west', 'south', 'east'];
-    const currentIndex = directions.indexOf(drone.direction);
-    drone.direction = directions[(currentIndex + 1) % 4];
-    
-    addConsoleMessage(`↩️ Поворот налево. Направление: ${drone.direction}`, 'info');
-    updateDronePosition();
-    
-    await new Promise(resolve => setTimeout(resolve, 400));
-}
-
-// Поворот направо
-async function turnRight() {
-    const directions = ['north', 'east', 'south', 'west'];
-    const currentIndex = directions.indexOf(drone.direction);
-    drone.direction = directions[(currentIndex + 1) % 4];
-    
-    addConsoleMessage(`↪️ Поворот направо. Направление: ${drone.direction}`, 'info');
-    updateDronePosition();
-    
-    await new Promise(resolve => setTimeout(resolve, 400));
-}
-
-// Обновление позиции дрона
-function updateDronePosition() {
-    const oldDrone = document.querySelector('.drone');
-    if (oldDrone) oldDrone.remove();
-
-    const cell = document.querySelector(`[data-x="${drone.x}"][data-y="${drone.y}"]`);
-    if (cell) {
-        const droneElement = document.createElement('div');
-        droneElement.className = `drone ${drone.direction}`;
-        cell.appendChild(droneElement);
-    }
-}
-
-// Функция для обновления отображения предметов
-function updateItemsDisplay() {
-    // Удаляем все существующие предметы
-    document.querySelectorAll('.item-red, .item-blue, .item-green').forEach(item => {
-        item.classList.remove('item-red', 'item-blue', 'item-green');
-    });
-    
-    // Добавляем предметы на их позиции
-    levelConfig.items.forEach(item => {
-        const cell = document.querySelector(`[data-x="${item.x}"][data-y="${item.y}"]`);
-        if (cell) {
-            cell.classList.add(`item-${item.color}`);
+    skipBlock(startIndex, baseIndent) {
+        let i = startIndex;
+        while (i < this.functionBody.length && this.functionBody[i].indent > baseIndent) {
+            i++;
         }
-    });
-}
-
-// Сброс программы
-function resetProgram() {
-    if (isExecuting) {
-        isExecuting = false;
-        addConsoleMessage('⚠️ Выполнение прервано', 'warning');
+        return i;
     }
-    
-    resetDrone();
-    addConsoleMessage('🔄 Программа сброшена', 'info');
-}
 
-// Сброс дрона
-function resetDrone() {
-    drone.x = levelConfig.start.x;
-    drone.y = levelConfig.start.y;
-    drone.direction = 'east';
-    drone.isMoving = false;
-    updateDronePosition();
-    
-    // Сбрасываем все состояния
-    levelConfig.trafficLight.state = 'красный';
-    levelConfig.conveyorsFilled = false;
-    levelConfig.virusCoreActivated = false;
-    levelConfig.itemsMoved = 0;
-    
-    // Сбрасываем предметы на начальные позиции
-    levelConfig.items = [
-        { x: 1, y: 8, color: 'red' },
-        { x: 5, y: 8, color: 'blue' },
-        { x: 9, y: 8, color: 'green' }
-    ];
-    
-    // Обновляем отображение предметов
-    updateItemsDisplay();
-    
-    updateTrafficLightDisplay();
-}
-
-// Добавление сообщения в консоль
-function addConsoleMessage(message, type = '') {
-    const consoleOutput = document.getElementById('consoleOutput');
-    const messageElement = document.createElement('div');
-    messageElement.className = `console-line ${type ? 'log-' + type : ''}`;
-    messageElement.textContent = message;
-    
-    consoleOutput.appendChild(messageElement);
-    consoleOutput.scrollTop = consoleOutput.scrollHeight;
-}
-
-// Завершение уровня
-async function completeLevel() {
-    isExecuting = false;
-    
-    if (trafficLightInterval) {
-        clearInterval(trafficLightInterval);
+    findNextAfterBlock(currentIndex, baseIndent) {
+        let i = currentIndex + 1;
+        while (i < this.functionBody.length && this.functionBody[i].indent > baseIndent) {
+            i++;
+        }
+        return i;
     }
-    
-    try {
-        await updateProgress('3.boss');
-    } catch (error) {
-        console.error('Ошибка обновления прогресса (3.boss):', error);
+
+    async executeBlock(startIndex, baseIndent) {
+        let i = startIndex;
+        while (i < this.functionBody.length && this.functionBody[i].indent > baseIndent) {
+            i = await this.processInstruction(this.functionBody[i], i);
+            
+            if (this.checkLevelComplete()) {
+                return;
+            }
+        }
     }
-    syncLocalProfileAfterLevel('3.boss');
-    
-    setTimeout(() => {
-        alert('🎊 УРОВЕНЬ ПРОЙДЕН!\n\n' +
-              '🏆 ВЫ СТАЛИ SENIOR-ПРОГРАММИСТОМ!\n\n' +
-              'Вы успешно восстановили систему, победив ядро вируса!\n' +
-              'Освоены: условия, циклы, функции и их комбинации!\n\n' +
-              'Поздравляем с завершением игры!');
-        goToLevelMap();
-    }, 1000);
-}
 
-// Навигация
-function goBack() {
-    if (trafficLightInterval) {
-        clearInterval(trafficLightInterval);
+    async executeForLoop(loopInstruction, currentIndex) {
+        const match = loopInstruction.content.match(/for\s+\w+\s+in\s+range\((\d+)\):/);
+        if (!match) {
+            throw new Error('Некорректный синтаксис цикла for');
+        }
+        
+        const iterations = parseInt(match[1]);
+        if (isNaN(iterations) || iterations <= 0) {
+            throw new Error(`Некорректное количество итераций: ${match[1]}`);
+        }
+        
+        this.addConsoleMessage(`🔄 Запуск цикла for на ${iterations} итераций`, 'info');
+        
+        const loopBody = [];
+        let nextIndex = currentIndex + 1;
+        while (nextIndex < this.functionBody.length && this.functionBody[nextIndex].indent > loopInstruction.indent) {
+            loopBody.push(this.functionBody[nextIndex]);
+            nextIndex++;
+        }
+        
+        if (loopBody.length === 0) {
+            throw new Error('Тело цикла for пусто');
+        }
+        
+        for (let i = 0; i < iterations && this.isExecuting; i++) {
+            this.addConsoleMessage(`⟳ Итерация ${i + 1}/${iterations}`, 'info');
+            
+            for (const bodyLine of loopBody) {
+                if (!this.isExecuting) break;
+                
+                if (bodyLine.content.startsWith('if ') || bodyLine.content.startsWith('for ') || bodyLine.content.startsWith('while ')) {
+                    await this.processInstruction(bodyLine, this.functionBody.indexOf(bodyLine));
+                } else {
+                    await this.executeCommand(bodyLine.content);
+                }
+                
+                if (this.checkLevelComplete()) {
+                    return;
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        }
+        
+        this.addConsoleMessage('✅ Цикл for завершен', 'success');
     }
-    window.location.href = '../level-map/index.html';
-}
 
-function showHelp() {
-    alert('Помощь по уровню 3.3 - Финальный босс:\n\n' +
-          '1. Напишите функцию восстановить_систему() с условиями и циклами\n' +
-          '2. Проверяйте состояние светофора: светофор == "зеленый/красный"\n' +
-          '3. Используйте переложить_предметы() для заполнения конвейеров\n' +
-          '   - Дрон должен стоять НА КОНВЕЙЕРЕ (координаты: 1,8 / 5,8 / 9,8)\n' +
-          '4. Доберитесь до ядра вируса (13,8) и используйте активировать_ядро()\n' +
-          '5. Нужно переместить 3 предмета\n\n' +
-          'Координаты:\n' +
-          '- Старт: (1,1)\n' +
-          '- Конвейеры: (1,8), (5,8), (9,8)\n' +
-          '- Ядро вируса: (13,8)');
-}
+    async moveForward() {
+        if (this.config.trafficLight.state === 'красный') {
+            this.addConsoleMessage('🚫 Движение запрещено: красный свет!', 'warning');
+            this.addConsoleMessage('⏳ Ожидание зеленого света...', 'info');
+            
+            while (this.config.trafficLight.state === 'красный' && this.isExecuting) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            if (!this.isExecuting) return;
+            
+            this.addConsoleMessage('✅ Светофор стал зеленым! Продолжаем движение', 'success');
+        }
 
-function goToLevelMap() {
-    if (trafficLightInterval) {
-        clearInterval(trafficLightInterval);
+        let newX = this.drone.x;
+        let newY = this.drone.y;
+
+        switch (this.drone.direction) {
+            case 'north': newY--; break;
+            case 'east': newX++; break;
+            case 'south': newY++; break;
+            case 'west': newX--; break;
+        }
+
+        const droneElement = document.querySelector('.drone');
+        if (droneElement) {
+            droneElement.classList.add('drone-moving');
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 400));
+
+        const hasObstacle = this.config.obstacles.some(obs => obs.x === newX && obs.y === newY);
+        
+        if (newX >= 0 && newX < this.config.gridSizeX && 
+            newY >= 0 && newY < this.config.gridSizeY &&
+            !hasObstacle) {
+            this.drone.x = newX;
+            this.drone.y = newY;
+            this.addConsoleMessage(`✅ Движение вперед на (${newX}, ${newY})`, 'success');
+        } else {
+            throw new Error(`Невозможно двигаться вперед: препятствие или граница поля. Направление: ${this.drone.direction}`);
+        }
+
+        this.updateDronePosition();
+        
+        if (droneElement) {
+            setTimeout(() => {
+                droneElement.classList.remove('drone-moving');
+            }, 200);
+        }
     }
-    window.location.href = '../level-map/index.html';
-}
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', initializeLevel);
+    async waitInPlace() {
+        const droneElement = document.querySelector('.drone');
+        if (droneElement) {
+            droneElement.classList.add('waiting');
+        }
+        
+        this.addConsoleMessage('⏳ Ожидание на месте...', 'warning');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        if (droneElement) {
+            droneElement.classList.remove('waiting');
+        }
+    }
+
+    async moveItems() {
+        const onConveyor = this.config.conveyors.some(conv => 
+            this.drone.x === conv.x && this.drone.y === conv.y
+        );
+        
+        if (!onConveyor) {
+            throw new Error('Дрон должен находиться на конвейере для перемещения предметов!');
+        }
+        
+        const conveyorIndex = this.config.conveyors.findIndex(conv => 
+            this.drone.x === conv.x && this.drone.y === conv.y
+        );
+        
+        if (conveyorIndex === -1) {
+            throw new Error('Не найден соответствующий раздатчик!');
+        }
+        
+        const section = this.config.conveyors[conveyorIndex].section;
+        const dispenser = this.config.dispensers.find(d => {
+            if (section === 1) return d.color === 'red';
+            if (section === 2) return d.color === 'blue';
+            if (section === 3) return d.color === 'green';
+            return false;
+        });
+        
+        if (!dispenser) {
+            throw new Error('Не найден раздатчик для этого конвейера!');
+        }
+        
+        this.addConsoleMessage(`📦 Перемещение предмета ${dispenser.color} с раздатчика...`, 'info');
+        
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        this.itemsMoved++;
+        
+        if (this.itemsMoved >= 3) {
+            this.conveyorsFilled = true;
+            this.addConsoleMessage(`✅ Все конвейеры заполнены! (${this.itemsMoved}/3 предметов)`, 'success');
+        } else {
+            this.addConsoleMessage(`📊 Перемещено предметов: ${this.itemsMoved}/3`, 'info');
+        }
+    }
+
+    async activateVirusCore() {
+        if (!this.conveyorsFilled) {
+            throw new Error(`Сначала нужно заполнить все конвейеры предметами! Перемещено: ${this.itemsMoved}/3`);
+        }
+        
+        if (this.drone.x !== this.config.virusCore.x || this.drone.y !== this.config.virusCore.y) {
+            throw new Error(`Дрон должен находиться на ядре вируса для активации! Текущая позиция: (${this.drone.x}, ${this.drone.y}), нужна: (${this.config.virusCore.x}, ${this.config.virusCore.y})`);
+        }
+        
+        this.addConsoleMessage('🚀 Активация ядра вируса...', 'info');
+        
+        const coreCell = document.querySelector(`[data-x="${this.config.virusCore.x}"][data-y="${this.config.virusCore.y}"]`);
+        if (coreCell) {
+            coreCell.style.animation = 'virusPulse 0.5s infinite';
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        this.virusCoreActivated = true;
+        this.addConsoleMessage('✅ Ядро вируса активировано! Система восстанавливается...', 'success');
+    }
+
+    async turnLeft() {
+        const directions = ['north', 'west', 'south', 'east'];
+        const currentIndex = directions.indexOf(this.drone.direction);
+        this.drone.direction = directions[(currentIndex + 1) % 4];
+        
+        this.addConsoleMessage(`↩️ Поворот налево. Направление: ${this.drone.direction}`, 'info');
+        this.updateDronePosition();
+        
+        await new Promise(resolve => setTimeout(resolve, 400));
+    }
+
+    async turnRight() {
+        const directions = ['north', 'east', 'south', 'west'];
+        const currentIndex = directions.indexOf(this.drone.direction);
+        this.drone.direction = directions[(currentIndex + 1) % 4];
+        
+        this.addConsoleMessage(`↪️ Поворот направо. Направление: ${this.drone.direction}`, 'info');
+        this.updateDronePosition();
+        
+        await new Promise(resolve => setTimeout(resolve, 400));
+    }
+
+    initializeGameGrid() {
+        const grid = document.getElementById('gameGrid');
+        if (!grid) {
+            console.error('Элемент #gameGrid не найден');
+            return;
+        }
+        
+        grid.innerHTML = '';
+
+        for (let y = 0; y < this.config.gridSizeY; y++) {
+            for (let x = 0; x < this.config.gridSizeX; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+
+                if (x === this.config.start.x && y === this.config.start.y) {
+                    cell.classList.add('start');
+                } else if (x === this.config.virusCore.x && y === this.config.virusCore.y) {
+                    cell.classList.add('virus-core');
+                } else if (this.config.obstacles.some(obs => obs.x === x && obs.y === y)) {
+                    cell.classList.add('obstacle');
+                } else if (this.config.conveyors.some(conv => conv.x === x && conv.y === y)) {
+                    cell.classList.add('conveyor');
+                } else if (this.config.dispensers.some(disp => disp.x === x && disp.y === y)) {
+                    cell.classList.add('dispenser');
+                } else if (this.config.path.some(point => point.x === x && point.y === y)) {
+                    cell.classList.add('path');
+                }
+
+                grid.appendChild(cell);
+            }
+        }
+
+        this.updateItemsDisplay();
+        this.updateDronePosition();
+    }
+
+    updateItemsDisplay() {
+        document.querySelectorAll('.item-red, .item-blue, .item-green').forEach(item => {
+            item.classList.remove('item-red', 'item-blue', 'item-green');
+        });
+        
+        this.config.items.forEach(item => {
+            const cell = document.querySelector(`[data-x="${item.x}"][data-y="${item.y}"]`);
+            if (cell) {
+                cell.classList.add(`item-${item.color}`);
+            }
+        });
+    }
+
+    updateDronePosition() {
+        const oldDrone = document.querySelector('.drone');
+        if (oldDrone) oldDrone.remove();
+
+        const cell = document.querySelector(`[data-x="${this.drone.x}"][data-y="${this.drone.y}"]`);
+        if (cell) {
+            const droneElement = document.createElement('div');
+            droneElement.className = `drone ${this.drone.direction}`;
+            cell.appendChild(droneElement);
+        }
+    }
+
+    startTrafficLight() {
+        this.updateTrafficLightDisplay();
+        
+        this.trafficLightInterval = setInterval(() => {
+            this.config.trafficLight.state = this.config.trafficLight.state === 'зеленый' ? 'красный' : 'зеленый';
+            this.updateTrafficLightDisplay();
+            this.addConsoleMessage(`🚦 Светофор сменился на: ${this.config.trafficLight.state}`, 'warning');
+        }, this.config.trafficLight.changeInterval);
+    }
+
+    updateTrafficLightDisplay() {
+        const redLight = document.getElementById('redLight');
+        const greenLight = document.getElementById('greenLight');
+        
+        if (this.config.trafficLight.state === 'красный') {
+            redLight.classList.remove('inactive');
+            redLight.classList.add('red', 'light-changing');
+            greenLight.classList.add('inactive');
+            greenLight.classList.remove('green', 'light-changing');
+        } else {
+            greenLight.classList.remove('inactive');
+            greenLight.classList.add('green', 'light-changing');
+            redLight.classList.add('inactive');
+            redLight.classList.remove('red', 'light-changing');
+        }
+        
+        setTimeout(() => {
+            if (redLight) redLight.classList.remove('light-changing');
+            if (greenLight) greenLight.classList.remove('light-changing');
+        }, 500);
+    }
+
+    resetProgram() {
+        if (this.isExecuting) {
+            this.isExecuting = false;
+            this.addConsoleMessage('⚠️ Выполнение прервано', 'warning');
+        }
+        
+        this.resetDrone();
+        this.addConsoleMessage('🔄 Программа сброшена', 'info');
+    }
+
+    resetDrone() {
+        this.drone.x = this.config.start.x;
+        this.drone.y = this.config.start.y;
+        this.drone.direction = 'east';
+        this.drone.isMoving = false;
+        this.updateDronePosition();
+        
+        this.config.trafficLight.state = 'красный';
+        this.conveyorsFilled = false;
+        this.virusCoreActivated = false;
+        this.itemsMoved = 0;
+        
+        this.config.items = [
+            { x: 1, y: 8, color: 'red' },
+            { x: 5, y: 8, color: 'blue' },
+            { x: 9, y: 8, color: 'green' }
+        ];
+        
+        this.updateItemsDisplay();
+        this.updateTrafficLightDisplay();
+    }
+
+    checkLevelComplete() {
+        return this.drone.x === this.config.virusCore.x && 
+               this.drone.y === this.config.virusCore.y && 
+               this.conveyorsFilled;
+    }
+
+    async completeLevel() {
+        this.isExecuting = false;
+        
+        if (this.trafficLightInterval) {
+            clearInterval(this.trafficLightInterval);
+            this.trafficLightInterval = null;
+        }
+        
+        try {
+            console.log('=== НАЧАЛО ЗАВЕРШЕНИЯ УРОВНЯ 3.3 ===');
+            
+            // ВАЖНО: Сохраняем в ТЕ ЖЕ КЛЮЧИ, что и карта уровней!
+            // 1. Получаем или создаем профиль в правильном формате
+            let profile = JSON.parse(localStorage.getItem('cyberSystemsProfile') || '{}');
+            console.log('📊 Текущий профиль (cyberSystemsProfile):', profile);
+            
+            // Если профиля нет, создаем его
+            if (!profile || Object.keys(profile).length === 0) {
+                profile = {
+                    currentLevelId: '1.1',
+                    lastCompleted: null,
+                    juniorUnlocked: false,
+                    seniorUnlocked: false,
+                    completedLevels: [],
+                    rank: 'СТАЖЕР'
+                };
+            }
+            
+            // 2. Обновляем прогресс
+            profile.lastCompleted = '3.boss'; // Важно: используем тот же формат, что в карте уровней
+            profile.seniorUnlocked = true;
+            profile.juniorUnlocked = true;
+            
+            // 3. Добавляем все пройденные уровни
+            const allLevels = ['1.1', '1.2', '1.boss', '2.1', '2.2', '2.boss', '3.1', '3.2', '3.boss'];
+            
+            if (!profile.completedLevels) {
+                profile.completedLevels = [];
+            }
+            
+            // Добавляем недостающие уровни
+            allLevels.forEach(level => {
+                if (!profile.completedLevels.includes(level)) {
+                    profile.completedLevels.push(level);
+                }
+            });
+            
+            profile.completedLevels = allLevels; // Гарантируем, что все уровни есть
+            
+            // 4. Устанавливаем ранг SENIOR
+            profile.rank = 'SENIOR';
+            
+            // 5. Сохраняем обновленный профиль
+            localStorage.setItem('cyberSystemsProfile', JSON.stringify(profile));
+            console.log('✅ Обновленный профиль сохранен:', profile);
+            
+            // 6. Также сохраняем дублирующие ключи для совместимости
+            localStorage.setItem(`level_3.3_completed`, 'true');
+            localStorage.setItem(`level_3_3_completed`, 'true');
+            localStorage.setItem('game_completed', 'true');
+            localStorage.setItem('senior_unlocked', 'true');
+            
+            // 7. Синхронизируем с cyberProfile для обратной совместимости
+            const cyberProfile = {
+                rank: 'Senior Developer',
+                title: 'Senior Разработчик',
+                rankIcon: '👨‍💻',
+                levels: allLevels
+            };
+            localStorage.setItem('cyberProfile', JSON.stringify(cyberProfile));
+            
+            // 8. Показываем сообщение об успехе
+            this.addConsoleMessage('🎉 Все уровни пройдены! Вы стали SENIOR разработчиком!', 'success');
+            this.addConsoleMessage('📊 Прогресс сохранен', 'info');
+            
+            // 9. Создаем красивое окно с результатом
+            setTimeout(() => {
+                this.showCompletionPopup();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('❌ Критическая ошибка сохранения прогресса:', error);
+            this.addConsoleMessage('❌ Ошибка сохранения прогресса! Проверьте консоль', 'error');
+            
+            // Показываем сообщение с деталями ошибки
+            setTimeout(() => {
+                this.showErrorPopup(error);
+            }, 500);
+        }
+    }
+
+    showCompletionPopup() {
+        const alertDiv = document.createElement('div');
+        alertDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #0a0a1a, #1a1a2e);
+            border: 3px solid #00ff88;
+            border-radius: 15px;
+            padding: 30px;
+            z-index: 9999;
+            color: white;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.5);
+        `;
+        
+        alertDiv.innerHTML = `
+            <h2 style="color: #00ff88; margin-bottom: 20px; text-shadow: 0 0 10px #00ff88;">🎊 УРОВЕНЬ ПРОЙДЕН!</h2>
+            <h3 style="color: gold; margin-bottom: 20px;">🏆 ВЫ СТАЛИ SENIOR РАЗРАБОТЧИКОМ!</h3>
+            <div style="background: rgba(0, 255, 136, 0.1); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <p style="margin: 8px 0; font-size: 16px;">✅ Ядро вируса уничтожено</p>
+                <p style="margin: 8px 0; font-size: 16px;">✅ Все 9 уровней завершены</p>
+                <p style="margin: 8px 0; font-size: 16px;">✅ Статус: SENIOR</p>
+                <p style="margin: 8px 0; font-size: 14px; color: #aaa;">Все уровни разблокированы для повторного прохождения</p>
+            </div>
+            <button onclick="this.parentElement.remove(); goToLevelMap();" 
+                    style="background: #00ff88; 
+                           color: #0a0a1a; 
+                           border: none; 
+                           padding: 12px 30px; 
+                           font-size: 16px; 
+                           border-radius: 5px; 
+                           cursor: pointer;
+                           font-family: 'Courier New', monospace;
+                           font-weight: bold;
+                           margin-top: 20px;
+                           transition: all 0.3s;">
+                Перейти к карте уровней
+            </button>
+            <div style="margin-top: 15px; font-size: 12px; color: #888;">
+                Прогресс сохранен в: cyberSystemsProfile
+            </div>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        // Добавляем анимацию кнопки
+        const button = alertDiv.querySelector('button');
+        button.addEventListener('mouseover', () => {
+            button.style.background = '#00cc6a';
+            button.style.boxShadow = '0 0 15px #00ff88';
+        });
+        button.addEventListener('mouseout', () => {
+            button.style.background = '#00ff88';
+            button.style.boxShadow = 'none';
+        });
+        
+        // Автоматический переход через 15 секунд
+        setTimeout(() => {
+            if (alertDiv.parentElement) {
+                alertDiv.remove();
+            }
+            this.goToLevelMap();
+        }, 15000);
+    }
+
+    showErrorPopup(error) {
+        const errorAlert = document.createElement('div');
+        errorAlert.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a2e;
+            border: 3px solid #f44336;
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 9999;
+            color: white;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            max-width: 600px;
+        `;
+        
+        errorAlert.innerHTML = `
+            <h3 style="color: #f44336;">⚠️ Ошибка сохранения</h3>
+            <p>${error.message}</p>
+            <p style="margin-top: 15px; color: #aaa;">Рекомендации:</p>
+            <ol style="color: #aaa; margin-left: 20px;">
+                <li>Откройте DevTools (F12) и проверьте Console</li>
+                <li>Проверьте ключ 'cyberSystemsProfile' в Application/Storage</li>
+                <li>Попробуйте перезагрузить страницу и пройти уровень снова</li>
+            </ol>
+            <button onclick="this.parentElement.remove(); location.reload();" 
+                    style="background: #f44336; 
+                           color: white; 
+                           border: none; 
+                           padding: 10px 20px; 
+                           border-radius: 5px; 
+                           cursor: pointer;
+                           margin-top: 15px;">
+                Перезагрузить страницу
+            </button>
+        `;
+        
+        document.body.appendChild(errorAlert);
+    }
+
+    checkAndFixProgress() {
+        console.group('=== ПРОВЕРКА И ВОССТАНОВЛЕНИЕ ПРОГРЕССА ===');
+        
+        const profile = JSON.parse(localStorage.getItem('cyberSystemsProfile') || '{}');
+        const allLevels = ['1.1', '1.2', '1.boss', '2.1', '2.2', '2.boss', '3.1', '3.2', '3.boss'];
+        let needsFix = false;
+        
+        // Проверяем, все ли уровни в профиле
+        if (!profile.completedLevels || !Array.isArray(profile.completedLevels)) {
+            console.log('❌ completedLevels отсутствует или не массив');
+            needsFix = true;
+        } else {
+            allLevels.forEach(level => {
+                if (!profile.completedLevels.includes(level)) {
+                    console.log(`❌ Уровень ${level} отсутствует в completedLevels`);
+                    needsFix = true;
+                }
+            });
+        }
+        
+        // Проверяем статус SENIOR
+        if (profile.seniorUnlocked !== true || profile.rank !== 'SENIOR') {
+            console.log(`❌ Статус не SENIOR: seniorUnlocked=${profile.seniorUnlocked}, rank=${profile.rank}`);
+            needsFix = true;
+        }
+        
+        // Если нужно исправить
+        if (needsFix) {
+            console.log('🔄 Исправляю прогресс...');
+            
+            // Обновляем профиль
+            profile.lastCompleted = '3.boss';
+            profile.seniorUnlocked = true;
+            profile.juniorUnlocked = true;
+            profile.completedLevels = allLevels;
+            profile.rank = 'SENIOR';
+            
+            localStorage.setItem('cyberSystemsProfile', JSON.stringify(profile));
+            console.log('✅ Прогресс исправлен!');
+            
+            this.addConsoleMessage('🔄 Прогресс восстановлен', 'success');
+        } else {
+            console.log('✅ Прогресс в порядке');
+        }
+        
+        console.groupEnd();
+        return !needsFix;
+    }
+
+    getCompletionMessage() {
+        return '🎊 УРОВЕНЬ ПРОЙДЕН!\n\n🏆 ВЫ СТАЛИ SENIOR-ПРОГРАММИСТОМ!\n\nВы успешно восстановили систему, победив ядро вируса!\nОсвоены: условия, циклы, функции и их комбинации!\n\nПоздравляем с завершением игры!';
+    }
+
+    showHelp() {
+        alert('Помощь по уровню 3.3 - Финальный босс:\n\n' +
+              '1. Напишите функцию восстановить_систему() с условиями и циклами\n' +
+              '2. Проверяйте состояние светофора: светофор == "зеленый/красный"\n' +
+              '3. Используйте переложить_предметы() для заполнения конвейеров\n' +
+              '   - Дрон должен стоять НА КОНВЕЙЕРЕ (координаты: 1,8 / 5,8 / 9,8)\n' +
+              '4. Доберитесь до ядра вируса (13,8) и используйте активировать_ядро()\n' +
+              '5. Нужно переместить 3 предметов\n\n' +
+              'Координаты:\n' +
+              '- Старт: (1,1)\n' +
+              '- Конвейеры: (1,8), (5,8), (9,8)\n' +
+              '- Ядро вируса: (13,8)');
+    }
+
+    goBack() {
+        if (this.trafficLightInterval) {
+            clearInterval(this.trafficLightInterval);
+            this.trafficLightInterval = null;
+        }
+        window.location.href = '../level-map/index.html';
+    }
+
+    goToLevelMap() {
+        if (this.trafficLightInterval) {
+            clearInterval(this.trafficLightInterval);
+            this.trafficLightInterval = null;
+        }
+        window.location.href = '../level-map/index.html';
+    }
+}

@@ -4,254 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Уровень 1.1: Первые шаги - КиберСистемс</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../levels-common.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --level-color: #00ff88;
+            --game-field-bg: #1a1a2e;
+            --cell-bg: #1a2a4a;
+            --cell-border: #2a3a5a;
+            --code-block-bg: #0f3460;
+            --code-block-border: #2196F3;
+            --code-area-bg: #0a0a1a;
         }
 
-        body {
-            font-family: 'Courier New', monospace;
-            background: #0a0a1a;
-            color: #00ff88;
-            height: 100vh;
-            overflow: hidden;
+        /* Специфичные стили для уровня 1.1 */
+        .drone-moving {
+            animation: droneMove 0.3s ease-in-out;
         }
 
-        /* Верхняя панель */
-        .top-panel {
-            background: #151530;
-            border-bottom: 2px solid #00ff88;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 60px;
-        }
-
-        .level-title {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #00ff88;
-        }
-
-        .nav-button {
-            background: transparent;
-            color: #00ff88;
-            border: 1px solid #00ff88;
-            padding: 6px 12px;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .nav-button:hover {
-            background: #00ff88;
-            color: #0a0a1a;
-        }
-
-        /* Основной контейнер */
-        .main-container {
-            display: flex;
-            height: calc(100vh - 60px);
-            padding: 15px;
-            gap: 15px;
-        }
-
-        /* Левая часть - Игровое поле */
-        .left-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .game-field {
-            flex: 1;
-            background: #1a1a2e;
-            border: 2px solid #00ff88;
-            border-radius: 5px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .field-label {
-            color: #00ff88;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-            text-align: center;
-        }
-
-        .pixel-grid {
-            flex: 1;
-            background: #0a1429;
-            border: 2px solid #00ff88;
-            border-radius: 5px;
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(6, 1fr);
-            gap: 2px;
-            padding: 10px;
-        }
-
-        .grid-cell {
-            background: #1a2a4a;
-            border-radius: 3px;
-            position: relative;
-            border: 1px solid #2a3a5a;
-        }
-
-        .grid-cell.start {
-            background: #4CAF50;
-        }
-
-        .grid-cell.finish {
-            background: #FF9800;
-        }
-
-        .drone {
-            width: 70%;
-            height: 70%;
-            background: #8de8ff;
-            border-radius: 50%;
-            position: absolute;
-            top: 15%;
-            left: 15%;
-            box-shadow: 0 0 10px rgba(141, 232, 255, 0.7);
-        }
-
-        .drone::after {
-            content: '▲';
-            position: absolute;
-            top: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #1a1a2e;
-            font-size: 10px;
-        }
-
-        /* Правая часть - Программирование */
-        .right-panel {
-            width: 300px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .programming-section {
-            background: #1a1a2e;
-            border: 2px solid #00ff88;
-            border-radius: 5px;
-            padding: 15px;
-        }
-
-        .section-title {
-            color: #00ff88;
-            margin-bottom: 10px;
-            font-size: 1em;
-            text-align: center;
-        }
-
-        .code-block {
-            background: #0f3460;
-            padding: 8px;
-            border: 1px solid #2196F3;
-            border-radius: 4px;
-            cursor: grab;
-            color: white;
-            text-align: center;
-            font-family: 'Courier New', monospace;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-        }
-
-        .code-area {
-            background: #0a0a1a;
-            border: 1px dashed #00ff88;
-            border-radius: 4px;
-            padding: 10px;
-            min-height: 120px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .code-placeholder {
-            color: #666;
-            font-style: italic;
-            text-align: center;
-            padding: 10px;
-        }
-
-        /* Консоль */
-        .console-section {
-            background: #1a1a2e;
-            border: 2px solid #00ff88;
-            border-radius: 5px;
-            padding: 15px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .console-output {
-            flex: 1;
-            background: #0a0a1a;
-            border: 1px solid #00ff88;
-            border-radius: 4px;
-            padding: 10px;
-            font-family: 'Courier New', monospace;
-            color: #00ff88;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            font-size: 0.9em;
-        }
-
-        .console-line {
-            margin: 3px 0;
-        }
-
-        .console-line::before {
-            content: '> ';
-            color: #ff9800;
-        }
-
-        /* Кнопки управления */
-        .control-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .control-button {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            color: white;
-            font-size: 0.9em;
-        }
-
-        .control-button.run {
-            background: #4CAF50;
-        }
-
-        .control-button.reset {
-            background: #f44336;
-        }
-
-        /* Анимации */
         @keyframes droneMove {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
-        }
-
-        .drone-moving {
-            animation: droneMove 0.3s ease-in-out;
         }
     </style>
 </head>
@@ -280,8 +53,10 @@
             <!-- Блок программирования -->
             <div class="programming-section">
                 <div class="section-title">ДВИГАТЬСЯ_ВПЕРЕД()</div>
-                <div class="code-block" draggable="true" data-action="move">
-                    ДВИГАТЬСЯ_ВПЕРЕД()
+                <div class="blocks-container">
+                    <div class="code-block movement" draggable="true" data-action="move">
+                        ДВИГАТЬСЯ_ВПЕРЕД()
+                    </div>
                 </div>
             </div>
 
@@ -298,6 +73,7 @@
                 <div class="section-title">Консоль</div>
                 <div class="console-output" id="consoleOutput">
                     <div class="console-line">Дрон готов</div>
+                    <div class="console-line">Используйте ДВИГАТЬСЯ_ВПЕРЕД() чтобы достичь цели</div>
                 </div>
                 
                 <div class="control-buttons">
@@ -308,8 +84,11 @@
         </div>
     </div>
 
-    <!-- Подключаем общий API-клиент, чтобы был доступен updateProgress -->
+    <!-- Подключаем общий API-клиент -->
     <script src="../api.js"></script>
-    <script src="level-1-1.js"></script>
+    <!-- Подключаем базовый класс уровня -->
+    <script src="../LevelBase.js"></script>
+    <!-- Подключаем класс конкретного уровня -->
+    <script src="../level-1-1/level-1-1.js"></script>
 </body>
 </html>

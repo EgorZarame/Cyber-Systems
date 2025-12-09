@@ -5,236 +5,143 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Уровень 2.1: Условные переменные - КиберСистемс</title>
     <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../levels-common.css">
+    <link rel="stylesheet" href="../levels-common2.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --level-color: #2196F3;
+            --game-field-bg: #1a1a2e;
+            --code-area-bg: #0a0a1a;
+            --cell-bg: #1a2a4a;
+            --cell-border: #2a3a5a;
+            --code-block-bg: #0f3460;
+            --code-block-border: #2196F3;
+            --conveyor-line-bg: #1a2a4a;
+            --conveyor-line-border: #2a3a5a;
+            --conveyor-track-bg: #2d5b88;
         }
 
         body {
-            font-family: 'Courier New', monospace;
-            background: #0a0a1a;
             color: #00ff88;
+        }
+
+        .top-panel {
+            border-bottom-color: var(--level-color);
+        }
+
+        .level-title {
+            color: var(--level-color);
+        }
+
+        .nav-button {
+            color: var(--level-color);
+            border-color: var(--level-color);
+        }
+
+        .nav-button:hover {
+            background: var(--level-color);
+            color: #0a0a1a;
+        }
+
+        .sorting-system, .programming-section, .console-section {
+            background: var(--game-field-bg);
+            border-color: var(--level-color);
+        }
+
+        .system-label, .section-title {
+            color: var(--level-color);
+        }
+
+        .conveyor-system {
+            background: #0a1429;
+            border-color: var(--level-color);
+        }
+
+        .code-area, .console-output {
+            background: var(--code-area-bg);
+            border-color: var(--level-color);
+        }
+
+        .console-output {
+            color: var(--level-color);
+        }
+
+        .conveyor-line {
+            background: var(--conveyor-line-bg);
+            border-color: var(--conveyor-line-border);
+        }
+
+        .conveyor-track {
+            background: var(--conveyor-track-bg);
+        }
+
+        .code-block {
+            background: var(--code-block-bg);
+            border-color: var(--code-block-border);
+        }
+
+        /* Специфичные стили для 2.1 */
+        body {
             height: 100vh;
             overflow: hidden;
         }
 
-        /* Верхняя панель */
-        .top-panel {
-            background: #151530;
-            border-bottom: 2px solid #2196F3;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 60px;
-            flex-shrink: 0;
-        }
-
-        .level-title {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #2196F3;
-        }
-
-        .nav-button {
-            background: transparent;
-            color: #2196F3;
-            border: 1px solid #2196F3;
-            padding: 6px 12px;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .nav-button:hover {
-            background: #2196F3;
-            color: #0a0a1a;
-        }
-
-        /* Основной контейнер */
         .main-container {
-            display: flex;
             height: calc(100vh - 60px);
             padding: 15px;
             gap: 15px;
-            min-height: 0;
         }
 
-        /* Левая часть - Система сортировки */
-        .left-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            min-height: 0;
-        }
-
-        .sorting-system {
-            flex: 1;
-            background: #1a1a2e;
-            border: 2px solid #2196F3;
-            border-radius: 5px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        .system-label {
-            color: #2196F3;
-            margin-bottom: 8px;
-            font-size: 1em;
-            text-align: center;
-            flex-shrink: 0;
+        .right-panel {
+            width: 600px;
         }
 
         .conveyor-system {
-            flex: 1;
-            background: #0a1429;
-            border: 2px solid #2196F3;
-            border-radius: 5px;
             padding: 8px;
-            display: flex;
-            flex-direction: column;
             gap: 6px;
-            min-height: 0;
-            overflow: hidden;
         }
 
         .conveyor-line {
-            display: flex;
-            align-items: center;
             gap: 8px;
             padding: 5px;
-            background: #1a2a4a;
-            border-radius: 4px;
-            border: 1px solid #2a3a5a;
-            flex-shrink: 0;
             min-height: 40px;
         }
 
         .conveyor-label {
             width: 90px;
-            color: #2196F3;
-            font-weight: bold;
-            flex-shrink: 0;
             font-size: 0.8em;
         }
 
         .conveyor-track {
-            flex: 1;
             height: 32px;
-            background: #2d5b88;
-            border-radius: 4px;
-            border: 1px dashed #2196F3;
-            display: flex;
-            align-items: center;
             padding: 0 6px;
             gap: 6px;
-            overflow-x: auto;
-            flex-shrink: 0;
+        }
+
+        .robot-arm {
+            width: 50px;
+            height: 32px;
+            font-size: 0.7em;
         }
 
         .package {
             width: 25px;
             height: 25px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
             font-size: 0.7em;
-            color: white;
-            animation: packageAppear 0.5s ease-in;
-            flex-shrink: 0;
-        }
-
-        .package.red { background: #f44336; }
-        .package.blue { background: #2196F3; }
-        .package.green { background: #4CAF50; }
-
-        .robot-arm {
-            width: 50px;
-            height: 32px;
-            background: #666;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.7em;
-            border: 2px solid #888;
-            flex-shrink: 0;
-        }
-
-        /* Правая часть - Программирование */
-        .right-panel {
-            width: 600px; /* ОЧЕНЬ ШИРОКАЯ */
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-height: 0;
         }
 
         .programming-section {
-            background: #1a1a2e;
-            border: 2px solid #2196F3;
-            border-radius: 5px;
             padding: 10px;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
         }
 
         .section-title {
-            color: #2196F3;
             margin-bottom: 6px;
             font-size: 0.9em;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .blocks-container {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            flex-shrink: 0;
         }
 
         .code-block {
-            background: #0f3460;
             padding: 8px 6px;
-            border: 1px solid #2196F3;
-            border-radius: 4px;
-            cursor: grab;
-            color: white;
-            text-align: center;
-            font-family: 'Courier New', monospace;
             font-size: 0.85em;
-            flex-shrink: 0;
-            min-width: 0;
-            word-break: break-word;
-            line-height: 1.3;
-        }
-
-        .code-block.condition {
-            border-color: #FF9800;
-            background: #b36b00;
-        }
-
-        .code-block.action {
-            border-color: #4CAF50;
-            background: #2d5b88;
-        }
-
-        .condition-content {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            justify-content: center;
-            flex-wrap: wrap;
         }
 
         .condition-select {
@@ -250,51 +157,17 @@
         }
 
         .code-area {
-            background: #0a0a1a;
-            border: 1px dashed #2196F3;
-            border-radius: 4px;
-            padding: 8px;
             min-height: 80px;
             max-height: 120px;
-            overflow-y: auto;
-            flex-shrink: 0;
         }
 
-        .code-placeholder {
-            color: #666;
-            font-style: italic;
-            text-align: center;
-            padding: 8px;
-            font-size: 0.85em;
-        }
-
-        /* КОНСОЛЬ - ОЧЕНЬ БОЛЬШАЯ */
         .console-section {
-            background: #1a1a2e;
-            border: 2px solid #2196F3;
-            border-radius: 5px;
             padding: 10px;
-            flex: 2; /* ЕЩЕ БОЛЬШЕ МЕСТА */
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
         }
 
         .console-output {
-            flex: 1;
-            background: #0a0a1a;
-            border: 1px solid #2196F3;
-            border-radius: 4px;
             padding: 12px;
-            font-family: 'Courier New', monospace;
-            color: #2196F3;
-            overflow-y: auto;
-            margin-bottom: 8px;
-            font-size: 0.9em; /* Увеличили шрифт */
-            min-height: 0;
-            word-break: break-word;
-            white-space: pre-wrap;
-            line-height: 1.5;
+            font-size: 0.9em;
         }
 
         .console-line {
@@ -310,37 +183,8 @@
             font-weight: bold;
         }
 
-        /* Кнопки управления */
-        .control-buttons {
-            display: flex;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-
         .control-button {
-            flex: 1;
-            padding: 10px 5px;
-            border: none;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            color: white;
-            font-size: 0.85em;
             min-height: 35px;
-        }
-
-        .control-button.run {
-            background: #4CAF50;
-        }
-
-        .control-button.reset {
-            background: #f44336;
-        }
-
-        /* Анимации */
-        @keyframes packageAppear {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
         }
 
         @keyframes packageMove {
@@ -356,6 +200,11 @@
             background: #FF9800 !important;
             color: #000 !important;
         }
+
+        .log-system { color: #2196F3; }
+        .log-warning { color: #FF9800; }
+        .log-danger { color: #f44336; }
+        .log-success { color: #4CAF50; }
     </style>
 </head>
 <body>
@@ -465,12 +314,12 @@
                 </div>
             </div>
 
-            <!-- КОНСОЛЬ - ГЛАВНЫЙ ЭЛЕМЕНТ -->
+            <!-- Консоль -->
             <div class="console-section">
                 <div class="section-title">Консоль системы</div>
                 <div class="console-output" id="consoleOutput">
-                    <div class="console-line">Система сортировки инициализирована</div>
-                    <div class="console-line">Запрограммируйте робота-сортировщика</div>
+                    <div class="console-line log-system">Система сортировки инициализирована</div>
+                    <div class="console-line log-system">Запрограммируйте робота-сортировщика</div>
                 </div>
                 
                 <div class="control-buttons">
@@ -481,8 +330,41 @@
         </div>
     </div>
 
-    <!-- API-клиент и логика уровня -->
+    <!-- API-клиент и ООП-логика уровня -->
     <script src="../api.js"></script>
-    <script src="level-2-1.js"></script>
+    <script src="../LevelBase.js"></script>
+    <script src="../LevelBase2.js"></script>
+    <script src="../level-2-1/level-2-1.js"></script>
+    
+    <script>
+    let level;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        level = new Level2_1();
+        level.initialize();
+    });
+
+    // Глобальные функции для вызова из HTML
+    function goBack() {
+        level.goBack();
+    }
+
+    function showHelp() {
+        level.showHelp();
+    }
+
+    function runProgram() {
+        level.runProgram();
+    }
+
+    function resetProgram() {
+        level.resetProgram();
+    }
+
+    // Навигация
+    function goToLevelMap() {
+        window.location.href = '../level-map/index.html';
+    }
+    </script>
 </body>
 </html>

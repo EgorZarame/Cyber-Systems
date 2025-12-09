@@ -5,25 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Уровень 2.2: Циклы - КиберСистемс</title>
     <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../levels-common.css">
+    <link rel="stylesheet" href="../levels-common2.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --level-color: #FF9800;
+            --game-field-bg: #1a1a2e;
+            --code-area-bg: #0a0a1a;
+            --cell-bg: #1a2a4a;
+            --cell-border: #2a3a5a;
+            --code-block-bg: #0f3460;
+            --code-block-border: #2196F3;
+            --loop-color: #9C27B0;
         }
 
         body {
-            font-family: 'Courier New', monospace;
-            background: #0a0a1a;
             color: #00ff88;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* Верхняя панель */
         .top-panel {
+            border-bottom-color: var(--level-color);
             background: #151530;
-            border-bottom: 2px solid #FF9800;
             padding: 10px 20px;
             display: flex;
             justify-content: space-between;
@@ -33,15 +37,16 @@
         }
 
         .level-title {
+            color: var(--level-color);
             font-size: 1.2em;
             font-weight: bold;
-            color: #FF9800;
         }
 
         .nav-button {
+            color: var(--level-color);
+            border-color: var(--level-color);
             background: transparent;
-            color: #FF9800;
-            border: 1px solid #FF9800;
+            border: 1px solid var(--level-color);
             padding: 6px 12px;
             font-family: 'Courier New', monospace;
             cursor: pointer;
@@ -49,7 +54,7 @@
         }
 
         .nav-button:hover {
-            background: #FF9800;
+            background: var(--level-color);
             color: #0a0a1a;
         }
 
@@ -60,6 +65,7 @@
             padding: 15px;
             gap: 15px;
             min-height: 0;
+            overflow: hidden;
         }
 
         /* Левая часть - Игровое поле */
@@ -73,17 +79,18 @@
 
         .game-field {
             flex: 1;
-            background: #1a1a2e;
-            border: 2px solid #FF9800;
+            background: var(--game-field-bg, #1a1a2e);
+            border: 2px solid var(--level-color, #00ff88);
             border-radius: 5px;
             padding: 15px;
             display: flex;
             flex-direction: column;
+            position: relative;
             min-height: 0;
         }
 
         .field-label {
-            color: #FF9800;
+            color: var(--level-color, #00ff88);
             margin-bottom: 10px;
             font-size: 1em;
             text-align: center;
@@ -93,7 +100,7 @@
         .pixel-grid {
             flex: 1;
             background: #0a1429;
-            border: 2px solid #FF9800;
+            border: 2px solid var(--level-color, #00ff88);
             border-radius: 5px;
             display: grid;
             grid-template-columns: repeat(12, 1fr);
@@ -104,10 +111,10 @@
         }
 
         .grid-cell {
-            background: #1a2a4a;
+            background: var(--cell-bg, #1a2a4a);
             border-radius: 3px;
             position: relative;
-            border: 1px solid #2a3a5a;
+            border: 1px solid var(--cell-border, #2a3a5a);
         }
 
         .grid-cell.start {
@@ -120,19 +127,22 @@
         }
 
         .grid-cell.obstacle {
-            background: #f44336;
+            background: #b30000;
             background-image: repeating-linear-gradient(
                 45deg,
                 transparent,
                 transparent 3px,
-                rgba(0, 0, 0, 0.1) 3px,
-                rgba(0, 0, 0, 0.1) 6px
+                rgba(0, 0, 0, 0.2) 3px,
+                rgba(0, 0, 0, 0.2) 6px
             );
         }
 
+        /* ИЗМЕНЕНИЕ: Клетки паттернов теперь КРАСНЫЕ */
         .grid-cell.pattern {
-            background: #2d5b88;
-            box-shadow: inset 0 0 10px rgba(255, 152, 0, 0.3);
+            background: #ff4444;
+            box-shadow: inset 0 0 10px rgba(255, 68, 68, 0.7);
+            border-color: #ff0000;
+            animation: patternPulse 2s infinite;
         }
 
         .drone {
@@ -145,6 +155,7 @@
             left: 15%;
             box-shadow: 0 0 10px rgba(141, 232, 255, 0.7);
             transition: transform 0.3s ease;
+            z-index: 2;
         }
 
         .drone::after {
@@ -171,7 +182,7 @@
             background: rgba(0, 0, 0, 0.8);
             padding: 5px 10px;
             border-radius: 5px;
-            border: 1px solid #FF9800;
+            border: 1px solid var(--level-color, #FF9800);
             font-size: 0.8em;
             z-index: 2;
             flex-shrink: 0;
@@ -179,7 +190,7 @@
 
         /* Правая часть - Программирование */
         .right-panel {
-            width: 500px; /* Увеличено */
+            width: 500px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -187,8 +198,8 @@
         }
 
         .programming-section {
-            background: #1a1a2e;
-            border: 2px solid #FF9800;
+            background: var(--game-field-bg, #1a1a2e);
+            border: 2px solid var(--level-color, #00ff88);
             border-radius: 5px;
             padding: 12px;
             display: flex;
@@ -197,7 +208,7 @@
         }
 
         .section-title {
-            color: #FF9800;
+            color: var(--level-color, #00ff88);
             margin-bottom: 8px;
             font-size: 0.9em;
             text-align: center;
@@ -212,9 +223,9 @@
         }
 
         .code-block {
-            background: #0f3460;
+            background: var(--code-block-bg, #0f3460);
             padding: 8px;
-            border: 1px solid #2196F3;
+            border: 1px solid var(--code-block-border, #2196F3);
             border-radius: 4px;
             cursor: grab;
             color: white;
@@ -260,8 +271,8 @@
         }
 
         .code-area {
-            background: #0a0a1a;
-            border: 1px dashed #FF9800;
+            background: var(--code-area-bg, #0a0a1a);
+            border: 1px dashed var(--level-color, #00ff88);
             border-radius: 4px;
             padding: 10px;
             min-height: 120px;
@@ -287,39 +298,46 @@
             gap: 5px;
         }
 
-        /* Консоль - ИСПРАВЛЕНО */
+        /* КОНСОЛЬ - ИСПРАВЛЕНА */
         .console-section {
-            background: #1a1a2e;
-            border: 2px solid #FF9800;
+            background: var(--game-field-bg, #1a1a2e);
+            border: 2px solid var(--level-color, #00ff88);
             border-radius: 5px;
             padding: 12px;
             flex: 1;
             display: flex;
             flex-direction: column;
             min-height: 0;
+            overflow: hidden;
         }
 
         .console-output {
             flex: 1;
-            background: #0a0a1a;
-            border: 1px solid #FF9800;
+            background: var(--code-area-bg, #0a0a1a);
+            border: 1px solid var(--level-color, #00ff88);
             border-radius: 4px;
             padding: 10px;
             font-family: 'Courier New', monospace;
-            color: #FF9800;
+            color: var(--level-color, #00ff88);
             overflow-y: auto;
+            overflow-x: hidden;
             margin-bottom: 10px;
             font-size: 0.82em;
             min-height: 0;
-            word-break: break-word;
+            word-break: break-all;
+            word-wrap: break-word;
             white-space: pre-wrap;
             line-height: 1.4;
+            max-height: 250px;
         }
 
         .console-line {
             margin: 2px 0;
             padding: 3px 0;
             border-bottom: 1px solid rgba(255, 152, 0, 0.1);
+            word-break: break-word;
+            white-space: normal;
+            font-size: 0.8em;
         }
 
         .console-line::before {
@@ -328,11 +346,17 @@
             margin-right: 4px;
         }
 
+        .log-system { color: #FF9800; }
+        .log-warning { color: #ff8800; }
+        .log-danger { color: #ff4444; }
+        .log-success { color: #4CAF50; }
+
         /* Кнопки управления */
         .control-buttons {
             display: flex;
             gap: 6px;
             flex-shrink: 0;
+            margin-top: auto;
         }
 
         .control-button {
@@ -345,6 +369,9 @@
             color: white;
             font-size: 0.85em;
             min-height: 35px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .control-button.run {
@@ -359,6 +386,17 @@
         @keyframes finishPulse {
             0%, 100% { box-shadow: 0 0 10px #2196F3; }
             50% { box-shadow: 0 0 20px #2196F3, 0 0 30px #2196F3; }
+        }
+
+        @keyframes patternPulse {
+            0%, 100% { 
+                background: #ff4444;
+                box-shadow: inset 0 0 10px rgba(255, 68, 68, 0.7);
+            }
+            50% { 
+                background: #ff6666;
+                box-shadow: inset 0 0 15px rgba(255, 68, 68, 0.9);
+            }
         }
 
         @keyframes droneMove {
@@ -380,6 +418,21 @@
             border-color: #FF9800 !important;
             background: #FF9800 !important;
             color: #000 !important;
+        }
+
+        /* Стиль для кнопки завершения цикла */
+        .end-loop-btn {
+            display: block;
+            margin-top: 5px;
+            margin-left: 20px;
+            background: #9C27B0;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            cursor: pointer;
+            width: fit-content;
         }
     </style>
 </head>
@@ -424,7 +477,7 @@
                     <div class="code-block loop" draggable="true" data-action="loop">
                         <div class="loop-content">
                             повторить(
-                            <input type="number" class="loop-input" value="3" min="1" max="10" onchange="updateLoopCount(this)">
+                            <input type="number" class="loop-input" value="3" min="1" max="10">
                             )
                         </div>
                     </div>
@@ -443,8 +496,8 @@
             <div class="console-section">
                 <div class="section-title">Консоль выполнения</div>
                 <div class="console-output" id="consoleOutput">
-                    <div class="console-line">Система инициализирована</div>
-                    <div class="console-line">Используйте циклы для повторяющихся паттернов</div>
+                    <div class="console-line log-system">Система инициализирована</div>
+                    <div class="console-line log-system">Используйте циклы для повторяющихся паттернов</div>
                 </div>
                 
                 <div class="control-buttons">
@@ -455,8 +508,31 @@
         </div>
     </div>
 
-    <!-- API-клиент и логика уровня -->
+    <!-- API-клиент и ООП-логика уровня -->
     <script src="../api.js"></script>
-    <script src="level-2-2.js"></script>
+    <script src="../LevelBase.js"></script>
+    <script src="../LevelBase2.js"></script>
+    <script src="../level-2-2/level-2-2.js"></script>
+    
+    <script>
+    let level;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        level = new Level2_2();
+        level.initialize();
+        
+        // Глобальные функции для вызова из HTML
+        window.goBack = () => level.goBack();
+        window.showHelp = () => level.showHelp();
+        window.runProgram = () => level.runProgram();
+        window.resetProgram = () => level.resetProgram();
+        window.updateLoopCount = (element) => level.updateLoopCount(element);
+    });
+
+    // Навигация
+    function goToLevelMap() {
+        window.location.href = '../level-map/index.html';
+    }
+    </script>
 </body>
 </html>

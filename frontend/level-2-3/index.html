@@ -5,174 +5,209 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Уровень 2.3: Босс - Адаптивный глитч - КиберСистемс</title>
     <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../levels-common.css">
+    <link rel="stylesheet" href="../levels-common2.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --level-color: #9C27B0;
+            --game-field-bg: #1a1a2e;
+            --code-area-bg: #0a0a1a;
+            --cell-bg: #1a2a4a;
+            --cell-border: #2a3a5a;
+            --code-block-bg: #0f3460;
+            --code-block-border: #9C27B0;
+            --conveyor-line-bg: #1a2a4a;
+            --conveyor-line-border: #2a3a5a;
+            --conveyor-track-bg: #2d5b88;
+            --loop-color: #9C27B0;
         }
 
         body {
-            font-family: 'Courier New', monospace;
-            background: #0a0a1a;
-            color: #9C27B0;
+            color: #00ff88;
+        }
+
+        .top-panel {
+            border-bottom-color: var(--level-color);
+        }
+
+        .level-title {
+            color: var(--level-color);
+            text-shadow: 0 0 10px #9C27B0;
+        }
+
+        .nav-button {
+            color: var(--level-color);
+            border-color: var(--level-color);
+        }
+
+        .nav-button:hover {
+            background: var(--level-color);
+            color: #0a0a1a;
+        }
+
+        .sorting-system, .programming-section, .console-section {
+            background: var(--game-field-bg);
+            border-color: var(--level-color);
+        }
+
+        .system-label, .section-title {
+            color: var(--level-color);
+        }
+
+        .conveyor-system {
+            background: #0a1429;
+            border-color: var(--level-color);
+        }
+
+        .code-area, .console-output {
+            background: var(--code-area-bg);
+            border-color: var(--level-color);
+        }
+
+        .console-output {
+            color: var(--level-color);
+        }
+
+        .conveyor-line {
+            background: var(--conveyor-line-bg);
+            border-color: var(--conveyor-line-border);
+        }
+
+        .conveyor-track {
+            background: var(--conveyor-track-bg);
+        }
+
+        .code-block {
+            background: var(--code-block-bg);
+            border-color: var(--code-block-border);
+        }
+
+        /* Специфичные стили для 2.3 */
+        body {
             height: 100vh;
             overflow: hidden;
         }
 
-        /* Глитч эффекты */
-        .glitch-effect {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 100;
-            opacity: 0;
-            background: linear-gradient(45deg, transparent 49%, #ff00ff 50%, transparent 51%);
-            background-size: 10px 10px;
-            animation: glitch 0.3s infinite;
-        }
-
-        /* Верхняя панель */
-        .top-panel {
-            background: #151530;
-            border-bottom: 2px solid #9C27B0;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 50px;
-            position: relative;
-            z-index: 10;
-            flex-shrink: 0;
-        }
-
-        .level-title {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #9C27B0;
-            text-shadow: 0 0 10px #9C27B0;
-            animation: textGlitch 5s infinite;
-        }
-
-        .nav-button {
-            background: transparent;
-            color: #9C27B0;
-            border: 1px solid #9C27B0;
-            padding: 5px 10px;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .nav-button:hover {
-            background: #9C27B0;
-            color: #0a0a1a;
-        }
-
-        /* Основной контейнер */
         .main-container {
-            display: flex;
-            height: calc(100vh - 50px);
-            padding: 10px;
-            gap: 10px;
-            overflow: hidden;
+            height: calc(100vh - 60px);
+            padding: 15px;
+            gap: 15px;
         }
 
-        /* Левая часть - Система сортировки */
-        .left-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-height: 0;
-            overflow: hidden;
+        .right-panel {
+            width: 600px;
         }
 
         .sorting-system {
-            flex: 1;
-            background: #1a0a1a;
-            border: 2px solid #9C27B0;
-            border-radius: 5px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            min-height: 0;
+            padding: 15px;
         }
 
         .system-label {
-            color: #9C27B0;
+            color: var(--level-color);
             margin-bottom: 10px;
-            font-size: 1em;
+            font-size: 1.1em;
             text-align: center;
-            text-shadow: 0 0 5px #9C27B0;
             flex-shrink: 0;
         }
 
         .conveyor-system {
-            flex: 1;
-            background: #0a1429;
-            border: 2px solid #9C27B0;
-            border-radius: 5px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: relative;
-            min-height: 0;
-            overflow: hidden;
+            padding: 8px;
+            gap: 6px;
         }
 
         .conveyor-line {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px;
-            background: #2a152a;
-            border-radius: 4px;
-            border: 1px solid #3a253a;
+            gap: 8px;
+            padding: 5px;
+            min-height: 40px;
             position: relative;
-            flex-shrink: 0;
-            min-height: 45px;
-        }
-
-        .section-label {
-            position: absolute;
-            top: -8px;
-            left: 10px;
-            background: #1a0a1a;
-            padding: 0 5px;
-            font-size: 0.7em;
-            color: #9C27B0;
         }
 
         .conveyor-label {
-            width: 110px;
-            color: #9C27B0;
-            font-weight: bold;
-            font-size: 0.9em;
-            flex-shrink: 0;
+            width: 90px;
+            font-size: 0.8em;
         }
 
         .conveyor-track {
-            flex: 1;
-            height: 35px;
-            background: #3a253a;
-            border-radius: 4px;
-            border: 1px dashed #9C27B0;
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            gap: 8px;
-            overflow-x: auto;
-            position: relative;
-            min-width: 0;
+            height: 32px;
+            padding: 0 6px;
+            gap: 6px;
         }
 
+        .robot-arm {
+            width: 50px;
+            height: 32px;
+            font-size: 0.7em;
+        }
+
+        .package {
+            width: 25px;
+            height: 25px;
+            font-size: 0.7em;
+        }
+
+        .programming-section {
+            padding: 10px;
+        }
+
+        .section-title {
+            margin-bottom: 6px;
+            font-size: 0.9em;
+        }
+
+        .code-block {
+            padding: 8px 6px;
+            font-size: 0.85em;
+        }
+
+        .condition-select, .loop-input {
+            background: #1a2a4a;
+            border: 1px solid #FF9800;
+            border-radius: 3px;
+            color: white;
+            padding: 2px 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75em;
+            min-width: 70px;
+            max-width: 80px;
+        }
+
+        .loop-input {
+            width: 35px;
+            text-align: center;
+        }
+
+        .code-area {
+            min-height: 80px;
+            max-height: 120px;
+        }
+
+        .console-section {
+            padding: 10px;
+        }
+
+        .console-output {
+            padding: 12px;
+            font-size: 0.9em;
+        }
+
+        .console-line {
+            margin: 2px 0;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(156, 39, 176, 0.1);
+        }
+
+        .console-line::before {
+            content: '>';
+            color: #ff9800;
+            margin-right: 6px;
+            font-weight: bold;
+        }
+
+        .control-button {
+            min-height: 35px;
+        }
+
+        /* Стили для секций конвейера */
         .conveyor-section {
             position: absolute;
             height: 100%;
@@ -181,46 +216,17 @@
             opacity: 0.3;
         }
 
-        .package {
-            width: 25px;
-            height: 25px;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.8em;
-            color: white;
-            animation: packageAppear 0.5s ease-in;
-            position: relative;
-            z-index: 2;
-            flex-shrink: 0;
+        .section-label {
+            position: absolute;
+            top: -8px;
+            left: 10px;
+            background: #1a1a2e;
+            padding: 0 5px;
+            font-size: 0.6em;
+            color: #9C27B0;
         }
 
-        .package.red { background: #f44336; }
-        .package.blue { background: #2196F3; }
-        .package.green { background: #4CAF50; }
-        .package.corrupted {
-            animation: corruption 2s infinite;
-            background: linear-gradient(45deg, #f44336, #9C27B0, #2196F3);
-        }
-
-        .robot-arm {
-            width: 55px;
-            height: 35px;
-            background: #666;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.8em;
-            border: 2px solid #888;
-            position: relative;
-            z-index: 2;
-            flex-shrink: 0;
-        }
-
+        /* Стиль для здоровья босса */
         .boss-health {
             position: absolute;
             top: 8px;
@@ -230,7 +236,6 @@
             border-radius: 5px;
             border: 1px solid #9C27B0;
             font-size: 0.8em;
-            flex-shrink: 0;
         }
 
         .health-bar {
@@ -249,124 +254,7 @@
             transition: width 0.3s ease;
         }
 
-        /* Правая часть - Программирование */
-        .right-panel {
-            width: 380px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        .programming-section {
-            background: #1a0a1a;
-            border: 2px solid #9C27B0;
-            border-radius: 5px;
-            padding: 12px;
-            min-height: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .section-title {
-            color: #9C27B0;
-            margin-bottom: 10px;
-            font-size: 0.95em;
-            text-align: center;
-            text-shadow: 0 0 5px #9C27B0;
-            flex-shrink: 0;
-        }
-
-        .blocks-container {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-
-        .code-block {
-            background: #2a152a;
-            padding: 8px;
-            border: 1px solid #9C27B0;
-            border-radius: 4px;
-            cursor: grab;
-            color: white;
-            text-align: center;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .code-block.condition {
-            border-color: #FF9800;
-            background: #b36b00;
-        }
-
-        .code-block.action {
-            border-color: #4CAF50;
-            background: #2d5b88;
-        }
-
-        .code-block.loop {
-            border-color: #2196F3;
-            background: #1565C0;
-        }
-
-        .code-block.corrupted {
-            animation: blockCorruption 3s infinite;
-            border-color: #ff00ff;
-            background: linear-gradient(45deg, #2a152a, #9C27B0, #2a152a);
-        }
-
-        .condition-content, .loop-content {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            justify-content: center;
-            font-size: 0.85em;
-        }
-
-        .condition-select, .loop-input {
-            background: #1a2a4a;
-            border: 1px solid #FF9800;
-            border-radius: 3px;
-            color: white;
-            padding: 2px 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8em;
-            max-width: 80px;
-        }
-
-        .loop-input {
-            width: 35px;
-            text-align: center;
-        }
-
-        .code-area {
-            background: #0a0a0a;
-            border: 1px dashed #9C27B0;
-            border-radius: 4px;
-            padding: 10px;
-            min-height: 120px;
-            max-height: 200px;
-            overflow-y: auto;
-            position: relative;
-            flex: 1;
-            min-height: 0;
-            margin-top: 5px;
-        }
-
-        .code-placeholder {
-            color: #666;
-            font-style: italic;
-            text-align: center;
-            padding: 10px;
-            font-size: 0.9em;
-        }
-
+        /* Стили для циклов */
         .loop-body {
             margin-left: 20px;
             border-left: 2px solid #2196F3;
@@ -391,85 +279,41 @@
             width: fit-content;
         }
 
-        /* Консоль - ИСПРАВЛЕНА */
-        .console-section {
-            background: #1a0a1a;
-            border: 2px solid #9C27B0;
-            border-radius: 5px;
-            padding: 12px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        .console-output {
-            flex: 1;
-            background: #0a0a0a;
-            border: 1px solid #9C27B0;
-            border-radius: 4px;
-            padding: 10px;
-            font-family: 'Courier New', monospace;
-            color: #9C27B0;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            font-size: 0.85em;
-            min-height: 0;
-            line-height: 1.3;
-            max-height: 220px;
-            word-wrap: break-word;
-        }
-
-        .console-line {
-            margin: 2px 0;
-            padding: 2px 0;
-            font-size: 0.8em;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            line-height: 1.4;
-        }
-
-        .console-line::before {
-            content: '> ';
-            color: #ff9800;
-            margin-right: 3px;
-        }
-
-        .log-system { color: #9C27B0; }
-        .log-warning { color: #FF9800; }
-        .log-danger { color: #f44336; }
-        .log-success { color: #4CAF50; }
-
-        /* Кнопки управления */
-        .control-buttons {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-            margin-top: auto;
-        }
-
-        .control-button {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            color: white;
-            font-size: 0.9em;
-            min-height: 35px;
-        }
-
-        .control-button.run {
-            background: #4CAF50;
-        }
-
-        .control-button.reset {
-            background: #f44336;
-        }
-
         /* Анимации */
+        @keyframes packageAppear {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .package-moving {
+            animation: packageAppear 0.5s ease-in-out;
+        }
+
+        .executing {
+            background: #FF9800 !important;
+            color: #000 !important;
+        }
+
+        .loop-executing {
+            border-color: #FF9800 !important;
+            background: #FF9800 !important;
+            color: #000 !important;
+        }
+
+        /* Глитч эффекты */
+        .glitch-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            background: linear-gradient(45deg, transparent 49%, #ff00ff 50%, transparent 51%);
+            background-size: 10px 10px;
+        }
+
         @keyframes glitch {
             0% { opacity: 0; transform: translateX(0); }
             50% { opacity: 0.1; transform: translateX(2px); }
@@ -485,14 +329,18 @@
             99% { transform: translateX(1px); }
         }
 
-        @keyframes packageAppear {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        .level-title {
+            animation: textGlitch 5s infinite;
         }
 
         @keyframes corruption {
             0%, 100% { filter: hue-rotate(0deg); }
             50% { filter: hue-rotate(180deg); }
+        }
+
+        .package.corrupted {
+            animation: corruption 2s infinite;
+            background: linear-gradient(45deg, #f44336, #9C27B0, #2196F3);
         }
 
         @keyframes blockCorruption {
@@ -501,27 +349,16 @@
             66% { border-color: #ff00ff; }
         }
 
-        .executing {
-            background: #FF9800 !important;
-            color: #000 !important;
-            transition: all 0.3s ease;
+        .code-block.corrupted {
+            animation: blockCorruption 3s infinite;
+            border-color: #ff00ff;
+            background: linear-gradient(45deg, #0f3460, #9C27B0, #0f3460);
         }
 
-        .loop-executing {
-            border-color: #FF9800 !important;
-            background: #FF9800 !important;
-            color: #000 !important;
-            transition: all 0.3s ease;
-        }
-
-        .glitch-active .conveyor-track {
-            animation: conveyorGlitch 0.5s infinite;
-        }
-
-        @keyframes conveyorGlitch {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(2px); }
-        }
+        .log-system { color: #9C27B0; }
+        .log-warning { color: #FF9800; }
+        .log-danger { color: #f44336; }
+        .log-success { color: #4CAF50; }
     </style>
 </head>
 <body>
@@ -549,11 +386,14 @@
                 </div>
                 <div class="conveyor-system" id="conveyorSystem">
                     <!-- Секции конвейеров -->
-                    <div class="conveyor-section" style="left: 33.3%; width: 33.3%;"></div>
-                    <div class="conveyor-section" style="left: 66.6%; width: 33.3%;"></div>
+                    <div class="conveyor-section" style="left: 33.3%; width: 33.3%;">
+                        <div class="section-label">Секция 1</div>
+                    </div>
+                    <div class="conveyor-section" style="left: 66.6%; width: 33.3%;">
+                        <div class="section-label">Секция 2</div>
+                    </div>
                     
                     <div class="conveyor-line">
-                        <div class="section-label">Секция 1</div>
                         <div class="conveyor-label">Входная лента:</div>
                         <div class="conveyor-track" id="inputConveyor">
                             <!-- Посылки появляются здесь -->
@@ -561,7 +401,6 @@
                     </div>
                     
                     <div class="conveyor-line">
-                        <div class="section-label">Секция 2</div>
                         <div class="conveyor-label">Робот-сортировщик:</div>
                         <div class="robot-arm" id="robotArm">
                             🤖
@@ -569,7 +408,6 @@
                     </div>
 
                     <div class="conveyor-line">
-                        <div class="section-label">Секция 3</div>
                         <div class="conveyor-label">Красная лента:</div>
                         <div class="conveyor-track" id="redConveyor">
                             <!-- Красные посылки -->
@@ -577,7 +415,6 @@
                     </div>
 
                     <div class="conveyor-line">
-                        <div class="section-label">Секция 1</div>
                         <div class="conveyor-label">Синяя лента:</div>
                         <div class="conveyor-track" id="blueConveyor">
                             <!-- Синие посылки -->
@@ -585,7 +422,6 @@
                     </div>
 
                     <div class="conveyor-line">
-                        <div class="section-label">Секция 2</div>
                         <div class="conveyor-label">Зеленая лента:</div>
                         <div class="conveyor-track" id="greenConveyor">
                             <!-- Зеленые посылки -->
@@ -639,13 +475,12 @@
                     </div>
                     <div class="code-block action" draggable="true" data-type="send">
                         <div class="condition-content">
-                            отправить_на_
+                            отправить_на_л
                             <select class="condition-select" data-param="conveyor">
                                 <option value="красный">красный</option>
                                 <option value="синий">синий</option>
                                 <option value="зеленый">зеленый</option>
                             </select>
-                            _конвейер()
                         </div>
                     </div>
                 </div>
@@ -676,43 +511,31 @@
         </div>
     </div>
 
-    <script>
-    // Быстрый фикс через консоль если JS не загрузился
-    window.manualFix = function() {
-        console.log('🔧 Применяем ручные исправления...');
-        
-        // Увеличиваем лимит ввода в циклах
-        document.querySelectorAll('.loop-input').forEach(input => {
-            input.max = 9;
-        });
-        
-        // Исправляем placeholder
-        const placeholder = document.querySelector('.code-placeholder');
-        if (placeholder) {
-            placeholder.textContent = 'Перетащите блоки сюда';
-        }
-        
-        console.log('✅ Ручные исправления применены');
-    };
-
-    // Автоматически применяем фикс при загрузке
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(window.manualFix, 500);
-        
-        // Если JS не загрузился за 3 секунды, показываем сообщение
-        setTimeout(function() {
-            if (typeof initializeLevel !== 'function') {
-                const consoleOutput = document.getElementById('consoleOutput');
-                if (consoleOutput) {
-                    consoleOutput.innerHTML += '<div class="console-line log-danger">❌ JS не загрузился. Нажмите F5 для обновления</div>';
-                }
-            }
-        }, 3000);
-    });
-    </script>
-    
-    <!-- API-клиент и логика уровня -->
+    <!-- API-клиент и ООП-логика уровня -->
     <script src="../api.js"></script>
-    <script src="level-2-3.js"></script>
+    <script src="../LevelBase.js"></script>
+    <script src="../LevelBase2.js"></script>
+    <script src="../level-2-3/level-2-3.js"></script>
+    
+    <script>
+    let level;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        level = new Level2_3();
+        level.initialize();
+        
+        // Глобальные функции для вызова из HTML
+        window.goBack = () => level.goBack();
+        window.showHelp = () => level.showHelp();
+        window.runProgram = () => level.runProgram();
+        window.resetProgram = () => level.resetProgram();
+        window.updateBlockParams = (element) => level.updateBlockParams(element);
+    });
+
+    // Навигация
+    function goToLevelMap() {
+        window.location.href = '../level-map/index.html';
+    }
+    </script>
 </body>
 </html>

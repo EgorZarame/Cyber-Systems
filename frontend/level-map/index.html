@@ -92,6 +92,7 @@
         .department.locked {
             opacity: 0.5;
             border-color: #7a7a7a;
+            pointer-events: none;
         }
         
         .department h2 {
@@ -113,8 +114,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid #ffd700;
-            background: #151530;
+            border: 2px solid var(--level-border, #ffd700);
+            background: var(--level-bg, #151530);
             cursor: pointer;
             transition: all 0.3s;
             border-radius: 5px;
@@ -122,9 +123,9 @@
         }
         
         .level.unlocked:hover {
-            background: #ffd700;
-            color: #0a0a1a;
-            box-shadow: 0 0 15px #ffd700;
+            background: var(--level-hover-bg, #ffd700);
+            color: var(--level-hover-text, #0a0a1a);
+            box-shadow: 0 0 15px var(--level-hover-shadow, #ffd700);
             transform: scale(1.1);
         }
         
@@ -135,14 +136,14 @@
         }
         
         .level.boss {
-            border-color: #ff0088;
-            color: #ff0088;
+            border-color: var(--boss-border, #ff0088);
+            color: var(--boss-text, #ff0088);
         }
         
         .level.boss.unlocked:hover {
-            background: #ff0088;
-            color: #ffffff;
-            box-shadow: 0 0 20px #ff0088;
+            background: var(--boss-hover-bg, #ff0088);
+            color: var(--boss-hover-text, #ffffff);
+            box-shadow: 0 0 20px var(--boss-hover-shadow, #ff0088);
         }
         
         .department-title {
@@ -244,6 +245,116 @@
             color: #ffd700;
             font-weight: bold;
         }
+        
+        /* Статус завершения игры */
+        .completion-message {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            margin: 30px auto;
+            max-width: 800px;
+        }
+        
+        .senior-badge {
+            font-size: 48px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .senior-title {
+            color: #00ff88;
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff88;
+        }
+        
+        .congratulations-text {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        
+        .restart-button {
+            background: #00ff88;
+            color: #0a0a1a;
+            border: none;
+            padding: 12px 24px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .restart-button:hover {
+            background: #00cc6a;
+            box-shadow: 0 0 15px #00ff88;
+        }
+        
+        /* Бейдж SENIOR */
+        .senior-badge-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 20px;
+            padding: 5px 15px;
+            background: linear-gradient(45deg, #ffd700, #ff6b00);
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #0a0a1a;
+            animation: glow 1.5s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 5px #ffd700; }
+            to { box-shadow: 0 0 15px #ffd700, 0 0 20px #ff6b00; }
+        }
+        
+        .senior-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ffd700, #ff6b00);
+            color: #0a0a1a;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 100;
+            box-shadow: 0 0 15px #ffd700;
+            animation: pulse 2s infinite;
+        }
+        
+        .level.completed {
+            position: relative;
+        }
+        
+        .level.completed::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #00ff88;
+            color: #0a0a1a;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -255,7 +366,28 @@
             <button class="nav-btn active">КАРТА</button>
             <button class="nav-btn" onclick="showHelp()">СПРАВКА</button>
         </nav>
+        <div id="seniorBadge" class="senior-badge-header" style="display: none;">
+            🏆 SENIOR РАЗРАБОТЧИК
+        </div>
     </header>
+    
+    <!-- Индикатор SENIOR (плавающий) -->
+    <div id="seniorIndicator" class="senior-indicator" style="display: none;">
+        🏆 SENIOR РАЗРАБОТЧИК
+    </div>
+
+    <!-- Сообщение о завершении игры -->
+    <div id="completionMessage" class="completion-message" style="display: none;">
+        <div class="senior-badge">🏆</div>
+        <div class="senior-title">SENIOR РАЗРАБОТЧИК</div>
+        <div class="congratulations-text">
+            Поздравляем! Вы успешно прошли все уровни и достигли вершины карьеры в КиберСистемс!
+        </div>
+        <div class="congratulations-text">
+            Все уровни теперь разблокированы для свободного прохождения.
+        </div>
+        <button class="restart-button" onclick="restartGame()">НАЧАТЬ ЗАНОВО</button>
+    </div>
 
     <!-- Карта офиса -->
     <div class="office-map">
@@ -277,34 +409,34 @@
         </section>
 
         <!-- Охранные системы -->
-        <section class="department unlocked" id="security-department">
+        <section class="department locked" id="security-department">
             <div class="department-title">🔒 ОХРАННЫЕ СИСТЕМЫ</div>
             <h2>Взлом системы безопасности</h2>
             <div class="levels">
-                <div class="level unlocked" data-level="2.1" onclick="startLevel('2.1')">
+                <div class="level locked" data-level="2.1" onclick="startLevel('2.1')">
                     <span>2.1</span>
                 </div>
-                <div class="level unlocked" data-level="2.2" onclick="startLevel('2.2')">
+                <div class="level locked" data-level="2.2" onclick="startLevel('2.2')">
                     <span>2.2</span>
                 </div>
-                <div class="level boss unlocked" data-level="2.boss" onclick="startLevel('2.boss')">
+                <div class="level boss locked" data-level="2.boss" onclick="startLevel('2.boss')">
                     <span>БОСС</span>
                 </div>
             </div>
         </section>
 
         <!-- Центральное ядро -->
-        <section class="department unlocked" id="core-department">
+        <section class="department locked" id="core-department">
             <div class="department-title">⚡ ЦЕНТРАЛЬНОЕ ЯДРО</div>
             <h2>Спасение ядра ИИ</h2>
             <div class="levels">
-                <div class="level unlocked" data-level="3.1" onclick="startLevel('3.1')">
+                <div class="level locked" data-level="3.1" onclick="startLevel('3.1')">
                     <span>3.1</span>
                 </div>
-                <div class="level unlocked" data-level="3.2" onclick="startLevel('3.2')">
+                <div class="level locked" data-level="3.2" onclick="startLevel('3.2')">
                     <span>3.2</span>
                 </div>
-                <div class="level boss unlocked" data-level="3.boss" onclick="startLevel('3.boss')">
+                <div class="level boss locked" data-level="3.boss" onclick="startLevel('3.boss')">
                     <span>БОСС</span>
                 </div>
             </div>
@@ -401,231 +533,649 @@
     </div>
 
     <script>
-        let allLevels = [];
-        let currentProfile = null;
-
-        // Логика карты уровней
-        function startLevel(levelId) {
-            console.log('🚀 Запуск уровня:', levelId);
-            
-            // Не даём заходить на заблокированные уровни
-            const levelElement = document.querySelector(`[data-level="${levelId}"]`);
-            if (levelElement && levelElement.classList.contains('locked')) {
-                alert('Этот уровень ещё заблокирован. Сначала пройди предыдущие уровни!');
-                return;
+        class ProfileStorage {
+            static load() {
+                try {
+                    const profile = localStorage.getItem('cyberSystemsProfile');
+                    if (profile) {
+                        const parsed = JSON.parse(profile);
+                        console.log('Загружен профиль:', parsed);
+                        return parsed;
+                    } else {
+                        // Создаем новый профиль по умолчанию
+                        const defaultProfile = {
+                            currentLevelId: '1.1',
+                            lastCompleted: null,
+                            juniorUnlocked: false,
+                            seniorUnlocked: false,
+                            completedLevels: []
+                        };
+                        localStorage.setItem('cyberSystemsProfile', JSON.stringify(defaultProfile));
+                        return defaultProfile;
+                    }
+                } catch (error) {
+                    console.error('Ошибка загрузки профиля:', error);
+                    return { 
+                        currentLevelId: '1.1',
+                        lastCompleted: null, 
+                        juniorUnlocked: false,
+                        seniorUnlocked: false,
+                        completedLevels: [] 
+                    };
+                }
+            }
+    
+            static save(profile) {
+                try {
+                    localStorage.setItem('cyberSystemsProfile', JSON.stringify(profile));
+                    console.log('Профиль сохранен:', profile);
+                } catch (error) {
+                    console.error('Ошибка сохранения профиля:', error);
+                }
+            }
+    
+            static setCurrentLevel(levelId) {
+                localStorage.setItem('currentLevel', levelId);
+            }
+    
+            static getCurrentLevel() {
+                return localStorage.getItem('currentLevel') || '1.1';
             }
             
-            // Определяем путь к уровню на основе его ID
-            let levelPath;
-            switch(levelId) {
-                case '1.1':
-                    levelPath = '../level-1-1/index.html';
-                    break;
-                case '1.2':
-                    levelPath = '../level-1-2/index.html';
-                    break;
-                case '1.boss':
-                    levelPath = '../level-1-3/index.html';
-                    break;
-                case '2.1':
-                    levelPath = '../level-2-1/index.html';
-                    break;
-                case '2.2':
-                    levelPath = '../level-2-2/index.html';
-                    break;
-                case '2.boss':
-                    levelPath = '../level-2-3/index.html';
-                    break;
-                case '3.1':
-                    levelPath = '../level-3-1/index.html';
-                    break;
-                case '3.2':
-                    levelPath = '../level-3-2/index.html';
-                    break;
-                case '3.boss':
-                    levelPath = '../level-3-3/index.html';
-                    break;
-                default:
-                    levelPath = '../level-1-1/index.html'; // fallback
+            static addCompletedLevel(levelId) {
+                const profile = this.load();
+                if (!profile.completedLevels) {
+                    profile.completedLevels = [];
+                }
+                if (!profile.completedLevels.includes(levelId)) {
+                    profile.completedLevels.push(levelId);
+                    
+                    // Обновляем lastCompleted
+                    profile.lastCompleted = levelId;
+                    
+                    // Проверяем, нужно ли разблокировать статусы
+                    this.checkAndUnlockStatuses(profile, levelId);
+                    
+                    this.save(profile);
+                }
             }
             
-            // Сохраняем выбранный уровень в localStorage
-            localStorage.setItem('currentLevel', levelId);
+            static checkAndUnlockStatuses(profile, levelId) {
+                // Разблокируем JUNIOR после прохождения 1.boss
+                if (levelId === '1.boss') {
+                    profile.juniorUnlocked = true;
+                    console.log('JUNIOR разблокирован!');
+                }
+                
+                // Разблокируем SENIOR после прохождения 3.boss
+                if (levelId === '3.boss') {
+                    profile.seniorUnlocked = true;
+                    console.log('SENIOR разблокирован!');
+                }
+                
+                // Также разблокируем SENIOR если пройдены все уровни
+                const allLevels = ['1.1', '1.2', '1.boss', '2.1', '2.2', '2.boss', '3.1', '3.2', '3.boss'];
+                const completedAll = allLevels.every(level => 
+                    profile.completedLevels && profile.completedLevels.includes(level)
+                );
+                
+                if (completedAll) {
+                    profile.seniorUnlocked = true;
+                    console.log('Все уровни пройдены! SENIOR разблокирован!');
+                }
+            }
             
-            // Переход к уровню
-            window.location.href = levelPath + '?level=' + levelId;
+            static isLevelCompleted(levelId) {
+                const profile = this.load();
+                return profile.completedLevels && profile.completedLevels.includes(levelId);
+            }
+            
+            static getRank() {
+                const profile = this.load();
+                if (profile.seniorUnlocked) return 'SENIOR';
+                if (profile.juniorUnlocked) return 'JUNIOR';
+                return 'СТАЖЕР';
+            }
+            
+            static isSenior() {
+                const profile = this.load();
+                return profile.seniorUnlocked === true;
+            }
+            
+            static forceUnlockAllLevels() {
+                const profile = this.load();
+                profile.seniorUnlocked = true;
+                profile.juniorUnlocked = true;
+                
+                // Добавляем все уровни в пройденные
+                const allLevels = ['1.1', '1.2', '1.boss', '2.1', '2.2', '2.boss', '3.1', '3.2', '3.boss'];
+                profile.completedLevels = [...allLevels];
+                profile.lastCompleted = '3.boss';
+                
+                this.save(profile);
+                console.log('Все уровни принудительно разблокированы!');
+                
+                // Перезагружаем страницу
+                setTimeout(() => window.location.reload(), 500);
+            }
         }
-
-        // Показать справку
-        function showHelp() {
-            const modal = document.getElementById('helpModal');
-            if (modal) {
-                modal.style.display = 'flex';
+    
+        class LevelStyleBase {
+            constructor(element, theme = {}) {
+                this.element = element;
+                this.theme = {
+                    levelBorder: '#ffd700',
+                    levelBg: '#151530',
+                    hoverBg: '#ffd700',
+                    hoverText: '#0a0a1a',
+                    hoverShadow: '#ffd700',
+                    bossBorder: '#ff0088',
+                    bossText: '#ff0088',
+                    bossHoverBg: '#ff0088',
+                    bossHoverText: '#ffffff',
+                    bossHoverShadow: '#ff0088',
+                    ...theme,
+                };
+                this.applyTheme();
+            }
+    
+            applyTheme() {
+                const style = this.element.style;
+                style.setProperty('--level-border', this.theme.levelBorder);
+                style.setProperty('--level-bg', this.theme.levelBg);
+                style.setProperty('--level-hover-bg', this.theme.hoverBg);
+                style.setProperty('--level-hover-text', this.theme.hoverText);
+                style.setProperty('--level-hover-shadow', this.theme.hoverShadow);
+                style.setProperty('--boss-border', this.theme.bossBorder);
+                style.setProperty('--boss-text', this.theme.bossText);
+                style.setProperty('--boss-hover-bg', this.theme.bossHoverBg);
+                style.setProperty('--boss-hover-text', this.theme.bossHoverText);
+                style.setProperty('--boss-hover-shadow', this.theme.bossHoverShadow);
+            }
+    
+            lock() {
+                this.element.classList.remove('unlocked');
+                this.element.classList.add('locked');
+            }
+    
+            unlock() {
+                this.element.classList.remove('locked');
+                this.element.classList.add('unlocked');
+            }
+            
+            markAsCompleted() {
+                this.element.classList.add('completed');
+            }
+            
+            removeCompletedMark() {
+                this.element.classList.remove('completed');
             }
         }
-
-        // Закрыть справку
-        function closeHelp() {
-            const modal = document.getElementById('helpModal');
-            if (modal) {
-                modal.style.display = 'none';
+    
+        class LevelStyleOne extends LevelStyleBase {
+            constructor(element) {
+                super(element, {
+                    levelBorder: '#ffd700',
+                    levelBg: '#151530',
+                    hoverBg: '#ffd700',
+                    hoverText: '#0a0a1a',
+                    hoverShadow: '#ffd700',
+                    bossBorder: '#ff0088',
+                    bossText: '#ff0088',
+                    bossHoverBg: '#ff0088',
+                    bossHoverText: '#ffffff',
+                    bossHoverShadow: '#ff0088',
+                });
+                this.element.dataset.levelStyle = '1';
             }
         }
-
-        // Закрыть по клику на оверлей
-        document.addEventListener('click', function(event) {
-            const helpModal = document.getElementById('helpModal');
-            if (helpModal && helpModal.style.display === 'flex' && event.target === helpModal) {
-                closeHelp();
+    
+        class LevelStyleTwo extends LevelStyleBase {
+            constructor(element) {
+                super(element, {
+                    levelBorder: '#00e0ff',
+                    levelBg: '#102033',
+                    hoverBg: '#00e0ff',
+                    hoverText: '#0a0a1a',
+                    hoverShadow: '#00e0ff',
+                    bossBorder: '#ff6b00',
+                    bossText: '#ff6b00',
+                    bossHoverBg: '#ff6b00',
+                    bossHoverText: '#ffffff',
+                    bossHoverShadow: '#ff6b00',
+                });
+                this.element.dataset.levelStyle = '2';
             }
-        });
-
-        // Закрыть по ESC
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeHelp();
+        }
+    
+        class LevelStyleThree extends LevelStyleBase {
+            constructor(element) {
+                super(element, {
+                    levelBorder: '#9b59ff',
+                    levelBg: '#1b1033',
+                    hoverBg: '#9b59ff',
+                    hoverText: '#0a0a1a',
+                    hoverShadow: '#9b59ff',
+                    bossBorder: '#00ff88',
+                    bossText: '#00ff88',
+                    bossHoverBg: '#00ff88',
+                    bossHoverText: '#0a0a1a',
+                    bossHoverShadow: '#00ff88',
+                });
+                this.element.dataset.levelStyle = '3';
             }
-        });
-
-        // Простая функция загрузки профиля из localStorage
-        function getProfile() {
-            try {
-                const profile = localStorage.getItem('cyberSystemsProfile');
-                return profile ? JSON.parse(profile) : null;
-            } catch (error) {
-                console.error('Ошибка загрузки профиля:', error);
+        }
+    
+        class BaseLevel {
+            constructor(id, element, style) {
+                this.id = id;
+                this.element = element;
+                this.style = style;
+                this.bound = false;
+            }
+    
+            start() {
+                if (this.isLocked()) {
+                    alert('Этот уровень ещё заблокирован. Сначала пройди предыдущие уровни!');
+                    return;
+                }
+    
+                const levelPath = this.getPath();
+                ProfileStorage.setCurrentLevel(this.id);
+                window.location.href = `${levelPath}?level=${this.id}`;
+            }
+    
+            getPath() {
+                return '';
+            }
+    
+            isLocked() {
+                return this.element.classList.contains('locked');
+            }
+    
+            lock() {
+                this.style.lock();
+            }
+    
+            unlock() {
+                this.style.unlock();
+                this.ensureClickBinding();
+            }
+            
+            markCompleted() {
+                this.style.markAsCompleted();
+            }
+            
+            removeCompletedMark() {
+                this.style.removeCompletedMark();
+            }
+    
+            ensureClickBinding() {
+                if (this.bound) {
+                    return;
+                }
+                this.element.addEventListener('click', () => this.start());
+                this.bound = true;
+            }
+        }
+    
+        class LevelOne extends BaseLevel {
+            constructor(id, element) {
+                super(id, element, new LevelStyleOne(element));
+            }
+    
+            getPath() {
+                return LevelOne.paths[this.id] || LevelOne.paths.default;
+            }
+        }
+    
+        LevelOne.paths = {
+            '1.1': '../level-1-1/index.html',
+            '1.2': '../level-1-2/index.html',
+            '1.boss': '../level-1-3/index.html',
+            default: '../level-1-1/index.html',
+        };
+    
+        class LevelTwo extends BaseLevel {
+            constructor(id, element) {
+                super(id, element, new LevelStyleTwo(element));
+            }
+    
+            getPath() {
+                return LevelTwo.paths[this.id] || LevelTwo.paths.default;
+            }
+        }
+    
+        LevelTwo.paths = {
+            '2.1': '../level-2-1/index.html',
+            '2.2': '../level-2-2/index.html',
+            '2.boss': '../level-2-3/index.html',
+            default: '../level-2-1/index.html',
+        };
+    
+        class LevelThree extends BaseLevel {
+            constructor(id, element) {
+                super(id, element, new LevelStyleThree(element));
+            }
+    
+            getPath() {
+                return LevelThree.paths[this.id] || LevelThree.paths.default;
+            }
+        }
+    
+        LevelThree.paths = {
+            '3.1': '../level-3-1/index.html',
+            '3.2': '../level-3-2/index.html',
+            '3.boss': '../level-3-3/index.html',
+            default: '../level-3-1/index.html',
+        };
+    
+        class LevelFactory {
+            static create(levelId, element) {
+                if (levelId.startsWith('1')) {
+                    return new LevelOne(levelId, element);
+                }
+                if (levelId.startsWith('2')) {
+                    return new LevelTwo(levelId, element);
+                }
+                if (levelId.startsWith('3')) {
+                    return new LevelThree(levelId, element);
+                }
                 return null;
             }
         }
-
-        // Обновление отображения уровней на основе профиля
-        function updateLevelsDisplay() {
-            const profile = getProfile();
-            
-            const levels = [
-                '1.1', '1.2', '1.boss',
-                '2.1', '2.2', '2.boss', 
-                '3.1', '3.2', '3.boss'
-            ];
-            
-            // Индекс последнего реально завершённого уровня
-            // -1 означает, что ещё ничего не пройдено
-            let completedIndex = -1;
-            if (profile && profile.lastCompleted) {
-                completedIndex = levels.indexOf(profile.lastCompleted);
-                console.log('📊 Обновление карты уровней. lastCompleted:', profile.lastCompleted, 'completedIndex:', completedIndex);
+    
+        class HelpModal {
+            constructor(modal) {
+                this.modal = modal;
             }
-            
-            levels.forEach(levelId => {
-                const levelElement = document.querySelector(`[data-level="${levelId}"]`);
-                if (levelElement) {
-                    const levelIndex = levels.indexOf(levelId);
-                    
-                    // Если ещё нет прогресса (completedIndex === -1), открыт только первый уровень
-                    // Иначе открыт последний пройденный и следующий за ним
-                    const maxOpenIndex = completedIndex + 1;
-                    if (levelIndex <= maxOpenIndex) {
-                        levelElement.classList.remove('locked');
-                        levelElement.classList.add('unlocked');
-                        console.log(`✅ Уровень ${levelId} разблокирован (index: ${levelIndex}, maxOpen: ${maxOpenIndex})`);
-                    } else {
-                        levelElement.classList.remove('unlocked');
-                        levelElement.classList.add('locked');
-                        console.log(`🔒 Уровень ${levelId} заблокирован (index: ${levelIndex}, maxOpen: ${maxOpenIndex})`);
-                    }
+    
+            show() {
+                if (this.modal) {
+                    this.modal.style.display = 'flex';
                 }
-            });
-            
-            // Разблокировка отделов
-            const securityDept = document.getElementById('security-department');
-            const coreDept = document.getElementById('core-department');
-            
-            // Разблокируем охранные системы после 1.boss
-            if (completedIndex >= 2) { // После 1.boss
-                securityDept?.classList.remove('locked');
-            } else {
-                securityDept?.classList.add('locked');
             }
-            
-            // Разблокируем центральное ядро после 2.boss
-            if (completedIndex >= 5) { // После 2.boss
-                coreDept?.classList.remove('locked');
-            } else {
-                coreDept?.classList.add('locked');
+    
+            close() {
+                if (this.modal) {
+                    this.modal.style.display = 'none';
+                }
             }
         }
-
-        // Установка фона офиса
-        function setupBackground() {
-            console.log('🖼️ Начало установки фона...');
-            
-            const possiblePaths = [
-                '../assets/images/backgrounds/office_bg.png',
-                'assets/images/backgrounds/office_bg.png',
-                '../assets/backgrounds/office-bg.png',
-                'assets/backgrounds/office-bg.png',
-            ];
-            
-            const body = document.body;
-            
-            function tryBackground(pathIndex) {
-                if (pathIndex >= possiblePaths.length) {
-                    console.error('❌ Все пути к фону не работают. Использую CSS фон.');
-                    setCSSBackground();
+    
+        class BackgroundManager {
+            constructor(body) {
+                this.body = body;
+                this.possiblePaths = [
+                    '../assets/images/backgrounds/office_bg.png',
+                    'assets/images/backgrounds/office_bg.png',
+                    '../assets/backgrounds/office-bg.png',
+                    'assets/backgrounds/office-bg.png',
+                ];
+            }
+    
+            setup() {
+                this.tryBackground(0);
+            }
+    
+            tryBackground(pathIndex) {
+                if (pathIndex >= this.possiblePaths.length) {
+                    this.setCSSBackground();
                     return;
                 }
-                
-                const bgPath = possiblePaths[pathIndex];
-                console.log(`🔄 Пробуем путь ${pathIndex + 1}:`, bgPath);
-                
+    
+                const bgPath = this.possiblePaths[pathIndex];
                 const bgImg = new Image();
-                bgImg.onload = function() {
-                    console.log('✅ Фон загружен успешно:', bgPath);
-                    body.style.backgroundImage = `url('${bgPath}')`;
-                    body.style.backgroundSize = 'cover';
-                    body.style.backgroundPosition = 'center';
-                    body.style.backgroundRepeat = 'no-repeat';
-                    body.style.backgroundAttachment = 'fixed';
+                bgImg.onload = () => {
+                    this.body.style.backgroundImage = `url('${bgPath}')`;
+                    this.body.style.backgroundSize = 'cover';
+                    this.body.style.backgroundPosition = 'center';
+                    this.body.style.backgroundRepeat = 'no-repeat';
+                    this.body.style.backgroundAttachment = 'fixed';
                 };
-                bgImg.onerror = function() {
-                    console.warn('❌ Не удалось загрузить:', bgPath);
-                    tryBackground(pathIndex + 1);
+                bgImg.onerror = () => {
+                    this.tryBackground(pathIndex + 1);
                 };
                 bgImg.src = bgPath;
             }
-            
-            function setCSSBackground() {
-                body.style.background = `
+    
+            setCSSBackground() {
+                this.body.style.background = `
                     radial-gradient(circle at 20% 30%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
                     radial-gradient(circle at 80% 80%, rgba(255, 0, 136, 0.1) 0%, transparent 50%),
                     radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
                     linear-gradient(135deg, #0a0a1a 0%, #151530 50%, #1a1a2e 100%)
                 `;
-                console.log('✅ Установлен CSS фон');
+            }
+        }
+    
+        class LevelMap {
+            constructor() {
+                this.levels = [];
+                this.levelsOrder = [
+                    '1.1', '1.2', '1.boss',
+                    '2.1', '2.2', '2.boss',
+                    '3.1', '3.2', '3.boss',
+                ];
+                this.helpModal = new HelpModal(document.getElementById('helpModal'));
+                this.background = new BackgroundManager(document.body);
+                this.completionMessage = document.getElementById('completionMessage');
+                this.seniorBadge = document.getElementById('seniorBadge');
+                this.seniorIndicator = document.getElementById('seniorIndicator');
+                this.buildLevels();
+                this.bindGlobalEvents();
+            }
+    
+            buildLevels() {
+                document.querySelectorAll('[data-level]').forEach(levelEl => {
+                    const levelId = levelEl.dataset.level;
+                    const levelInstance = LevelFactory.create(levelId, levelEl);
+                    if (levelInstance) {
+                        this.levels.push(levelInstance);
+                    }
+                });
+            }
+    
+            bindGlobalEvents() {
+                document.addEventListener('click', (event) => {
+                    if (this.helpModal.modal && this.helpModal.modal.style.display === 'flex' && event.target === this.helpModal.modal) {
+                        this.helpModal.close();
+                    }
+                });
+    
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        this.helpModal.close();
+                    }
+                });
+    
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) {
+                        this.updateLevelsDisplay();
+                    }
+                });
+    
+                window.addEventListener('focus', () => {
+                    this.updateLevelsDisplay();
+                });
+                
+                // Добавляем слушатель для отладки
+                window.addEventListener('keydown', (event) => {
+                    // Ctrl+Shift+S для принудительной разблокировки всех уровней
+                    if (event.ctrlKey && event.shiftKey && event.key === 'S') {
+                        event.preventDefault();
+                        if (confirm('Разблокировать все уровни и стать SENIOR?')) {
+                            ProfileStorage.forceUnlockAllLevels();
+                        }
+                    }
+                });
+            }
+    
+            updateLevelsDisplay() {
+                const profile = ProfileStorage.load();
+                const lastCompleted = profile.lastCompleted;
+                const isSenior = ProfileStorage.isSenior();
+                
+                console.log('Обновление отображения уровней:', {
+                    profile,
+                    lastCompleted,
+                    isSenior,
+                    rank: ProfileStorage.getRank()
+                });
+    
+                // Проверяем, является ли игрок SENIOR
+                if (isSenior) {
+                    this.showSeniorMode();
+                    return;
+                }
+                
+                // Обычная логика разблокировки для не-SENIOR
+                let completedIndex = -1;
+                if (lastCompleted) {
+                    completedIndex = this.levelsOrder.indexOf(lastCompleted);
+                    if (completedIndex === -1) {
+                        // Если lastCompleted нет в порядке уровней, пробуем найти по номеру
+                        for (let i = 0; i < this.levelsOrder.length; i++) {
+                            if (this.levelsOrder[i] === lastCompleted) {
+                                completedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                const nextLevelIndex = completedIndex + 1;
+                
+                console.log('Обычный режим:', {
+                    lastCompleted,
+                    completedIndex,
+                    nextLevelIndex,
+                    levelsOrder: this.levelsOrder
+                });
+    
+                // Разблокируем уровни до следующего
+                this.levels.forEach((level, index) => {
+                    if (index <= nextLevelIndex && index < this.levelsOrder.length) {
+                        level.unlock();
+                    } else {
+                        level.lock();
+                    }
+                });
+    
+                this.updateDepartments(completedIndex);
+                this.markCompletedLevels();
             }
             
-            tryBackground(0);
-        }
-        
-        // Обновление карты при возврате на страницу
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                console.log('🔄 Страница стала видимой, обновляем карту уровней');
-                updateLevelsDisplay();
+            showSeniorMode() {
+                console.log('Активирован SENIOR режим - все уровни разблокированы');
+                
+                // Показываем бейдж SENIOR
+                if (this.seniorBadge) {
+                    this.seniorBadge.style.display = 'inline-flex';
+                }
+                
+                if (this.seniorIndicator) {
+                    this.seniorIndicator.style.display = 'block';
+                }
+                
+                // Показываем сообщение о завершении
+                if (this.completionMessage) {
+                    this.completionMessage.style.display = 'block';
+                }
+                
+                // РАЗБЛОКИРОВЫВАЕМ ВСЕ УРОВНИ
+                this.levels.forEach(level => {
+                    level.unlock();
+                });
+                
+                // РАЗБЛОКИРОВЫВАЕМ ВСЕ ОТДЕЛЫ
+                document.getElementById('security-department')?.classList.remove('locked');
+                document.getElementById('core-department')?.classList.remove('locked');
+                
+                // Отмечаем пройденные уровни
+                this.markCompletedLevels();
+                
+                console.log('Все уровни разблокированы для SENIOR разработчика');
             }
-        });
-        
-        // Обновление карты при фокусе на окне
-        window.addEventListener('focus', function() {
-            console.log('🔄 Окно получило фокус, обновляем карту уровней');
-            updateLevelsDisplay();
-        });
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🗺️ Карта уровней загружена');
-            console.log('🔧 Вызываю setupBackground...');
-            setupBackground();
-            updateLevelsDisplay();
+    
+            updateDepartments(completedIndex) {
+                const securityDept = document.getElementById('security-department');
+                const coreDept = document.getElementById('core-department');
+    
+                // Отдел безопасности разблокируется после прохождения 1.boss (индекс 2)
+                if (completedIndex >= 2) {
+                    securityDept?.classList.remove('locked');
+                } else {
+                    securityDept?.classList.add('locked');
+                }
+    
+                // Центральное ядро разблокируется после прохождения 2.boss (индекс 5)
+                if (completedIndex >= 5) {
+                    coreDept?.classList.remove('locked');
+                } else {
+                    coreDept?.classList.add('locked');
+                }
+            }
+            
+            markCompletedLevels() {
+                const profile = ProfileStorage.load();
+                const completedLevels = profile.completedLevels || [];
+                
+                this.levels.forEach(level => {
+                    if (completedLevels.includes(level.id)) {
+                        level.markCompleted();
+                    } else {
+                        level.removeCompletedMark();
+                    }
+                });
+            }
+    
+            startLevel(levelId) {
+                const level = this.levels.find(item => item.id === levelId);
+                if (level) {
+                    level.start();
+                }
+            }
+    
+            showHelp() {
+                this.helpModal.show();
+            }
+    
+            closeHelp() {
+                this.helpModal.close();
+            }
+    
+            setupBackground() {
+                this.background.setup();
+            }
+    
+            restartGame() {
+                if (confirm('Вы уверены, что хотите начать игру заново? Весь прогресс будет сброшен.')) {
+                    // Сбрасываем прогресс
+                    localStorage.removeItem('cyberSystemsProfile');
+                    localStorage.removeItem('currentLevel');
+                    
+                    // Перезагружаем страницу
+                    window.location.reload();
+                }
+            }
+        }
+    
+        let levelMapInstance = null;
+    
+        window.startLevel = (levelId) => levelMapInstance?.startLevel(levelId);
+        window.showHelp = () => levelMapInstance?.showHelp();
+        window.closeHelp = () => levelMapInstance?.closeHelp();
+        window.restartGame = () => levelMapInstance?.restartGame();
+        window.unlockAllLevels = () => ProfileStorage.forceUnlockAllLevels();
+    
+        document.addEventListener('DOMContentLoaded', () => {
+            levelMapInstance = new LevelMap();
+            levelMapInstance.setupBackground();
+            levelMapInstance.updateLevelsDisplay();
+            
+            // Добавляем кнопку для разработчиков в консоль
+            console.log('Для разблокировки всех уровней нажмите Ctrl+Shift+S или выполните unlockAllLevels()');
         });
     </script>
 </body>

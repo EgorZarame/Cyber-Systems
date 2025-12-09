@@ -4,99 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Уровень 3.3: Финальный босс - Ядро вируса - КиберСистемс</title>
+    
+    <!-- Наследуем стили из родительских классов -->
+    <link rel="stylesheet" href="../levels-common.css">
+    <link rel="stylesheet" href="../levels-common2.css">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* Расширяем родительские стили для уровня 3.3 */
+        :root {
+            --level-color: #ff0000;
+            --level2-3-color: #ff0000;
+            --game-field-bg: #1a1a2e;
+            --code-area-bg: #0a0a1a;
+            --cell-bg: #1a2a4a;
+            --cell-border: #2a3a5a;
         }
 
+        /* Основные стили, наследуемые из levels-common.css */
         body {
-            font-family: 'Courier New', monospace;
-            background: #0a0a1a;
-            color: #00ff88;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* Верхняя панель */
-        .top-panel {
-            background: #151530;
-            border-bottom: 2px solid #ff0000;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 60px;
-            flex-shrink: 0;
-        }
-
-        .level-title {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #ff0000;
-            text-shadow: 0 0 10px #ff0000;
-        }
-
-        .nav-button {
-            background: transparent;
-            color: #ff0000;
-            border: 1px solid #ff0000;
-            padding: 6px 12px;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .nav-button:hover {
-            background: #ff0000;
-            color: #0a0a1a;
-        }
-
-        /* Основной контейнер */
         .main-container {
-            display: flex;
             height: calc(100vh - 60px);
             padding: 15px;
             gap: 15px;
-            overflow: hidden;
         }
 
-        /* Левая часть - Игровое поле */
-        .left-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            min-width: 0;
+        .right-panel {
+            width: 500px;
         }
 
-        .game-field {
-            flex: 1;
-            background: #1a1a2e;
-            border: 2px solid #ff0000;
+        /* Python редактор кода */
+        .python-editor {
+            background: var(--game-field-bg);
+            border: 2px solid var(--level-color);
             border-radius: 5px;
             padding: 15px;
+            flex: 1;
             display: flex;
             flex-direction: column;
-            position: relative;
+            min-height: 0;
             overflow: hidden;
         }
 
-        .field-label {
-            color: #ff0000;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-            text-align: center;
-            text-shadow: 0 0 5px #ff0000;
+        .code-header {
+            background: #0f3460;
+            padding: 8px;
+            border-radius: 4px 4px 0 0;
+            border: 1px solid var(--level-color);
+            border-bottom: none;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            flex-shrink: 0;
         }
 
+        .code-editor {
+            flex: 1;
+            background: var(--code-area-bg);
+            border: 1px solid var(--level-color);
+            border-radius: 0 0 4px 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #00ff88;
+            resize: none;
+            outline: none;
+            line-height: 1.4;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .code-editor::placeholder {
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Светофор (используем стили из levels-common2.css) */
         .traffic-light {
             position: absolute;
             top: 15px;
             right: 15px;
             background: #0a0a1a;
-            border: 2px solid #ff0000;
+            border: 2px solid var(--level-color);
             border-radius: 8px;
             padding: 10px;
             display: flex;
@@ -110,7 +101,7 @@
 
         .light-label {
             font-size: 0.7em;
-            color: #ff0000;
+            color: var(--level-color);
         }
 
         .light {
@@ -135,221 +126,33 @@
             box-shadow: none;
         }
 
-        .pixel-grid {
-            flex: 1;
-            background: #0a1429;
-            border: 2px solid #ff0000;
-            border-radius: 5px;
-            display: grid;
-            grid-template-columns: repeat(15, 1fr);
-            grid-template-rows: repeat(10, 1fr);
-            gap: 2px;
-            padding: 10px;
-            margin-right: 100px;
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        .grid-cell {
-            background: #1a2a4a;
-            border-radius: 3px;
-            position: relative;
-            border: 1px solid #2a3a5a;
-            min-width: 0;
-        }
-
-        .grid-cell.start {
-            background: #4CAF50;
-        }
-
-        .grid-cell.finish {
-            background: #FF9800;
-            animation: finishPulse 2s infinite;
-        }
-
-        .grid-cell.obstacle {
-            background: #f44336;
-            background-image: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 3px,
-                rgba(0, 0, 0, 0.1) 3px,
-                rgba(0, 0, 0, 0.1) 6px
-            );
-        }
-
-        .grid-cell.path {
-            background: #2d5b88;
-            box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.3);
+        /* Специфичные клетки для уровня 3.3 */
+        .grid-cell.virus-core {
+            background: #8B0000;
+            background-image: radial-gradient(circle at center, #FF0000 0%, #8B0000 70%);
+            animation: virusPulse 2s infinite;
         }
 
         .grid-cell.conveyor {
             background: #8B4513;
-            background-image: linear-gradient(
-                90deg,
-                transparent 0%,
-                transparent 50%,
-                #D2691E 50%,
-                #D2691E 100%
-            );
+            background-image: linear-gradient(90deg, transparent 0%, transparent 50%, #D2691E 50%, #D2691E 100%);
             background-size: 10px 100%;
             animation: conveyorMove 2s linear infinite;
         }
 
         .grid-cell.dispenser {
             background: #2F4F4F;
-            background-image: radial-gradient(
-                circle at 30% 30%,
-                #708090 0%,
-                transparent 70%
-            );
+            background-image: radial-gradient(circle at 30% 30%, #708090 0%, transparent 70%);
         }
 
-        .grid-cell.virus-core {
-            background: #8B0000;
-            background-image: radial-gradient(
-                circle at center,
-                #FF0000 0%,
-                #8B0000 70%
-            );
-            animation: virusPulse 2s infinite;
-        }
-
-        .grid-cell.item-red {
-            background: #FF0000;
-            border-radius: 50%;
-        }
-
-        .grid-cell.item-blue {
-            background: #0000FF;
-            border-radius: 50%;
-        }
-
-        .grid-cell.item-green {
-            background: #00FF00;
-            border-radius: 50%;
-        }
-
-        .drone {
-            width: 70%;
-            height: 70%;
-            background: #8de8ff;
-            border-radius: 50%;
-            position: absolute;
-            top: 15%;
-            left: 15%;
-            box-shadow: 0 0 10px rgba(141, 232, 255, 0.7);
-            transition: transform 0.3s ease;
-        }
-
-        .drone::after {
-            content: '▲';
-            position: absolute;
-            top: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #1a1a2e;
-            font-size: 10px;
-        }
-
-        .drone.north { transform: rotate(0deg); }
-        .drone.east { transform: rotate(90deg); }
-        .drone.south { transform: rotate(180deg); }
-        .drone.west { transform: rotate(270deg); }
-
-        .drone.waiting {
-            background: #ff9800;
-            animation: waitingPulse 1s infinite;
-        }
-
-        /* Правая часть - Редактор кода */
-        .right-panel {
-            width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            flex-shrink: 0;
-            overflow: hidden;
-        }
-
-        .code-editor-section {
-            background: #1a1a2e;
-            border: 2px solid #ff0000;
-            border-radius: 5px;
-            padding: 15px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        .section-title {
-            color: #ff0000;
-            margin-bottom: 10px;
-            font-size: 1em;
-            text-align: center;
-            text-shadow: 0 0 5px #ff0000;
-            flex-shrink: 0;
-        }
-
-        .code-header {
-            background: #0f3460;
-            padding: 8px;
-            border-radius: 4px 4px 0 0;
-            border: 1px solid #ff0000;
-            border-bottom: none;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            flex-shrink: 0;
-        }
-
-        .code-area {
-            flex: 1;
-            background: #0a0a1a;
-            border: 1px solid #ff0000;
-            border-radius: 0 0 4px 4px;
-            padding: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            color: #00ff88;
-            resize: none;
-            outline: none;
-            line-height: 1.4;
-            min-height: 0;
-            overflow-y: auto;
-        }
-
-        .code-area::placeholder {
-            color: #666;
-            font-style: italic;
-        }
-
-        .syntax-keyword {
-            color: #ff9800;
-        }
-
-        .syntax-function {
-            color: #8de8ff;
-        }
-
-        .syntax-condition {
-            color: #9C27B0;
-        }
-
-        .syntax-loop {
-            color: #2196F3;
-        }
-
-        .syntax-comment {
-            color: #666;
-            font-style: italic;
-        }
+        .grid-cell.item-red { background: #FF0000; border-radius: 50%; }
+        .grid-cell.item-blue { background: #0000FF; border-radius: 50%; }
+        .grid-cell.item-green { background: #00FF00; border-radius: 50%; }
 
         /* Подсказки */
-        .hints-section {
-            background: #1a1a2e;
-            border: 2px solid #ff0000;
+        .hints-panel {
+            background: var(--game-field-bg);
+            border: 2px solid var(--level-color);
             border-radius: 5px;
             padding: 15px;
             flex-shrink: 0;
@@ -372,7 +175,7 @@
         }
 
         .code-example {
-            background: #0a0a1a;
+            background: var(--code-area-bg);
             padding: 5px;
             border-radius: 3px;
             margin-top: 5px;
@@ -381,10 +184,10 @@
             font-size: 0.9em;
         }
 
-        /* Консоль - исправлено переполнение */
-        .console-section {
-            background: #1a1a2e;
-            border: 2px solid #ff0000;
+        /* Консоль Python */
+        .python-console {
+            background: var(--game-field-bg);
+            border: 2px solid var(--level-color);
             border-radius: 5px;
             padding: 15px;
             flex: 1;
@@ -394,10 +197,10 @@
             overflow: hidden;
         }
 
-        .console-output {
+        .console-output.python {
             flex: 1;
-            background: #0a0a1a;
-            border: 1px solid #ff0000;
+            background: var(--code-area-bg);
+            border: 1px solid var(--level-color);
             border-radius: 4px;
             padding: 10px;
             font-family: 'Courier New', monospace;
@@ -407,33 +210,15 @@
             font-size: 0.85em;
             min-height: 0;
             max-height: 200px;
-        }
-
-        .console-line {
-            margin: 3px 0;
             word-break: break-word;
         }
 
-        .console-line::before {
-            content: '> ';
-            color: #ff9800;
-        }
-
-        .log-error {
-            color: #f44336;
-        }
-
-        .log-success {
-            color: #4CAF50;
-        }
-
-        .log-warning {
-            color: #ff9800;
-        }
-
-        .log-info {
-            color: #2196F3;
-        }
+        /* Синтаксические классы */
+        .syntax-keyword { color: #ff9800; }
+        .syntax-function { color: #8de8ff; }
+        .syntax-condition { color: #9C27B0; }
+        .syntax-loop { color: #2196F3; }
+        .syntax-comment { color: #666; font-style: italic; }
 
         /* Кнопки управления */
         .control-buttons {
@@ -461,12 +246,7 @@
             background: #f44336;
         }
 
-        /* Анимации */
-        @keyframes finishPulse {
-            0%, 100% { box-shadow: 0 0 10px #FF9800; }
-            50% { box-shadow: 0 0 20px #FF9800, 0 0 30px #FF9800; }
-        }
-
+        /* Анимации из levels-common2.css */
         @keyframes virusPulse {
             0%, 100% { box-shadow: 0 0 10px #FF0000; }
             50% { box-shadow: 0 0 20px #FF0000, 0 0 30px #FF0000; }
@@ -477,10 +257,13 @@
             100% { background-position: 10px 0; }
         }
 
-        @keyframes droneMove {
-            0% { transform: scale(1) rotate(var(--rotation, 0deg)); }
-            50% { transform: scale(1.05) rotate(var(--rotation, 0deg)); }
-            100% { transform: scale(1) rotate(var(--rotation, 0deg)); }
+        .light-changing {
+            animation: trafficLightChange 0.5s ease-in-out;
+        }
+
+        /* Анимации из levels-common.css */
+        .drone-moving {
+            animation: droneMove 0.3s ease-in-out;
         }
 
         @keyframes waitingPulse {
@@ -488,37 +271,15 @@
             50% { transform: scale(1.1); }
         }
 
-        @keyframes trafficLightChange {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+        .drone.waiting {
+            background: #ff9800;
+            animation: waitingPulse 1s infinite;
         }
 
-        .drone-moving {
-            animation: droneMove 0.3s ease-in-out;
-        }
-
-        .light-changing {
-            animation: trafficLightChange 0.5s ease-in-out;
-        }
-
-        .line-executing {
-            background: rgba(255, 152, 0, 0.2);
-        }
-
-        /* Медиа-запросы для адаптивности */
+        /* Адаптивность */
         @media (max-height: 700px) {
-            .hints-section {
-                max-height: 150px;
-            }
-            
-            .console-output {
-                max-height: 150px;
-            }
-            
-            .pixel-grid {
-                grid-template-columns: repeat(15, minmax(0, 1fr));
-                grid-template-rows: repeat(10, minmax(0, 1fr));
-            }
+            .hints-panel { max-height: 150px; }
+            .console-output.python { max-height: 150px; }
         }
     </style>
 </head>
@@ -544,25 +305,25 @@
                     <div class="light green inactive" id="greenLight"></div>
                 </div>
 
-                <div class="pixel-grid" id="gameGrid">
+                <div class="pixel-grid" id="gameGrid" style="grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(10, 1fr); margin-right: 100px;">
                     <!-- Игровое поле генерируется JavaScript -->
                 </div>
             </div>
         </div>
 
-        <!-- Правая часть - Редактор кода и консоль -->
+        <!-- Правая часть - Python программирование -->
         <div class="right-panel">
-            <!-- Редактор кода -->
-            <div class="code-editor-section">
+            <!-- Редактор Python кода -->
+            <div class="python-editor">
                 <div class="section-title">РЕДАКТОР PYTHON КОДА</div>
                 <div class="code-header">
                     <span class="syntax-keyword">def</span> <span class="syntax-function">восстановить_систему</span>():
                 </div>
-                <textarea class="code-area" id="codeEditor" placeholder="# Напишите здесь код для восстановления системы&#10;# Комбинируйте условия, циклы и функции&#10;# Используйте:&#10;# - if/else для проверки светофора и состояния конвейеров&#10;# - for/while для циклов&#10;# - светофор == 'зеленый' или 'красный'&#10;# - конвейеры_заполнены = True/False&#10;# - ядро_активировано = True/False&#10;&#10;# Пример:&#10;if светофор == 'зеленый':&#10;    for i in range(3):&#10;        двигаться_вперед()&#10;    if конвейеры_заполнены:&#10;        переложить_предметы()&#10;else:&#10;    стой_на_месте()"></textarea>
+                <textarea class="code-editor" id="codeEditor" placeholder="# Напишите здесь код для восстановления системы&#10;# Комбинируйте условия, циклы и функции&#10;# Используйте:&#10;# - if/else для проверки светофора и состояния конвейеров&#10;# - for/while для циклов&#10;# - светофор == 'зеленый' или 'красный'&#10;# - конвейеры_заполнены = True/False&#10;# - ядро_активировано = True/False&#10;&#10;# Пример:&#10;if светофор == 'зеленый':&#10;    for i in range(3):&#10;        двигаться_вперед()&#10;    if конвейеры_заполнены:&#10;        переложить_предметы()&#10;else:&#10;    стой_на_месте()"></textarea>
             </div>
 
             <!-- Подсказки -->
-            <div class="hints-section">
+            <div class="hints-panel">
                 <div class="section-title">ПОДСКАЗКИ ПО СИНТАКСИСУ</div>
                 <div class="hints-container">
                     <div class="hint-item">
@@ -601,11 +362,11 @@
             </div>
 
             <!-- Консоль -->
-            <div class="console-section">
+            <div class="python-console">
                 <div class="section-title">КОНСОЛЬ ВЫПОЛНЕНИЯ</div>
-                <div class="console-output" id="consoleOutput">
-                    <div class="console-line">🐍 Python интерпретатор готов</div>
-                    <div class="console-line">🚨 ОБНАРУЖЕНО ЯДРО ВИРУСА!</div>
+                <div class="console-output python" id="consoleOutput">
+                    <div class="console-line log-info">🐍 Python интерпретатор готов</div>
+                    <div class="console-line log-error">🚨 ОБНАРУЖЕНО ЯДРО ВИРУСА!</div>
                     <div class="console-line">💡 Используйте условия, циклы и функции для восстановления системы</div>
                 </div>
                 
@@ -617,8 +378,26 @@
         </div>
     </div>
 
-    <!-- API-клиент и логика уровня -->
+    <!-- API-клиент и ООП-логика уровня -->
     <script src="../api.js"></script>
-    <script src="level-3-3.js"></script>
+    <script src="../LevelBase.js"></script>
+    <script src="../LevelBase3.js"></script>
+    <script src="../level-3-3/level-3-3.js"></script>
+    
+    <script>
+        let level3_3;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            level3_3 = new Level3_3();
+            level3_3.initialize();
+            
+            // Глобальные функции для вызова из HTML
+            window.runPythonCode = () => level3_3.runPythonCode();
+            window.resetProgram = () => level3_3.resetProgram();
+            window.goBack = () => level3_3.goBack();
+            window.showHelp = () => level3_3.showHelp();
+            window.goToLevelMap = () => level3_3.goToLevelMap();
+        });
+    </script>
 </body>
 </html>
