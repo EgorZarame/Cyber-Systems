@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>КиберСистемс - Главная</title>
     <style>
+        /* Весь ваш CSS стиль остается без изменений */
         * { 
             margin: 0; 
             padding: 0; 
@@ -458,7 +459,7 @@
         <nav class="main-nav">
             <button class="nav-btn active">ГЛАВНАЯ</button>
             <button class="nav-btn" onclick="location.href='../level-map/index.html'">КАРТА</button>
-            <button class="nav-btn" onclick="showHelp()">СПРАВКА</button>
+            <button class="nav-btn" onclick="MainPage.showHelp()">СПРАВКА</button>
         </nav>
     </header>
 
@@ -473,19 +474,19 @@
     <!-- Основной контент -->
     <main class="main-content">
         <div class="character-display">
-            <img id="character-avatar" class="character-avatar" alt="Аватар персонажа" onerror="this.style.display='none'; document.querySelector('.character-placeholder').style.display='block';">
+            <img id="character-avatar" class="character-avatar" alt="Аватар персонажа">
             <div class="character-placeholder">👨‍💼</div>
             <div class="character-name" id="character-name">Стажер</div>
         </div>
 
         <div class="menu-buttons">
-            <button class="menu-btn primary" onclick="showStartDialog()">
+            <button class="menu-btn primary" id="start-game-btn">
                 НАЧАТЬ ИГРУ
             </button>
-            <button class="menu-btn secondary" onclick="continueGame()">
+            <button class="menu-btn secondary" id="continue-game-btn">
                 ПРОДОЛЖИТЬ
             </button>
-            <button class="menu-btn secondary" onclick="showHelp()">
+            <button class="menu-btn secondary" id="help-btn">
                 СПРАВКА
             </button>
         </div>
@@ -496,7 +497,7 @@
         <div class="dialog-box">
             <div class="dialog-header">
                 <h2 class="dialog-title">🚀 НАЧАЛО НОВОЙ ИГРЫ</h2>
-                <button class="dialog-close" onclick="closeStartDialog()">×</button>
+                <button class="dialog-close" id="close-start-dialog">×</button>
             </div>
             
             <div class="dialog-content">
@@ -505,10 +506,10 @@
                 </div>
                 
                 <div class="dialog-buttons">
-                    <button class="dialog-btn confirm" onclick="startNewGame()">
+                    <button class="dialog-btn confirm" id="confirm-start-btn">
                         НАЧАТЬ
                     </button>
-                    <button class="dialog-btn cancel" onclick="closeStartDialog()">
+                    <button class="dialog-btn cancel" id="cancel-start-btn">
                         ОТМЕНА
                     </button>
                 </div>
@@ -521,7 +522,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">📘 СПРАВКА ПО ИГРЕ</h2>
-                <button class="modal-close" onclick="closeHelp()">×</button>
+                <button class="modal-close" id="close-help-btn">×</button>
             </div>
             
             <div class="help-section">
@@ -595,327 +596,11 @@
         </div>
     </div>
 
+    <script src="main-page.js"></script>
     <script>
-        let currentProfile = null;
-
-        // Функция для работы с localStorage
-        function getProfile() {
-            try {
-                const profile = localStorage.getItem('cyberSystemsProfile');
-                return profile ? JSON.parse(profile) : null;
-            } catch (error) {
-                console.error('Ошибка загрузки профиля:', error);
-                return null;
-            }
-        }
-
-        function saveProfile(profile) {
-            try {
-                localStorage.setItem('cyberSystemsProfile', JSON.stringify(profile));
-                console.log('✅ Профиль сохранен:', profile);
-                return true;
-            } catch (error) {
-                console.error('Ошибка сохранения профиля:', error);
-                return false;
-            }
-        }
-
-        // ВОССТАНОВЛЕННАЯ ФУНКЦИЯ setupBackground() 
-        function setupBackground() {
-            console.log('🖼️ Начало установки фона...');
-            
-            // Пробуем разные пути к фону
-            const possiblePaths = [
-                '../assets/images/backgrounds/office_bg.png',
-                'assets/images/backgrounds/office_bg.png',
-                '../assets/backgrounds/office-bg.png',
-                'assets/backgrounds/office-bg.png',
-                // Если есть конкретный путь к файлу, добавь его сюда
-            ];
-            
-            const body = document.body;
-            
-            // Функция для попытки загрузки фона
-            function tryBackground(pathIndex) {
-                if (pathIndex >= possiblePaths.length) {
-                    console.error('❌ Все пути к фону не работают. Использую CSS фон.');
-                    setCSSBackground();
-                    return;
-                }
-                
-                const bgPath = possiblePaths[pathIndex];
-                console.log(`🔄 Пробуем путь ${pathIndex + 1}:`, bgPath);
-                
-                const bgImg = new Image();
-                bgImg.onload = function() {
-                    console.log('✅ Фон загружен успешно:', bgPath);
-                    body.style.backgroundImage = `url('${bgPath}')`;
-                    body.style.backgroundSize = 'cover';
-                    body.style.backgroundPosition = 'center';
-                    body.style.backgroundRepeat = 'no-repeat';
-                    body.style.backgroundAttachment = 'fixed';
-                };
-                bgImg.onerror = function() {
-                    console.warn('❌ Не удалось загрузить:', bgPath);
-                    tryBackground(pathIndex + 1); // Пробуем следующий путь
-                };
-                bgImg.src = bgPath;
-            }
-            
-            // Функция для CSS фона (если картинки не работают)
-            function setCSSBackground() {
-                body.style.background = `
-                    radial-gradient(circle at 20% 30%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 80%, rgba(255, 0, 136, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
-                    linear-gradient(135deg, #0a0a1a 0%, #151530 50%, #1a1a2e 100%)
-                `;
-                body.style.backgroundSize = 'cover';
-                body.style.backgroundPosition = 'center';
-                body.style.backgroundRepeat = 'no-repeat';
-                body.style.backgroundAttachment = 'fixed';
-                console.log('✅ Установлен CSS фон');
-            }
-            
-            // Начинаем попытки загрузки
-            tryBackground(0);
-        }
-
-        // Продолжить игру
-        async function continueGame() {
-            try {
-                const profile = getProfile();
-                
-                if (profile && profile.currentLevelId) {
-                    console.log('🎮 Загружен профиль:', profile);
-                    location.href = '../level-map/index.html';
-                } else {
-                    // Если нет сохраненной игры, начинаем новую
-                    console.log('Профиль не найден, начинаем новую игру');
-                    const newProfile = {
-                        currentLevelId: '1.1',
-                        lastCompleted: null,
-                        juniorUnlocked: false,
-                        seniorUnlocked: false
-                    };
-                    
-                    saveProfile(newProfile);
-                    location.href = '../level-map/index.html';
-                }
-            } catch (error) {
-                console.error('Ошибка при продолжении игры:', error);
-                alert('Произошла ошибка при загрузке сохранения. Начинаем новую игру.');
-                location.href = '../level-map/index.html';
-            }
-        }
-
-        // Показать диалог начала новой игры
-        function showStartDialog() {
-            const dialog = document.getElementById('startDialog');
-            if (dialog) {
-                dialog.style.display = 'flex';
-            }
-        }
-
-        // Закрыть диалог начала новой игры
-        function closeStartDialog() {
-            const dialog = document.getElementById('startDialog');
-            if (dialog) {
-                dialog.style.display = 'none';
-            }
-        }
-
-        // Начать новую игру
-        function startNewGame() {
-            try {
-                console.log('🚀 Начинаем новую игру...');
-                
-                // Создаем новый профиль
-                const newProfile = {
-                    currentLevelId: '1.1',
-                    lastCompleted: null,
-                    juniorUnlocked: false,
-                    seniorUnlocked: false
-                };
-                
-                // Сохраняем профиль
-                const saved = saveProfile(newProfile);
-                
-                if (saved) {
-                    console.log('✅ Новая игра создана:', newProfile);
-                    
-                    // Закрываем диалог
-                    closeStartDialog();
-                    
-                    // Переходим на карту уровней
-                    setTimeout(() => {
-                        location.href = '../level-map/index.html';
-                    }, 300);
-                    
-                } else {
-                    throw new Error('Не удалось сохранить профиль');
-                }
-                
-            } catch (error) {
-                console.error('❌ Ошибка при начале новой игры:', error);
-                alert('Произошла ошибка при создании новой игры. Попробуйте еще раз.');
-            }
-        }
-
-        // Показать справку
-        function showHelp() {
-            const modal = document.getElementById('helpModal');
-            if (modal) {
-                modal.style.display = 'flex';
-            }
-        }
-
-        // Закрыть справку
-        function closeHelp() {
-            const modal = document.getElementById('helpModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        // Закрыть по клику на оверлей
-        document.addEventListener('click', function(event) {
-            const startDialog = document.getElementById('startDialog');
-            const helpModal = document.getElementById('helpModal');
-            
-            if (startDialog && startDialog.style.display === 'flex' && event.target === startDialog) {
-                closeStartDialog();
-            }
-            
-            if (helpModal && helpModal.style.display === 'flex' && event.target === helpModal) {
-                closeHelp();
-            }
-        });
-
-        // Закрыть по ESC
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeStartDialog();
-                closeHelp();
-            }
-        });
-
-        // Обновление прогресса карьеры
-        function updateCareerProgress() {
-            if (!currentProfile) return;
-            
-            const stages = document.querySelectorAll('.career-stage');
-            stages.forEach((stage, index) => {
-                stage.classList.remove('active');
-            });
-            
-            const levelId = currentProfile.lastCompleted || currentProfile.currentLevelId;
-            let stageIndex = 0; // Стажер по умолчанию
-            
-            console.log('🎯 Обновление статуса карьеры. levelId:', levelId);
-            
-            if (!levelId) {
-                stageIndex = 0;
-            } else if (levelId === '3.boss') {
-                // Финальный босс — SENIOR
-                stageIndex = 3;
-                console.log('✅ Статус: SENIOR (после финального босса)');
-            } else if (levelId === '2.boss' || (levelId.startsWith('3.') && levelId !== '3.boss')) {
-                // После второго босса или уровней 3.1, 3.2 (но не 3.boss) — DEVELOPER
-                stageIndex = 2;
-                console.log('✅ Статус: DEVELOPER (после 2.boss или уровней 3.1/3.2)');
-            } else if (levelId === '1.boss' || levelId.startsWith('2.')) {
-                // После первого босса или уровней 2.x — JUNIOR
-                stageIndex = 1;
-                console.log('✅ Статус: JUNIOR (после 1.boss или уровней 2.x)');
-            }
-            
-            if (stages[stageIndex]) {
-                stages[stageIndex].classList.add('active');
-                console.log(`✅ Активирован статус: ${stages[stageIndex].textContent}`);
-            }
-        }
-
-        // Загрузка профиля
-        function loadProfile() {
-            try {
-                currentProfile = getProfile();
-                if (currentProfile) {
-                    console.log('Профиль загружен:', currentProfile);
-                    updateCharacterDisplay(currentProfile);
-                } else {
-                    console.log('Профиль не найден');
-                    updateCharacterDisplay({ currentLevelId: '1.1' });
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки профиля:', error);
-                updateCharacterDisplay({ currentLevelId: '1.1' });
-            }
-            updateCareerProgress();
-        }
-        
-        // Обновление аватара
-        function updateCharacterDisplay(profile) {
-            const avatarImg = document.getElementById('character-avatar');
-            const characterName = document.getElementById('character-name');
-            
-            if (!avatarImg || !characterName) return;
-            
-            const basePath = window.location.protocol === 'file:' ? '../' : '/';
-            const avatarBasePath = basePath + 'assets/images/avatars/';
-            
-            let avatarFile = 'intern.png';
-            let characterTitle = 'Стажер';
-            
-            const levelId = profile.lastCompleted || profile.currentLevelId;
-            
-            if (levelId) {
-                if (levelId === '3.boss') {
-                    avatarFile = 'senior.png';
-                    characterTitle = 'Senior Developer';
-                    console.log('✅ Аватар: Senior Developer (после финального босса)');
-                } else if (levelId === '2.boss' || (levelId.startsWith('3.') && levelId !== '3.boss')) {
-                    avatarFile = 'developer.png';
-                    characterTitle = 'Developer';
-                    console.log('✅ Аватар: Developer (после 2.boss или уровней 3.1/3.2)');
-                } else if (levelId === '1.boss' || levelId.startsWith('2.')) {
-                    avatarFile = 'junior.png';
-                    characterTitle = 'Junior Developer';
-                    console.log('✅ Аватар: Junior Developer (после 1.boss или уровней 2.x)');
-                }
-            }
-            
-            console.log('🖼️ Установка аватара:', avatarFile, 'для уровня:', levelId);
-            
-            const avatarPath = avatarBasePath + avatarFile;
-            
-            avatarImg.src = avatarPath;
-            characterName.textContent = characterTitle;
-            
-            avatarImg.onerror = function() {
-                console.error('❌ Ошибка загрузки аватара:', avatarPath);
-                this.style.display = 'none';
-                const placeholder = document.querySelector('.character-placeholder');
-                if (placeholder) {
-                    placeholder.style.display = 'block';
-                }
-            };
-            
-            avatarImg.onload = function() {
-                console.log('✅ Аватар загружен:', avatarPath);
-                this.style.display = 'block';
-                const placeholder = document.querySelector('.character-placeholder');
-                if (placeholder) {
-                    placeholder.style.display = 'none';
-                }
-            };
-        }
-
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🏠 Главное меню загружено');
-            setupBackground(); // ВОССТАНОВЛЕН ВЫЗОВ setupBackground()
-            loadProfile();
+        // Инициализация главной страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            MainPage.init();
         });
     </script>
 </body>
