@@ -1,295 +1,194 @@
-// API клиент для работы с бэкендом
-const API_BASE_URL = 'http://localhost:8080/api';
+class APIClient {
+    static BASE_URL = 'http://localhost:8080/api';
+    static isAvailable = null;
+    static checkPromise = null;
 
-// Кэш состояния доступности бэкенда
-let backendAvailable = null;
-let backendCheckPromise = null;
+    static async checkAvailability() {
+        if (this.isAvailable !== null) return this.isAvailable;
+        if (this.checkPromise) return this.checkPromise;
 
-/**
- * Проверяет доступность бэкенда (один раз при загрузке)
- */
-async function checkBackendAvailability() {
-    // Если уже проверили, возвращаем кэшированный результат
-    if (backendAvailable !== null) {
-        return backendAvailable;
+        this.checkPromise = (async () => {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 500);
+
+                const response = await fetch(`${this.BASE_URL}/levels`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                this.isAvailable = response.ok;
+                return this.isAvailable;
+            } catch (error) {
+                this.isAvailable = false;
+                return false;
+            }
+        })();
+
+        return this.checkPromise;
     }
-    
-    // Если проверка уже идет, ждем её
-    if (backendCheckPromise) {
-        return backendCheckPromise;
+
+    static async request(endpoint, options = {}) {
+        const isAvailable = await this.checkAvailability();
+        
+        if (!isAvailable) {
+            throw new Error('Backend недоступен');
+        }
+
+        const defaultOptions = {
+            headers: { 'Content-Type': 'application/json' },
+            signal: this.createTimeoutSignal(2000)
+        };
+
+        const response = await fetch(`${this.BASE_URL}${endpoint}`, {
+            ...defaultOptions,
+            ...options
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return response.json();
     }
-    
-    // Запускаем проверку
-    backendCheckPromise = (async () => {
+
+    static createTimeoutSignal(timeoutMs) {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), timeoutMs);
+        return controller.signal;
+    }
+}
+
+class LevelService {
+    static FALLBACK_LEVELS = [
+        { id: '1.1', type: 'DRONES', difficulty: 'EASY', orderIndex: 1, title: 'Первые шаги' },
+        { id: '1.2', type: 'DRONES', difficulty: 'EASY', orderIndex: 2, title: 'Повороты' },
+        { id: '1.boss', type: 'DRONES', difficulty: 'BOSS', orderIndex: 4, title: 'Босс отдела дронов' },
+        { id: '2.1', type: 'SECURITY', difficulty: 'EASY', orderIndex: 5, title: 'Взлом системы' },
+        { id: '2.2', type: 'SECURITY', difficulty: 'MEDIUM', orderIndex: 6, title: 'Обход защиты' },
+        { id: '2.boss', type: 'SECURITY', difficulty: 'BOSS', orderIndex: 8, title: 'Босс безопасности' },
+        { id: '3.1', type: 'CORE', difficulty: 'MEDIUM', orderIndex: 9, title: 'Ядро системы' },
+        { id: '3.2', type: 'CORE', difficulty: 'HARD', orderIndex: 10, title: 'Критическая ошибка' },
+        { id: '3.boss', type: 'CORE', difficulty: 'BOSS', orderIndex: 12, title: 'Финальный босс' }
+    ];
+
+    static async getAll() {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 500);
-            
-            // Используем простой GET запрос с минимальным таймаутом
-            const response = await fetch(`${API_BASE_URL}/levels`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            backendAvailable = response.ok;
-            return backendAvailable;
+            return await APIClient.request('/levels', { method: 'GET' });
         } catch (error) {
-            // Подавляем ошибку - это нормально, если бэкенд недоступен
-            backendAvailable = false;
+            console.info('ℹ️ Используем локальные данные для уровней');
+            return this.FALLBACK_LEVELS;
+        }
+    }
+}
+
+class ProfileService {
+    static async get() {
+        try {
+            return await APIClient.request('/profile', { method: 'GET' });
+        } catch (error) {
+            console.info('ℹ️ Используем локальный профиль');
+            return { id: 'local-profile', nickname: 'Стажер', currentLevelId: '1.1' };
+        }
+    }
+
+    static async updateProgress(levelId) {
+        try {
+            return await APIClient.request('/profile/progress', {
+                method: 'POST',
+                body: JSON.stringify({ levelId })
+            });
+        } catch (error) {
+            console.info('ℹ️ Прогресс сохранен локально');
+            return { id: 'local-profile', nickname: 'Стажер', currentLevelId: levelId };
+        }
+    }
+
+    static async updateNickname(nickname) {
+        try {
+            return await APIClient.request('/profile/nickname', {
+                method: 'POST',
+                body: JSON.stringify({ nickname })
+            });
+        } catch (error) {
+            console.info('ℹ️ Никнейм сохранен локально');
+            return { id: 'local-profile', nickname, currentLevelId: '1.1' };
+        }
+    }
+}
+
+class LocalStorageService {
+    static PROFILE_KEY = 'cyberSystemsProfile';
+
+    static syncAfterLevel(levelId) {
+        try {
+            let profile = this.load();
+            
+            if (!profile) {
+                profile = {
+                    currentLevelId: levelId,
+                    lastCompleted: levelId,
+                    juniorUnlocked: false,
+                    seniorUnlocked: false,
+                    completedLevels: []
+                };
+            } else {
+                profile.currentLevelId = levelId;
+                profile.lastCompleted = levelId;
+                
+                if (!profile.completedLevels) {
+                    profile.completedLevels = [];
+                }
+                
+                if (!profile.completedLevels.includes(levelId)) {
+                    profile.completedLevels.push(levelId);
+                }
+            }
+
+            // Обновляем статусы карьеры
+            if (levelId === '1.boss') {
+                profile.juniorUnlocked = true;
+            }
+            if (levelId === '3.boss') {
+                profile.seniorUnlocked = true;
+            }
+
+            this.save(profile);
+            console.log('✅ Локальный профиль синхронизирован:', profile);
+            
+        } catch (error) {
+            console.error('❌ Ошибка синхронизации локального профиля:', error);
+        }
+    }
+
+    static load() {
+        try {
+            const profile = localStorage.getItem(this.PROFILE_KEY);
+            return profile ? JSON.parse(profile) : null;
+        } catch (error) {
+            console.error('Ошибка загрузки профиля:', error);
+            return null;
+        }
+    }
+
+    static save(profile) {
+        try {
+            localStorage.setItem(this.PROFILE_KEY, JSON.stringify(profile));
+            return true;
+        } catch (error) {
+            console.error('Ошибка сохранения профиля:', error);
             return false;
         }
-    })();
-    
-    return backendCheckPromise;
-}
-
-// Fallback данные для работы без бэкенда
-const FALLBACK_LEVELS = [
-    { id: '1.1', type: 'DRONES', difficulty: 'EASY', orderIndex: 1, title: 'Первые шаги' },
-    { id: '1.2', type: 'DRONES', difficulty: 'EASY', orderIndex: 2, title: 'Повороты' },
-
-    { id: '1.boss', type: 'DRONES', difficulty: 'BOSS', orderIndex: 4, title: 'Босс отдела дронов' },
-    { id: '2.1', type: 'SECURITY', difficulty: 'EASY', orderIndex: 5, title: 'Взлом системы' },
-    { id: '2.2', type: 'SECURITY', difficulty: 'MEDIUM', orderIndex: 6, title: 'Обход защиты' },
-    { id: '2.boss', type: 'SECURITY', difficulty: 'BOSS', orderIndex: 8, title: 'Босс безопасности' },
-    { id: '3.1', type: 'CORE', difficulty: 'MEDIUM', orderIndex: 9, title: 'Ядро системы' },
-    { id: '3.2', type: 'CORE', difficulty: 'HARD', orderIndex: 10, title: 'Критическая ошибка' },
-    { id: '3.boss', type: 'CORE', difficulty: 'BOSS', orderIndex: 12, title: 'Финальный босс' }
-];
-
-/**
- * Создает AbortController с таймаутом для совместимости
- */
-function createTimeoutSignal(timeoutMs) {
-    const controller = new AbortController();
-    setTimeout(() => controller.abort(), timeoutMs);
-    return controller.signal;
-}
-
-/**
- * Загружает список всех уровней с бэкенда
- */
-async function fetchLevels() {
-    // Проверяем доступность бэкенда
-    const isAvailable = await checkBackendAvailability();
-    
-    if (!isAvailable) {
-        // Бэкенд недоступен, сразу возвращаем fallback данные без попыток запроса
-        if (backendAvailable === false) {
-            // Показываем предупреждение только один раз
-            console.info('ℹ️ Работаем в режиме без бэкенда (используются локальные данные)');
-        }
-        return FALLBACK_LEVELS;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/levels`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            signal: createTimeoutSignal(2000)
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const levels = await response.json();
-        console.log('✅ Уровни загружены с бэкенда:', levels.length);
-        return levels;
-    } catch (error) {
-        // Если бэкенд стал недоступен после проверки, обновляем статус
-        backendAvailable = false;
-        return FALLBACK_LEVELS;
     }
 }
 
-/**
- * Загружает профиль игрока с бэкенда
- */
-async function fetchProfile() {
-    // Проверяем доступность бэкенда
-    const isAvailable = await checkBackendAvailability();
-    
-    if (!isAvailable) {
-        // Бэкенд недоступен, возвращаем fallback профиль
-        return {
-            id: 'local-profile',
-            nickname: 'Стажер',
-            currentLevelId: '1.1'
-        };
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/profile`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            signal: createTimeoutSignal(2000)
-        });
-        if (!response.ok) {
-            if (response.status === 404) {
-                return null; // Профиль не найден
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const profile = await response.json();
-        console.log('✅ Профиль загружен с бэкенда');
-        return profile;
-    } catch (error) {
-        // Если бэкенд стал недоступен после проверки, обновляем статус
-        backendAvailable = false;
-        return {
-            id: 'local-profile',
-            nickname: 'Стажер',
-            currentLevelId: '1.1'
-        };
-    }
-}
-
-/**
- * Обновляет прогресс игрока (текущий уровень)
- */
-async function updateProgress(levelId) {
-    // Проверяем доступность бэкенда
-    const isAvailable = await checkBackendAvailability();
-    
-    if (!isAvailable) {
-        // Бэкенд недоступен, возвращаем локальный профиль
-        return {
-            id: 'local-profile',
-            nickname: 'Стажер',
-            currentLevelId: levelId
-        };
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/profile/progress`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ levelId: levelId }),
-            signal: createTimeoutSignal(2000)
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const profile = await response.json();
-        console.log('✅ Прогресс обновлен на бэкенде');
-        return profile;
-    } catch (error) {
-        // Если бэкенд стал недоступен после проверки, обновляем статус
-        backendAvailable = false;
-        return {
-            id: 'local-profile',
-            nickname: 'Стажер',
-            currentLevelId: levelId
-        };
-    }
-}
-
-/**
- * Синхронизация локального профиля (localStorage) после прохождения уровня.
- * Используется всеми уровнями, чтобы карта и главное меню знали реальный прогресс.
- */
-function syncLocalProfileAfterLevel(levelId) {
-    try {
-        const profileStr = localStorage.getItem('cyberSystemsProfile');
-        let profile = profileStr ? JSON.parse(profileStr) : null;
-
-        if (!profile) {
-            profile = {
-                currentLevelId: levelId,
-                lastCompleted: levelId,
-                juniorUnlocked: false,
-                seniorUnlocked: false
-            };
-        } else {
-            // ВСЕГДА обновляем lastCompleted на новый уровень
-            profile.currentLevelId = levelId;
-            profile.lastCompleted = levelId;
-            console.log(`🔄 Обновление lastCompleted: ${profile.lastCompleted} -> ${levelId}`);
-        }
-
-        // Обновляем карьерные ступени на основе уровня
-        // После первого босса — Junior
-        if (levelId === '1.boss') {
-            profile.juniorUnlocked = true;
-        }
-        // После второго босса — Developer (но не Senior)
-        if (levelId === '2.boss') {
-            profile.juniorUnlocked = true; // Уже Junior
-            // Developer определяется по lastCompleted на главной странице
-        }
-        // Финальный босс 3.boss — Senior
-        if (levelId === '3.boss') {
-            profile.juniorUnlocked = true;
-            profile.seniorUnlocked = true;
-        }
-
-        // ВАЖНО: Сохраняем ПЕРЕД проверкой, чтобы убедиться, что данные записались
-        localStorage.setItem('cyberSystemsProfile', JSON.stringify(profile));
-        
-        // Проверяем, что данные действительно сохранились
-        const verifyProfile = JSON.parse(localStorage.getItem('cyberSystemsProfile'));
-        if (verifyProfile.lastCompleted !== levelId) {
-            console.error('❌ ОШИБКА: lastCompleted не обновился! Ожидалось:', levelId, 'Получено:', verifyProfile.lastCompleted);
-            // Пытаемся еще раз
-            verifyProfile.lastCompleted = levelId;
-            verifyProfile.currentLevelId = levelId;
-            localStorage.setItem('cyberSystemsProfile', JSON.stringify(verifyProfile));
-        }
-        
-        console.log('✅ syncLocalProfileAfterLevel завершено. Профиль:', profile);
-        console.log('✅ Проверка сохранения. lastCompleted в localStorage:', verifyProfile.lastCompleted);
-    } catch (error) {
-        console.error('❌ Ошибка синхронизации локального профиля:', error);
-    }
-}
-
-/**
- * Обновляет никнейм игрока
- */
-async function updateNickname(nickname) {
-    // Проверяем доступность бэкенда
-    const isAvailable = await checkBackendAvailability();
-    
-    if (!isAvailable) {
-        // Бэкенд недоступен, возвращаем локальный профиль
-        return {
-            id: 'local-profile',
-            nickname: nickname,
-            currentLevelId: '1.1'
-        };
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/profile/nickname`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ nickname: nickname }),
-            signal: createTimeoutSignal(2000)
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const profile = await response.json();
-        console.log('✅ Никнейм обновлен на бэкенде');
-        return profile;
-    } catch (error) {
-        // Если бэкенд стал недоступен после проверки, обновляем статус
-        backendAvailable = false;
-        return {
-            id: 'local-profile',
-            nickname: nickname,
-            currentLevelId: '1.1'
-        };
-    }
+// Экспорт глобальных функций для обратной совместимости
+if (typeof window !== 'undefined') {
+    window.fetchLevels = LevelService.getAll.bind(LevelService);
+    window.fetchProfile = ProfileService.get.bind(ProfileService);
+    window.updateProgress = ProfileService.updateProgress.bind(ProfileService);
+    window.updateNickname = ProfileService.updateNickname.bind(ProfileService);
+    window.syncLocalProfileAfterLevel = LocalStorageService.syncAfterLevel.bind(LocalStorageService);
 }

@@ -9,7 +9,7 @@ app.use(express.static(__dirname));
 app.use('/home', express.static(path.join(__dirname, 'home')));
 app.use('/level-map', express.static(path.join(__dirname, 'level-map')));
 app.use('/level-1-1', express.static(path.join(__dirname, 'level-1-1')));
-app.use('/sandbox', express.static(path.join(__dirname, 'sandbox')));
+//app.use('/sandbox', express.static(path.join(__dirname, 'sandbox')));
 
 // Главная страница по умолчанию
 app.get('/', (req, res) => {
