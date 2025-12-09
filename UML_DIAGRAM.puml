@@ -1,0 +1,569 @@
+@startuml CyberSystems_FullArchitecture
+
+' ====== Настройки стиля ======
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+title Cyber Systems - Полная архитектура системы
+
+' ====== Указываем layout (обход бага 2025) ======
+!pragma useVerticalIfOnLeft
+
+' ============================================================
+' ================ ENUMS ====================================
+' ============================================================
+
+enum LevelType {
+  DRONES
+  SECURITY
+  CORE
+}
+
+enum LevelDifficulty {
+  EASY
+  MEDIUM
+  HARD
+  BOSS
+}
+
+' ============================================================
+' ================ BACKEND: DOMAIN LAYER =====================
+' ============================================================
+
+package "«Backend» Domain Layer" {
+  interface LevelInfo {
+    + getId(): String
+    + getType(): LevelType
+    + getName(): String
+    + getOrderIndex(): int
+    + getDifficulty(): LevelDifficulty
+  }
+
+  abstract class AbstractLevel {
+    - id: String
+    - name: String
+    - orderIndex: int
+    - difficulty: LevelDifficulty
+    --
+    + AbstractLevel(id, name, orderIndex, difficulty)
+    + getId(): String
+    + getName(): String
+    + getOrderIndex(): int
+    + getDifficulty(): LevelDifficulty
+    + {abstract} getType(): LevelType
+  }
+
+  class SecurityLevel {
+    + SecurityLevel(id, name, orderIndex, difficulty)
+    + getType(): LevelType
+    note right
+      Уровни отдела безопасности
+      (2.1, 2.2, 2.3, 2.boss)
+    end note
+  }
+
+  class DronesLevel {
+    + DronesLevel(id, name, orderIndex, difficulty)
+    + getType(): LevelType
+    note right
+      Уровни отдела дронов
+      (1.1, 1.2, 1.3, 1.boss)
+    end note
+  }
+
+  class CoreLevel {
+    + CoreLevel(id, name, orderIndex, difficulty)
+    + getType(): LevelType
+    note right
+      Уровни центрального ядра
+      (3.1, 3.2, 3.3, 3.boss)
+    end note
+  }
+
+  class Level {
+    - id: String
+    - department: String
+    - name: String
+    - orderIndex: int
+    - difficulty: LevelDifficulty
+    --
+    + Level(id, department, name, orderIndex, difficulty)
+    + getId(): String
+    + getDepartment(): String
+    + getName(): String
+    + getOrderIndex(): int
+    + getDifficulty(): LevelDifficulty
+    note right
+      DTO для передачи на фронтенд
+      Отделён от внутренней иерархии
+    end note
+  }
+
+  class PlayerProfile {
+    - id: String
+    - nickname: String
+    - currentLevelId: String
+    --
+    + PlayerProfile(id, nickname, currentLevelId)
+    + getId(): String
+    + getNickname(): String
+    + setNickname(String): void
+    + getCurrentLevelId(): String
+    + setCurrentLevelId(String): void
+  }
+
+  LevelInfo <|.. AbstractLevel
+  AbstractLevel <|-- SecurityLevel
+  AbstractLevel <|-- DronesLevel
+  AbstractLevel <|-- CoreLevel
+}
+
+' ============================================================
+' ================ BACKEND: SERVICE LAYER ====================
+' ============================================================
+
+package "«Backend» Service Layer" {
+  interface LevelFactory {
+    + createLevel(id: String): LevelInfo
+  }
+
+  class DefaultLevelFactory {
+    + DefaultLevelFactory()
+    + createLevel(id: String): LevelInfo
+    note right
+      Создаёт уровни по ID:
+      - "1.1", "1.2", "1.3", "1.boss" → DronesLevel
+      - "2.1", "2.2", "2.3", "2.boss" → SecurityLevel
+      - "3.1", "3.2", "3.3", "3.boss" → CoreLevel
+    end note
+  }
+
+  interface LevelCatalogService {
+    + getAllLevels(): List<LevelInfo>
+    + getById(id: String): LevelInfo
+    + exists(id: String): boolean
+  }
+
+  class LevelCatalog {
+    - levels: Map<String, LevelInfo>
+    - factory: LevelFactory
+    --
+    + LevelCatalog(factory: LevelFactory)
+    - register(level: LevelInfo): void
+    + getAllLevels(): List<LevelInfo>
+    + getById(id: String): LevelInfo
+    + exists(id: String): boolean
+    note right
+      Инициализирует все 12 уровней
+      при создании через фабрику
+    end note
+  }
+
+  interface PlayerProfileRepository {
+    + findSingleProfile(): Optional<PlayerProfile>
+    + save(profile: PlayerProfile): PlayerProfile
+  }
+
+  class InMemoryPlayerProfileRepository {
+    - storage: Map<String, PlayerProfile>
+    --
+    + findSingleProfile(): Optional<PlayerProfile>
+    + save(profile: PlayerProfile): PlayerProfile
+    + createNew(nickname: String, levelId: String): PlayerProfile
+    note right
+      In-memory хранилище
+      Готово к замене на БД
+    end note
+  }
+
+  interface PlayerProfileServiceContract {
+    + getSingleProfile(): PlayerProfile
+    + updateProgress(levelId: String): PlayerProfile
+    + updateNickname(nickname: String): PlayerProfile
+  }
+
+  class PlayerProfileService {
+    - levelCatalog: LevelCatalogService
+    - profileRepository: InMemoryPlayerProfileRepository
+    --
+    + PlayerProfileService(levelCatalog, profileRepository)
+    + initDemoProfile(): void
+    + getSingleProfile(): PlayerProfile
+    + updateProgress(levelId: String): PlayerProfile
+    + updateNickname(nickname: String): PlayerProfile
+    note right
+      Создаёт демо-профиль "Интерн"
+      при старте приложения
+    end note
+  }
+
+  interface ProgressionStrategy {
+    + getNextLevel(profile: PlayerProfile, catalog: LevelCatalogService): LevelInfo
+  }
+
+  class LinearProgressionStrategy {
+    + getNextLevel(profile: PlayerProfile, catalog: LevelCatalogService): LevelInfo
+    note right
+      Линейная стратегия прогресса
+      Следующий уровень по orderIndex
+    end note
+  }
+
+  LevelFactory <|.. DefaultLevelFactory
+  LevelCatalogService <|.. LevelCatalog
+  LevelCatalog --> DefaultLevelFactory : uses
+  PlayerProfileRepository <|.. InMemoryPlayerProfileRepository
+  PlayerProfileServiceContract <|.. PlayerProfileService
+  PlayerProfileService --> LevelCatalogService
+  PlayerProfileService --> InMemoryPlayerProfileRepository
+  ProgressionStrategy <|.. LinearProgressionStrategy
+}
+
+' ============================================================
+' ================ BACKEND: API LAYER ========================
+' ============================================================
+
+package "«Backend» API Layer" {
+  class GameController {
+    - levelCatalog: LevelCatalogService
+    - playerProfileService: PlayerProfileServiceContract
+    - progressionStrategy: ProgressionStrategy
+    --
+    + GameController(levelCatalog, playerProfileService, progressionStrategy)
+    + getLevels(): List<LevelInfo>
+    + getProfile(): ResponseEntity<PlayerProfileDto>
+    + updateProgress(request: UpdateProgressRequest): PlayerProfileDto
+    + updateNickname(request: UpdateNicknameRequest): PlayerProfileDto
+    + getNextLevel(): ResponseEntity<LevelInfo>
+    note right
+      @RestController
+      @RequestMapping("/api")
+      @CrossOrigin(origins = "http://localhost:3000")
+      
+      Endpoints:
+      GET /api/levels
+      GET /api/profile
+      POST /api/profile/progress
+      POST /api/profile/nickname
+      GET /api/profile/next-level
+    end note
+  }
+
+  class PlayerProfileDto {
+    - id: String
+    - nickname: String
+    - currentLevelId: String
+    --
+    + PlayerProfileDto()
+    + PlayerProfileDto(id, nickname, currentLevelId)
+    + {static} fromDomain(profile: PlayerProfile): PlayerProfileDto
+    + getId(): String
+    + setId(String): void
+    + getNickname(): String
+    + setNickname(String): void
+    + getCurrentLevelId(): String
+    + setCurrentLevelId(String): void
+  }
+
+  class UpdateProgressRequest {
+    - levelId: String
+    --
+    + getLevelId(): String
+    + setLevelId(String): void
+  }
+
+  class UpdateNicknameRequest {
+    - nickname: String
+    --
+    + getNickname(): String
+    + setNickname(String): void
+  }
+
+  class ApiErrorResponse {
+    - timestamp: OffsetDateTime
+    - status: int
+    - error: String
+    - message: String
+    - path: String
+    --
+    + ApiErrorResponse(status, error, message, path)
+    + getTimestamp(): OffsetDateTime
+    + getStatus(): int
+    + getError(): String
+    + getMessage(): String
+    + getPath(): String
+  }
+
+  class GlobalExceptionHandler {
+    + handleIllegalArgument(ex: IllegalArgumentException, request: HttpServletRequest): ResponseEntity<ApiErrorResponse>
+    + handleValidation(ex: MethodArgumentNotValidException, request: HttpServletRequest): ResponseEntity<ApiErrorResponse>
+    + handleOther(ex: Exception, request: HttpServletRequest): ResponseEntity<ApiErrorResponse>
+    note right
+      @RestControllerAdvice
+      Обработка ошибок:
+      - IllegalArgumentException → 400
+      - MethodArgumentNotValidException → 400
+      - Exception → 500
+    end note
+  }
+
+  GameController --> LevelCatalogService
+  GameController --> PlayerProfileServiceContract
+  GameController --> ProgressionStrategy
+  GameController ..> PlayerProfileDto : returns
+  GameController ..> UpdateProgressRequest : accepts
+  GameController ..> UpdateNicknameRequest : accepts
+  GlobalExceptionHandler ..> ApiErrorResponse : returns
+}
+
+' ============================================================
+' ================ FRONTEND: BASE CLASSES ====================
+' ============================================================
+
+package "«Frontend» Base Classes" {
+  class LevelBase {
+    # config: Object
+    # drone: Object
+    # isExecuting: boolean
+    # gameGrid: HTMLElement
+    # codeArea: HTMLElement
+    # consoleOutput: HTMLElement
+    --
+    + LevelBase(config)
+    + initElements(): void
+    + initialize(): void
+    + initializeGameGrid(): void
+    + createGridCell(x, y): HTMLElement
+    + resetDrone(): void
+    + moveForward(): Promise<void>
+    + turnLeft(): Promise<void>
+    + turnRight(): Promise<void>
+    + updateDronePosition(): void
+    + canMoveTo(x, y): boolean
+    + checkLevelComplete(): boolean
+    + addConsoleMessage(message, type): void
+    + resetProgram(): void
+    + goBack(): void
+    + showHelp(): void
+    + goToLevelMap(): void
+    note right
+      Базовый класс для всех уровней
+      с движением дрона
+    end note
+  }
+
+  class LevelBase2 {
+    # config: Object
+    # sortedPackages: Object
+    # currentPackageIndex: number
+    # programBlocks: Array
+    # robotArm: HTMLElement
+    # inputConveyor: HTMLElement
+    # redConveyor: HTMLElement
+    # blueConveyor: HTMLElement
+    # greenConveyor: HTMLElement
+    --
+    + LevelBase2(config)
+    + initialize(): void
+    + initializeConveyors(): void
+    + resetConveyors(): void
+    + loadPackagesToInput(): void
+    + createPackageElement(pkg): HTMLElement
+    + animateRobotPickup(pkg): Promise<void>
+    + sendPackageToConveyor(pkg, color): Promise<void>
+    + getBlockText(type, params): String
+    + updateProgramState(): void
+    note right
+      Базовый класс для уровней
+      с системой сортировки посылок
+    end note
+  }
+
+  class LevelBase3 {
+    # isPythonMode: boolean
+    # currentLine: number
+    # trafficLightInterval: Object
+    # conveyorsFilled: boolean
+    # virusCoreActivated: boolean
+    # codeEditor: HTMLElement
+    --
+    + LevelBase3(config)
+    + initialize(): void
+    + setupCodeEditor(): void
+    + handleCodeInput(): void
+    + updateTrafficLightDisplay(): void
+    + startTrafficLight(interval): void
+    + runPythonCode(): Promise<void>
+    + validatePythonCode(code): boolean
+    + executePythonCode(code): Promise<void>
+    + executeCommand(command): Promise<void>
+    + waitInPlace(): Promise<void>
+    + moveItems(): Promise<void>
+    + activateVirusCore(): Promise<void>
+    + evaluateCondition(condition): boolean
+    note right
+      Базовый класс для уровней
+      с Python-кодом (глава 3)
+    end note
+  }
+
+  LevelBase <|-- LevelBase2
+  LevelBase <|-- LevelBase3
+}
+
+' ============================================================
+' ================ FRONTEND: LEVEL IMPLEMENTATIONS ==========
+' ============================================================
+
+package "«Frontend» Level 2 Implementations" {
+  class Level2_1 {
+    - packages: Array
+    - requiredSorting: Object
+    - programBlocks: Array
+    --
+    + Level2_1()
+    + getWelcomeMessage(): String
+    + initializeDragAndDrop(): void
+    + addBlockToProgram(type, params): void
+    + updateBlockParams(blockElement): void
+    + runProgram(): Promise<void>
+    + executeProgramForPackage(pkg): Promise<String>
+    + checkLevelCompletion(): Promise<void>
+    + completeLevel(): Promise<void>
+    note right
+      Уровень 2.1: Условные переменные
+      Сортировка 8 посылок
+      Блоки: если, иначе если, иначе, отправить
+      Система сортировки с конвейерами
+    end note
+  }
+
+  class Level2_2 {
+    - gridSizeX: number
+    - gridSizeY: number
+    - start: Object
+    - finish: Object
+    - obstacles: Array
+    - patterns: Array
+    - programBlocks: Array
+    - currentLoop: Object
+    - activeLoopBody: HTMLElement
+    --
+    + Level2_2()
+    + getWelcomeMessage(): String
+    + initialize(): void
+    + createGridCell(x, y): HTMLElement
+    + checkObstacles(cell, x, y): void
+    + isPatternCell(x, y): boolean
+    + initializeDragAndDrop(): void
+    + addBlockToProgram(action, loopCount): void
+    + updateLoopCount(input): void
+    + runProgram(): Promise<void>
+    + executeBlocks(blocks): Promise<void>
+    + executeLoop(loopBlock): Promise<void>
+    + getBlocksInLoopBody(loopBody): Array
+    + executeAction(block): Promise<void>
+    + updateLoopCounter(): void
+    + completeLevel(): Promise<void>
+    note right
+      Уровень 2.2: Циклы
+      Игровое поле 12x8
+      Препятствия с повторяющимися паттернами
+      Блоки: движение, повороты, циклы
+      Счетчик циклов в реальном времени
+    end note
+  }
+
+  class Level2_3 {
+    - sections: number
+    - packagesPerSection: number
+    - packages: Array
+    - sectionStates: Array<boolean>
+    - bossHealth: number
+    - currentSection: number
+    - glitchEffect: HTMLElement
+    --
+    + Level2_3()
+    + getWelcomeMessage(): String
+    + initialize(): void
+    + startGlitchEffects(): void
+    + updateSectionVisuals(): void
+    + updateBossHealth(): void
+    + initializeDragAndDrop(): void
+    + addBlockToProgram(type, params): void
+    + updateBlockParams(selectElement): void
+    + runProgram(): Promise<void>
+    + executeProgramForPackage(pkg, section): Promise<String>
+    + getBlocksInLoopBody(loopBody): Array
+    + bossAttack(): Promise<void>
+    + defeatBoss(): Promise<void>
+    + checkLevelCompletion(): Promise<void>
+    + completeLevel(): Promise<void>
+    note right
+      Уровень 2.3: Босс - Адаптивный глитч
+      3 секции конвейеров
+      9 посылок (по 3 на секцию)
+      Система здоровья босса (100 HP)
+      Глитч-эффекты и адаптивная система
+      Циклы с параметрами
+    end note
+  }
+
+  LevelBase2 <|-- Level2_1
+  LevelBase <|-- Level2_2
+  LevelBase2 <|-- Level2_3
+}
+
+' ============================================================
+' ================ FRONTEND: API CLIENT ======================
+' ============================================================
+
+package "«Frontend» API Client" {
+  class ApiClient {
+    - API_BASE_URL: String
+    - backendAvailable: boolean
+    - backendCheckPromise: Promise
+    - FALLBACK_LEVELS: Array
+    --
+    + checkBackendAvailability(): Promise<boolean>
+    + createTimeoutSignal(timeoutMs): AbortSignal
+    + fetchLevels(): Promise<Array>
+    + fetchProfile(): Promise<Object>
+    + updateProgress(levelId): Promise<Object>
+    + updateNickname(nickname): Promise<Object>
+    + syncLocalProfileAfterLevel(levelId): void
+    note right
+      API клиент с fallback режимом
+      Работает без бэкенда (localStorage)
+      Проверяет доступность бэкенда
+    end note
+  }
+}
+
+' ============================================================
+' ================ CROSS-LAYER RELATIONSHIPS =================
+' ============================================================
+
+' Backend internal
+LevelCatalog --> DefaultLevelFactory
+PlayerProfileService --> InMemoryPlayerProfileRepository
+PlayerProfileService --> LevelCatalogService
+
+' Frontend internal
+Level2_1 ..> ApiClient : uses
+Level2_2 ..> ApiClient : uses
+Level2_3 ..> ApiClient : uses
+
+' Frontend → Backend (HTTP)
+ApiClient ..> GameController : HTTP
+
+' DTO conversion
+PlayerProfileDto ..> PlayerProfile : fromDomain()
+
+' Factory creates domain objects
+DefaultLevelFactory ..> SecurityLevel : creates
+DefaultLevelFactory ..> DronesLevel : creates
+DefaultLevelFactory ..> CoreLevel : creates
+
+@enduml
