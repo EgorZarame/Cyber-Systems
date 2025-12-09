@@ -1,11 +1,13 @@
 @startuml CyberSystems_FullArchitecture
 
-' ====== Настройки стиля ======
+' ====== Настройки для компактности ======
 skinparam packageStyle rectangle
 skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam wrapWidth 300
+left to right direction
 
-title Cyber Systems - Полная архитектура системы
+title Cyber Systems - Полная архитектура системы (Компактная версия)
 
 ' ====== Указываем layout (обход бага 2025) ======
 !pragma useVerticalIfOnLeft
@@ -413,10 +415,12 @@ package "«Frontend» Base Classes" {
 }
 
 ' ============================================================
-' ================ FRONTEND: LEVEL IMPLEMENTATIONS ==========
+' ================ FRONTEND: LEVEL 2 IMPLEMENTATIONS (ГОРИЗОНТАЛЬНЫЙ) ==========
 ' ============================================================
 
-package "«Frontend» Level 2 Implementations" {
+rectangle "«Frontend» Level 2 Implementations" #FFFFFF {
+  left to right direction
+
   class Level2_1 {
     - packages: Array
     - requiredSorting: Object
@@ -540,30 +544,5 @@ package "«Frontend» API Client" {
     end note
   }
 }
-
-' ============================================================
-' ================ CROSS-LAYER RELATIONSHIPS =================
-' ============================================================
-
-' Backend internal
-LevelCatalog --> DefaultLevelFactory
-PlayerProfileService --> InMemoryPlayerProfileRepository
-PlayerProfileService --> LevelCatalogService
-
-' Frontend internal
-Level2_1 ..> ApiClient : uses
-Level2_2 ..> ApiClient : uses
-Level2_3 ..> ApiClient : uses
-
-' Frontend → Backend (HTTP)
-ApiClient ..> GameController : HTTP
-
-' DTO conversion
-PlayerProfileDto ..> PlayerProfile : fromDomain()
-
-' Factory creates domain objects
-DefaultLevelFactory ..> SecurityLevel : creates
-DefaultLevelFactory ..> DronesLevel : creates
-DefaultLevelFactory ..> CoreLevel : creates
 
 @enduml
