@@ -66,7 +66,7 @@ class CharacterDisplay {
         this.name = nameElement;
         this.placeholder = placeholderElement;
         this.basePath = window.location.protocol === 'file:' ? '../' : '/';
-        this.avatarBasePath = this.basePath + 'assets/images/avatars/';
+        this.avatarBasePath = (window.location.protocol === 'file:' ? '../' : '/') + 'assets/images/avatars/';
     }
 
     update(profile) {
@@ -165,11 +165,11 @@ class GameStarter {
 class BackgroundManager {
     constructor(body) {
         this.body = body;
+        const assetRoot = window.location.protocol === 'file:' ? '../' : '/';
         this.possiblePaths = [
+            assetRoot + 'assets/images/backgrounds/office_bg.png',
             '../assets/images/backgrounds/office_bg.png',
             'assets/images/backgrounds/office_bg.png',
-            '../assets/backgrounds/office-bg.png',
-            'assets/backgrounds/office-bg.png',
         ];
     }
 

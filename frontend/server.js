@@ -11,9 +11,9 @@ app.use('/level-map', express.static(path.join(__dirname, 'level-map')));
 app.use('/level-1-1', express.static(path.join(__dirname, 'level-1-1')));
 //app.use('/sandbox', express.static(path.join(__dirname, 'sandbox')));
 
-// Главная страница по умолчанию
+// Главная: редирект на /home/, чтобы относительные пути (main-page.js, assets) работали
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'home', 'index.html'));
+    res.redirect('/home/index.html');
 });
 
 const PORT = 3000;
