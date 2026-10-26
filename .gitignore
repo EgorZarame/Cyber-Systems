@@ -1,0 +1,16 @@
+# сборка и зависимости
+target/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+
+# секреты и локальные настройки: ключи в репозиторий не кладём
+.env
+*.env.local
+
+# IDE и мусор системы
+.idea/
+.vscode/
+*.iml
+.DS_Store
