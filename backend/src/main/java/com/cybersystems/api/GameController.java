@@ -11,6 +11,8 @@ import com.cybersystems.security.AuthFilter;
 import com.cybersystems.service.HintProvider;
 import com.cybersystems.service.LevelCatalogService;
 import com.cybersystems.service.PlayerProfileServiceContract;
+import com.cybersystems.service.Weather;
+import com.cybersystems.service.WeatherProvider;
 import com.cybersystems.service.ProgressionStrategy;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -29,15 +31,18 @@ public class GameController {
     private final PlayerProfileServiceContract playerProfileService;
     private final ProgressionStrategy progressionStrategy;
     private final HintProvider hintProvider;
+    private final WeatherProvider weatherProvider;
 
     public GameController(LevelCatalogService levelCatalog,
                           PlayerProfileServiceContract playerProfileService,
                           ProgressionStrategy progressionStrategy,
-                          HintProvider hintProvider) {
+                          HintProvider hintProvider,
+                          WeatherProvider weatherProvider) {
         this.levelCatalog = levelCatalog;
         this.playerProfileService = playerProfileService;
         this.progressionStrategy = progressionStrategy;
         this.hintProvider = hintProvider;
+        this.weatherProvider = weatherProvider;
     }
 
     @GetMapping("/levels")
@@ -95,5 +100,10 @@ public class GameController {
         // подсказка становится подробнее, когда игрок пробует уровень не в первый раз
         int attempt = Math.max(1, playerProfileService.countAttempts(userId, request.getLevelId()));
         return hintProvider.hint(request.getLevelId(), request.getProgram(), attempt);
+    }
+
+    @GetMapping("/external/weather")
+    public Weather weather() {
+        return weatherProvider.current();
     }
 }

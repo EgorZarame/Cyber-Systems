@@ -3,6 +3,7 @@ package com.cybersystems.api.error;
 import com.cybersystems.service.AiServiceUnavailableException;
 import com.cybersystems.service.DataServiceUnavailableException;
 import com.cybersystems.service.ProfileNotFoundException;
+import com.cybersystems.service.WeatherUnavailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -44,6 +45,15 @@ public class GlobalExceptionHandler {
         ApiErrorResponse response = new ApiErrorResponse(
                 HttpStatus.BAD_GATEWAY.value(), "Bad Gateway",
                 "Хранилище данных сейчас недоступно", request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
+    }
+
+    @ExceptionHandler(WeatherUnavailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleWeatherDown(WeatherUnavailableException ex,
+                                                              HttpServletRequest request) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_GATEWAY.value(), "Bad Gateway",
+                "Погода сейчас недоступна", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
     }
 
