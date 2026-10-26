@@ -47,6 +47,11 @@
             z-index: 10;
         }
         
+        .weather {
+            color: #9a9ab5;
+            font-size: 14px;
+        }
+
         .logo {
             font-size: 24px;
             font-weight: bold;
@@ -456,6 +461,7 @@
     <!-- Логотип и навигация -->
     <header class="main-header">
         <div class="logo">🔷 КИБЕРСИСТЕМС</div>
+        <div class="weather" id="weather"></div>
         <nav class="main-nav">
             <button class="nav-btn active">ГЛАВНАЯ</button>
             <button class="nav-btn" onclick="location.href='../level-map/index.html'">КАРТА</button>
@@ -601,7 +607,19 @@
     <script src="main-page.js"></script>
     <script>
         // Инициализация главной страницы
+        // погода в офисе берётся у внешнего сервиса через игровой сервис; если не ответил, блок просто пустой
+        async function showWeather() {
+            try {
+                const w = await APIClient.request('/external/weather', { method: 'GET', timeout: 6000 });
+                document.getElementById('weather').textContent =
+                    `За окном (${w.city}): ${Math.round(w.temperatureC)}°C, ${w.description}, ветер ${Math.round(w.windKmh)} км/ч`;
+            } catch (error) {
+                console.info('ℹ️ Погода недоступна');
+            }
+        }
+
         if (Session.requireLogin()) document.addEventListener('DOMContentLoaded', () => {
+            showWeather();
             MainPage.init();
         });
     </script>
