@@ -14,3 +14,8 @@ __pycache__/
 .vscode/
 *.iml
 .DS_Store
+
+# отчёты о покрытии тестами
+.coverage
+htmlcov/
+.pytest_cache/
