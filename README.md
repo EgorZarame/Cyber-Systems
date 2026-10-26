@@ -119,6 +119,10 @@ Cyber-Systems/
 Порядок запуска вручную: data-service, auth-service, game-service (`mvn spring-boot:run` в каждой папке).
 Подробнее про каждый сервис в README внутри папки.
 
+Описание всех методов API открывается на http://localhost:3000/api-docs/ (обычная HTML-страница, лежит в `frontend/api-docs`).
+
+Покрытие тестами считает JaCoCo: `mvn test` в папке сервиса, отчёт в `target/site/jacoco/index.html`.
+
 Новые методы игрового сервиса: `POST /api/attempts`, `GET /api/profile/completed-levels`.
 Все методы `/api`, кроме `GET /api/levels`, требуют заголовок `Authorization: Bearer <токен>`.
 
