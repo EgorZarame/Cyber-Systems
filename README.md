@@ -107,9 +107,14 @@ Cyber-Systems/
 | auth-service | `auth-service/` | 8081 | регистрация, вход, выдача JWT |
 | game-service | `backend/` | 8080 | уровни, прогресс, попытки (нужен токен) |
 | data-service | `data-service/` | 8082 | единственный, кто работает с PostgreSQL |
+| ai-service | `ai-service/` | 8083 | подсказки по программе игрока (Python) |
 
 Секреты и пароли задаются переменными окружения (шаблон в `.env.example`), в репозиторий их класть нельзя.
 Сервисам нужны одинаковые `JWT_SECRET` (auth и game) и `INTERNAL_TOKEN` (все три бэкенда).
+
+Запуск всего сразу через Docker: `cp .env.example .env`, заполнить значения (пароль базы, `JWT_SECRET`,
+`INTERNAL_TOKEN`) и `docker compose up --build`. Игра откроется на http://localhost:3000, первым делом
+попросит зарегистрироваться. На уровнях 1.1, 1.2 и 2.2 есть кнопка «Подсказка».
 
 Порядок запуска вручную: data-service, auth-service, game-service (`mvn spring-boot:run` в каждой папке).
 Подробнее про каждый сервис в README внутри папки.

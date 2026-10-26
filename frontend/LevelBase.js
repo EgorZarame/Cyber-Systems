@@ -149,15 +149,22 @@ class LevelBase {
             await new Promise(resolve => setTimeout(resolve, 600));
             
             if (this.checkLevelComplete()) {
+                this.recordAttempt(true);
                 await this.completeLevel();
-                break;
+                return;
             }
         }
         
         if (this.isExecuting) {
+            this.recordAttempt(false);
             this.addConsoleMessage('Программа завершена');
             this.isExecuting = false;
         }
+    }
+
+    recordAttempt(success) {
+        const program = this.programBlocks.map(block => block.action);
+        AttemptService.record(this.config.id, program, success);
     }
 
     async executeAction(blockData) {
