@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: game-service
+
+data-service:
+  url: ${DATA_SERVICE_URL:http://localhost:8082}
+
+ai-service:
+  url: ${AI_SERVICE_URL:http://localhost:8083}
+
+internal:
+  token: ${INTERNAL_TOKEN:}
+
+jwt:
+  # то же значение, что у auth-service
+  secret: ${JWT_SECRET:}

@@ -97,6 +97,26 @@ Cyber-Systems/
   { "nickname": "Имя игрока" }
   ```
 
+## Сервисы (новая архитектура)
+
+Приложение разделено на независимые сервисы, они общаются по HTTP:
+
+| Сервис | Папка | Порт | Что делает |
+|---|---|---|---|
+| frontend | `frontend/` | 3000 | раздаёт страницы игры |
+| auth-service | `auth-service/` | 8081 | регистрация, вход, выдача JWT |
+| game-service | `backend/` | 8080 | уровни, прогресс, попытки (нужен токен) |
+| data-service | `data-service/` | 8082 | единственный, кто работает с PostgreSQL |
+
+Секреты и пароли задаются переменными окружения (шаблон в `.env.example`), в репозиторий их класть нельзя.
+Сервисам нужны одинаковые `JWT_SECRET` (auth и game) и `INTERNAL_TOKEN` (все три бэкенда).
+
+Порядок запуска вручную: data-service, auth-service, game-service (`mvn spring-boot:run` в каждой папке).
+Подробнее про каждый сервис в README внутри папки.
+
+Новые методы игрового сервиса: `POST /api/attempts`, `GET /api/profile/completed-levels`.
+Все методы `/api`, кроме `GET /api/levels`, требуют заголовок `Authorization: Bearer <токен>`.
+
 ## 🛠️ Решение проблем
 
 ### npm не работает в PowerShell

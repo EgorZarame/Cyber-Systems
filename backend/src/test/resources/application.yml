@@ -1,0 +1,11 @@
+jwt:
+  secret: game-test-secret-game-test-secret-123
+
+data-service:
+  url: http://data-service.test
+
+ai-service:
+  url: http://ai-service.test
+
+internal:
+  token: test-internal

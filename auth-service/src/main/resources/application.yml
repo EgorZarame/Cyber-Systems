@@ -1,0 +1,20 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+
+data-service:
+  url: ${DATA_SERVICE_URL:http://localhost:8082}
+
+internal:
+  token: ${INTERNAL_TOKEN:}
+
+jwt:
+  # минимум 32 символа, одно и то же значение должно быть у auth-service и game-service
+  secret: ${JWT_SECRET:}
+  ttl-hours: ${JWT_TTL_HOURS:12}
+
+cors:
+  origin: ${CORS_ORIGIN:http://localhost:3000}

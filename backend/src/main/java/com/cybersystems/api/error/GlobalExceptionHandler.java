@@ -1,5 +1,8 @@
 package com.cybersystems.api.error;
 
+import com.cybersystems.service.AiServiceUnavailableException;
+import com.cybersystems.service.DataServiceUnavailableException;
+import com.cybersystems.service.ProfileNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -25,6 +28,32 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(ProfileNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleProfileNotFound(ProfileNotFoundException ex,
+                                                                  HttpServletRequest request) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(DataServiceUnavailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleDataDown(DataServiceUnavailableException ex,
+                                                           HttpServletRequest request) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_GATEWAY.value(), "Bad Gateway",
+                "Хранилище данных сейчас недоступно", request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
+    }
+
+    @ExceptionHandler(AiServiceUnavailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleAiDown(AiServiceUnavailableException ex,
+                                                         HttpServletRequest request) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_GATEWAY.value(), "Bad Gateway",
+                "Помощник сейчас недоступен", request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
