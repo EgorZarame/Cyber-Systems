@@ -8,6 +8,9 @@ spring:
 data-service:
   url: ${DATA_SERVICE_URL:http://localhost:8082}
 
+ai-service:
+  url: ${AI_SERVICE_URL:http://localhost:8083}
+
 internal:
   token: ${INTERNAL_TOKEN:}
 

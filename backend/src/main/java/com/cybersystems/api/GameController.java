@@ -2,11 +2,13 @@ package com.cybersystems.api;
 
 import com.cybersystems.api.dto.PlayerProfileDto;
 import com.cybersystems.api.dto.AttemptRequest;
+import com.cybersystems.api.dto.HintRequest;
 import com.cybersystems.api.dto.UpdateNicknameRequest;
 import com.cybersystems.api.dto.UpdateProgressRequest;
 import com.cybersystems.domain.LevelInfo;
 import com.cybersystems.domain.PlayerProfile;
 import com.cybersystems.security.AuthFilter;
+import com.cybersystems.service.HintProvider;
 import com.cybersystems.service.LevelCatalogService;
 import com.cybersystems.service.PlayerProfileServiceContract;
 import com.cybersystems.service.ProgressionStrategy;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -25,13 +28,16 @@ public class GameController {
     private final LevelCatalogService levelCatalog;
     private final PlayerProfileServiceContract playerProfileService;
     private final ProgressionStrategy progressionStrategy;
+    private final HintProvider hintProvider;
 
     public GameController(LevelCatalogService levelCatalog,
                           PlayerProfileServiceContract playerProfileService,
-                          ProgressionStrategy progressionStrategy) {
+                          ProgressionStrategy progressionStrategy,
+                          HintProvider hintProvider) {
         this.levelCatalog = levelCatalog;
         this.playerProfileService = playerProfileService;
         this.progressionStrategy = progressionStrategy;
+        this.hintProvider = hintProvider;
     }
 
     @GetMapping("/levels")
@@ -78,5 +84,16 @@ public class GameController {
     public void saveAttempt(@RequestAttribute(AuthFilter.USER_ID) String userId,
                             @Valid @RequestBody AttemptRequest request) {
         playerProfileService.recordAttempt(userId, request.getLevelId(), request.getProgram(), request.isSuccess());
+    }
+
+    @PostMapping("/hint")
+    public Map<String, Object> hint(@RequestAttribute(AuthFilter.USER_ID) String userId,
+                                    @Valid @RequestBody HintRequest request) {
+        if (!levelCatalog.exists(request.getLevelId())) {
+            throw new IllegalArgumentException("Уровень с id=" + request.getLevelId() + " не найден");
+        }
+        // подсказка становится подробнее, когда игрок пробует уровень не в первый раз
+        int attempt = Math.max(1, playerProfileService.countAttempts(userId, request.getLevelId()));
+        return hintProvider.hint(request.getLevelId(), request.getProgram(), attempt);
     }
 }

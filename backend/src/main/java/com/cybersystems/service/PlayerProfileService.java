@@ -53,6 +53,11 @@ public class PlayerProfileService implements PlayerProfileServiceContract {
         return profileRepository.findCompletedLevelIds(getProfile(userId).getId());
     }
 
+    @Override
+    public int countAttempts(String userId, String levelId) {
+        return profileRepository.countAttempts(getProfile(userId).getId(), levelId);
+    }
+
     private void checkLevelExists(String levelId) {
         if (!levelCatalog.exists(levelId)) {
             throw new IllegalArgumentException("Уровень с id=" + levelId + " не найден");

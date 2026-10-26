@@ -26,6 +26,9 @@ public class DataServiceProfileRepository implements PlayerProfileRepository {
     private record CompletedJson(String levelId) {
     }
 
+    private record AttemptJson(String levelId) {
+    }
+
     private final RestClient client;
 
     public DataServiceProfileRepository(RestClient.Builder builder,
@@ -88,6 +91,17 @@ public class DataServiceProfileRepository implements PlayerProfileRepository {
                     .retrieve()
                     .body(CompletedJson[].class);
             return items == null ? List.<String>of() : java.util.Arrays.stream(items).map(CompletedJson::levelId).toList();
+        });
+    }
+
+    @Override
+    public int countAttempts(String profileId, String levelId) {
+        return call(() -> {
+            AttemptJson[] items = client.get()
+                    .uri("/internal/profiles/{id}/attempts?levelId={level}&limit=50", profileId, levelId)
+                    .retrieve()
+                    .body(AttemptJson[].class);
+            return items == null ? 0 : items.length;
         });
     }
 

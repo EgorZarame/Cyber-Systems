@@ -1,5 +1,6 @@
 package com.cybersystems.api.error;
 
+import com.cybersystems.service.AiServiceUnavailableException;
 import com.cybersystems.service.DataServiceUnavailableException;
 import com.cybersystems.service.ProfileNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,15 @@ public class GlobalExceptionHandler {
         ApiErrorResponse response = new ApiErrorResponse(
                 HttpStatus.BAD_GATEWAY.value(), "Bad Gateway",
                 "Хранилище данных сейчас недоступно", request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
+    }
+
+    @ExceptionHandler(AiServiceUnavailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleAiDown(AiServiceUnavailableException ex,
+                                                         HttpServletRequest request) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_GATEWAY.value(), "Bad Gateway",
+                "Помощник сейчас недоступен", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
     }
 

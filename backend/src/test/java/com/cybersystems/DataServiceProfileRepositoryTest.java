@@ -97,6 +97,15 @@ class DataServiceProfileRepositoryTest {
     }
 
     @Test
+    void attemptsAreCounted() {
+        server.expect(requestTo("http://data/internal/profiles/p-1/attempts?levelId=1.1&limit=50"))
+                .andRespond(withSuccess("[{\"levelId\":\"1.1\"},{\"levelId\":\"1.1\"},{\"levelId\":\"1.1\"}]",
+                        MediaType.APPLICATION_JSON));
+
+        assertThat(repository.countAttempts("p-1", "1.1")).isEqualTo(3);
+    }
+
+    @Test
     void serverErrorBecomesUnavailable() {
         server.expect(requestTo("http://data/internal/profiles/by-user/u-1"))
                 .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));

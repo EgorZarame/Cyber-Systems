@@ -20,4 +20,6 @@ public interface PlayerProfileServiceContract {
     void recordAttempt(String userId, String levelId, String program, boolean success);
 
     List<String> getCompletedLevelIds(String userId);
+
+    int countAttempts(String userId, String levelId);
 }

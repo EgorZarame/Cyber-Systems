@@ -1,7 +1,9 @@
 package com.cybersystems;
 
 import com.cybersystems.domain.PlayerProfile;
+import com.cybersystems.service.AiServiceUnavailableException;
 import com.cybersystems.service.DataServiceUnavailableException;
+import com.cybersystems.service.HintProvider;
 import com.cybersystems.service.PlayerProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +40,9 @@ class GameApiTest {
 
     @MockBean
     PlayerProfileRepository profiles;
+
+    @MockBean
+    HintProvider hints;
 
     String auth;
 
@@ -165,5 +171,54 @@ class GameApiTest {
         when(profiles.findByUserId(eq(USER))).thenThrow(new DataServiceUnavailableException("down", new RuntimeException()));
 
         mvc.perform(get("/api/profile").header("Authorization", auth)).andExpect(status().isBadGateway());
+    }
+
+    @Test
+    void hintGetsAttemptNumberFromHistory() throws Exception {
+        when(profiles.countAttempts("p-1", "1.2")).thenReturn(4);
+        when(hints.hint(eq("1.2"), any(), eq(4))).thenReturn(Map.of("verdict", "blocked", "hint", "Поверни раньше"));
+
+        mvc.perform(post("/api/hint").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"levelId\":\"1.2\",\"program\":[\"move\",{\"type\":\"loop\",\"count\":2,\"body\":[\"move\"]}]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.verdict").value("blocked"));
+    }
+
+    @Test
+    void firstHintStartsFromAttemptOne() throws Exception {
+        when(profiles.countAttempts("p-1", "1.1")).thenReturn(0);
+        when(hints.hint(eq("1.1"), any(), eq(1))).thenReturn(Map.of("verdict", "empty"));
+
+        mvc.perform(post("/api/hint").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"levelId\":\"1.1\",\"program\":[]}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void hintForUnknownLevelIsRejected() throws Exception {
+        mvc.perform(post("/api/hint").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"levelId\":\"9.9\",\"program\":[]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void hintNeedsToken() throws Exception {
+        mvc.perform(post("/api/hint").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"levelId\":\"1.1\",\"program\":[]}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void aiOutageGivesBadGateway() throws Exception {
+        when(hints.hint(any(), any(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenThrow(new AiServiceUnavailableException("down", new RuntimeException()));
+
+        mvc.perform(post("/api/hint").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"levelId\":\"1.1\",\"program\":[\"move\"]}"))
+                .andExpect(status().isBadGateway());
     }
 }

@@ -21,4 +21,6 @@ public interface PlayerProfileRepository {
     void saveAttempt(String profileId, String levelId, String program, boolean success);
 
     List<String> findCompletedLevelIds(String profileId);
+
+    int countAttempts(String profileId, String levelId);
 }
