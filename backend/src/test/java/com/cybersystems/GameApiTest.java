@@ -5,6 +5,9 @@ import com.cybersystems.service.AiServiceUnavailableException;
 import com.cybersystems.service.DataServiceUnavailableException;
 import com.cybersystems.service.HintProvider;
 import com.cybersystems.service.PlayerProfileRepository;
+import com.cybersystems.service.Weather;
+import com.cybersystems.service.WeatherProvider;
+import com.cybersystems.service.WeatherUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +46,9 @@ class GameApiTest {
 
     @MockBean
     HintProvider hints;
+
+    @MockBean
+    WeatherProvider weather;
 
     String auth;
 
@@ -220,5 +226,28 @@ class GameApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"levelId\":\"1.1\",\"program\":[\"move\"]}"))
                 .andExpect(status().isBadGateway());
+    }
+
+    @Test
+    void weatherComesFromExternalService() throws Exception {
+        when(weather.current()).thenReturn(new Weather("Уфа", -3.5, 12.0, "снег"));
+
+        mvc.perform(get("/api/external/weather").header("Authorization", auth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.city").value("Уфа"))
+                .andExpect(jsonPath("$.temperatureC").value(-3.5))
+                .andExpect(jsonPath("$.description").value("снег"));
+    }
+
+    @Test
+    void weatherNeedsToken() throws Exception {
+        mvc.perform(get("/api/external/weather")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void weatherOutageGivesBadGateway() throws Exception {
+        when(weather.current()).thenThrow(new WeatherUnavailableException("down", new RuntimeException()));
+
+        mvc.perform(get("/api/external/weather").header("Authorization", auth)).andExpect(status().isBadGateway());
     }
 }
