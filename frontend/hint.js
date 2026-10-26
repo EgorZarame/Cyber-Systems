@@ -11,11 +11,12 @@ class HintPanel {
         button.textContent = 'Подсказка';
         button.style.cssText = 'background: transparent; border: 1px solid #ffd166; color: #ffd166;';
         button.addEventListener('click', () => HintPanel.ask());
+        buttons.style.flexWrap = 'wrap';
         buttons.appendChild(button);
 
         const panel = document.createElement('div');
         panel.id = 'hintPanel';
-        panel.style.cssText = 'display: none; position: fixed; right: 20px; top: 20px; width: 320px; ' +
+        panel.style.cssText = 'display: none; position: fixed; right: 20px; top: 75px; width: 320px; ' +
             'max-height: 60vh; overflow-y: auto; padding: 16px; background: #151530; color: #ffffff; ' +
             'border: 2px solid #ffd166; box-shadow: 0 0 15px rgba(255, 209, 102, 0.4); ' +
             'font-family: "Courier New", monospace; font-size: 14px; z-index: 1000;';
