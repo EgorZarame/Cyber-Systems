@@ -1,0 +1,70 @@
+# Запуск всей системы: cp .env.example .env, заполнить значения, потом docker compose up --build
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: cybersystems
+      POSTGRES_USER: ${DB_USER:-cybersystems}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?заполни DB_PASSWORD в .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d cybersystems"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  data-service:
+    build: ./data-service
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/cybersystems
+      DB_USER: ${DB_USER:-cybersystems}
+      DB_PASSWORD: ${DB_PASSWORD}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?заполни INTERNAL_TOKEN в .env}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      DATA_SERVICE_URL: http://data-service:8082
+      JWT_SECRET: ${JWT_SECRET:?заполни JWT_SECRET в .env}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+    depends_on:
+      - data-service
+    ports:
+      - "8081:8081"
+
+  ai-service:
+    build: ./ai-service
+    environment:
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+    ports:
+      - "8083:8083"
+
+  game-service:
+    build: ./backend
+    environment:
+      DATA_SERVICE_URL: http://data-service:8082
+      AI_SERVICE_URL: http://ai-service:8083
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+    depends_on:
+      - data-service
+      - ai-service
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - game-service
+      - auth-service
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:

@@ -533,10 +533,11 @@
         </div>
     </div>
 
+    <script src="../api.js"></script>
     <script src="level-map.js"></script>
     <script>
         // Инициализация карты уровней
-        document.addEventListener('DOMContentLoaded', () => {
+        if (Session.requireLogin()) document.addEventListener('DOMContentLoaded', () => {
             LevelMap.init();
         });
     </script>

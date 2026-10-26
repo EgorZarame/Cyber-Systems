@@ -1,3 +1,91 @@
+// Токен и логин игрока хранятся в localStorage, после входа через страницу /auth
+class Session {
+    static TOKEN_KEY = 'cyberToken';
+    static LOGIN_KEY = 'cyberLogin';
+    static AUTH_PAGE = '../auth/index.html';
+
+    static get token() {
+        try {
+            return localStorage.getItem(this.TOKEN_KEY);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    static get login() {
+        try {
+            return localStorage.getItem(this.LOGIN_KEY);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    static save(token, login) {
+        localStorage.setItem(this.TOKEN_KEY, token);
+        localStorage.setItem(this.LOGIN_KEY, login);
+    }
+
+    static clear() {
+        try {
+            localStorage.removeItem(this.TOKEN_KEY);
+            localStorage.removeItem(this.LOGIN_KEY);
+            localStorage.removeItem(LocalStorageService.PROFILE_KEY);
+        } catch (error) {
+            console.error('Не удалось очистить сессию:', error);
+        }
+    }
+
+    static isLoggedIn() {
+        return !!this.token;
+    }
+
+    // Если игрок не вошёл, отправляем на страницу входа
+    static requireLogin() {
+        if (!this.isLoggedIn()) {
+            window.location.href = this.AUTH_PAGE;
+            return false;
+        }
+        return true;
+    }
+
+    static logout() {
+        this.clear();
+        window.location.href = this.AUTH_PAGE;
+    }
+}
+
+class AuthService {
+    static URL = 'http://localhost:8081/api/auth';
+
+    static async send(path, login, password) {
+        let response;
+        try {
+            response = await fetch(`${this.URL}${path}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ login, password })
+            });
+        } catch (error) {
+            throw new Error('Сервис входа недоступен');
+        }
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.message || `Ошибка ${response.status}`);
+        }
+        Session.save(data.token, data.login);
+        return data;
+    }
+
+    static login(login, password) {
+        return this.send('/login', login, password);
+    }
+
+    static register(login, password) {
+        return this.send('/register', login, password);
+    }
+}
+
 class APIClient {
     static BASE_URL = 'http://localhost:8080/api';
     static isAvailable = null;
@@ -37,15 +125,22 @@ class APIClient {
             throw new Error('Backend недоступен');
         }
 
-        const defaultOptions = {
-            headers: { 'Content-Type': 'application/json' },
-            signal: this.createTimeoutSignal(2000)
-        };
+        const headers = { 'Content-Type': 'application/json' };
+        if (Session.token) {
+            headers['Authorization'] = `Bearer ${Session.token}`;
+        }
 
         const response = await fetch(`${this.BASE_URL}${endpoint}`, {
-            ...defaultOptions,
-            ...options
+            signal: this.createTimeoutSignal(options.timeout || 2000),
+            ...options,
+            headers
         });
+
+        if (response.status === 401) {
+            // токен просрочен или подделан, нужно войти заново
+            Session.logout();
+            throw new Error('Нужно войти заново');
+        }
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -119,6 +214,32 @@ class ProfileService {
     }
 }
 
+class AttemptService {
+    // Результат запуска программы. Ответа не ждём, на игру это не влияет
+    static record(levelId, program, success) {
+        if (!Session.isLoggedIn()) return;
+        fetch(`${APIClient.BASE_URL}/attempts`, {
+            method: 'POST',
+            keepalive: true,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Session.token}`
+            },
+            body: JSON.stringify({ levelId, program: JSON.stringify(program), success })
+        }).catch(() => console.info('ℹ️ Попытка не сохранена'));
+    }
+}
+
+class HintService {
+    static get(levelId, program) {
+        return APIClient.request('/hint', {
+            method: 'POST',
+            timeout: 8000,
+            body: JSON.stringify({ levelId, program })
+        });
+    }
+}
+
 class LocalStorageService {
     static PROFILE_KEY = 'cyberSystemsProfile';
 
@@ -163,6 +284,28 @@ class LocalStorageService {
         }
     }
 
+    // После входа собираем локальный профиль из того, что хранит сервер
+    static async syncFromServer() {
+        try {
+            const levels = await APIClient.request('/levels', { method: 'GET' });
+            const completed = await APIClient.request('/profile/completed-levels', { method: 'GET' });
+            const profile = await APIClient.request('/profile', { method: 'GET' });
+
+            const order = levels.slice().sort((a, b) => a.orderIndex - b.orderIndex).map(l => l.id);
+            const done = order.filter(id => completed.includes(id));
+
+            this.save({
+                currentLevelId: profile.currentLevelId,
+                lastCompleted: done.length ? done[done.length - 1] : null,
+                juniorUnlocked: done.includes('1.boss'),
+                seniorUnlocked: done.includes('3.boss'),
+                completedLevels: done
+            });
+        } catch (error) {
+            console.info('ℹ️ Не удалось подтянуть профиль с сервера');
+        }
+    }
+
     static load() {
         try {
             const profile = localStorage.getItem(this.PROFILE_KEY);
@@ -190,5 +333,10 @@ if (typeof window !== 'undefined') {
     window.fetchProfile = ProfileService.get.bind(ProfileService);
     window.updateProgress = ProfileService.updateProgress.bind(ProfileService);
     window.updateNickname = ProfileService.updateNickname.bind(ProfileService);
+    window.Session = Session;
+    window.AuthService = AuthService;
+    window.AttemptService = AttemptService;
+    window.LocalStorageService = LocalStorageService;
+    window.HintService = HintService;
     window.syncLocalProfileAfterLevel = LocalStorageService.syncAfterLevel.bind(LocalStorageService);
 }

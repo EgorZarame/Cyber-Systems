@@ -263,9 +263,10 @@
         this.resetDrone();
         this.addConsoleMessage('Запуск программы...', 'system');
 
-        await this.executeBlocks(this.programBlocks);
+        await this.executeBlocks(this.topLevelBlocks());
         
         if (this.isExecuting) {
+            AttemptService.record(this.config.id, HintPanel.serialize(this), this.checkLevelComplete());
             if (this.checkLevelComplete()) {
                 this.addConsoleMessage('🎉 Дрон достиг цели!', 'success');
                 setTimeout(() => {
@@ -327,6 +328,11 @@
         this.currentLoop.active = false;
         this.updateLoopCounter();
         this.addConsoleMessage(`✅ Цикл завершен (выполнено ${loopCount} повторений)`, 'system');
+    }
+
+    // блоки внутри цикла тоже лежат в programBlocks, но запускает их сам цикл
+    topLevelBlocks() {
+        return this.programBlocks.filter(b => b.element.parentElement === this.codeArea);
     }
 
     getBlocksInLoopBody(loopBody) {

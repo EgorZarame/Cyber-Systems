@@ -460,6 +460,7 @@
             <button class="nav-btn active">ГЛАВНАЯ</button>
             <button class="nav-btn" onclick="location.href='../level-map/index.html'">КАРТА</button>
             <button class="nav-btn" onclick="MainPage.showHelp()">СПРАВКА</button>
+            <button class="nav-btn" onclick="Session.logout()">ВЫЙТИ</button>
         </nav>
     </header>
 
@@ -596,10 +597,11 @@
         </div>
     </div>
 
+    <script src="../api.js"></script>
     <script src="main-page.js"></script>
     <script>
         // Инициализация главной страницы
-        document.addEventListener('DOMContentLoaded', () => {
+        if (Session.requireLogin()) document.addEventListener('DOMContentLoaded', () => {
             MainPage.init();
         });
     </script>
