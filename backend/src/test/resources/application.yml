@@ -1,0 +1,8 @@
+jwt:
+  secret: game-test-secret-game-test-secret-123
+
+data-service:
+  url: http://data-service.test
+
+internal:
+  token: test-internal

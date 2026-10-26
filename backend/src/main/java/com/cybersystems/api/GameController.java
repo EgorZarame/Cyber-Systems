@@ -1,14 +1,17 @@
 package com.cybersystems.api;
 
 import com.cybersystems.api.dto.PlayerProfileDto;
+import com.cybersystems.api.dto.AttemptRequest;
 import com.cybersystems.api.dto.UpdateNicknameRequest;
 import com.cybersystems.api.dto.UpdateProgressRequest;
 import com.cybersystems.domain.LevelInfo;
 import com.cybersystems.domain.PlayerProfile;
+import com.cybersystems.security.AuthFilter;
 import com.cybersystems.service.LevelCatalogService;
 import com.cybersystems.service.PlayerProfileServiceContract;
 import com.cybersystems.service.ProgressionStrategy;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,35 +40,43 @@ public class GameController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<PlayerProfileDto> getProfile() {
-        PlayerProfile profile = playerProfileService.getSingleProfile();
-        if (profile == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(PlayerProfileDto.fromDomain(profile));
+    public PlayerProfileDto getProfile(@RequestAttribute(AuthFilter.USER_ID) String userId) {
+        return PlayerProfileDto.fromDomain(playerProfileService.getProfile(userId));
     }
 
     @PostMapping("/profile/progress")
-    public PlayerProfileDto updateProgress(@Valid @RequestBody UpdateProgressRequest request) {
-        PlayerProfile updated = playerProfileService.updateProgress(request.getLevelId());
+    public PlayerProfileDto updateProgress(@RequestAttribute(AuthFilter.USER_ID) String userId,
+                                           @Valid @RequestBody UpdateProgressRequest request) {
+        PlayerProfile updated = playerProfileService.updateProgress(userId, request.getLevelId());
         return PlayerProfileDto.fromDomain(updated);
     }
 
     @PostMapping("/profile/nickname")
-    public PlayerProfileDto updateNickname(@Valid @RequestBody UpdateNicknameRequest request) {
-        PlayerProfile updated = playerProfileService.updateNickname(request.getNickname());
+    public PlayerProfileDto updateNickname(@RequestAttribute(AuthFilter.USER_ID) String userId,
+                                           @Valid @RequestBody UpdateNicknameRequest request) {
+        PlayerProfile updated = playerProfileService.updateNickname(userId, request.getNickname());
         return PlayerProfileDto.fromDomain(updated);
     }
 
     @GetMapping("/profile/next-level")
-    public ResponseEntity<LevelInfo> getNextLevel() {
-        PlayerProfile profile = playerProfileService.getSingleProfile();
+    public ResponseEntity<LevelInfo> getNextLevel(@RequestAttribute(AuthFilter.USER_ID) String userId) {
+        PlayerProfile profile = playerProfileService.getProfile(userId);
         LevelInfo next = progressionStrategy.getNextLevel(profile, levelCatalog);
         if (next == null) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(next);
     }
+
+    @GetMapping("/profile/completed-levels")
+    public List<String> getCompletedLevels(@RequestAttribute(AuthFilter.USER_ID) String userId) {
+        return playerProfileService.getCompletedLevelIds(userId);
+    }
+
+    @PostMapping("/attempts")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void saveAttempt(@RequestAttribute(AuthFilter.USER_ID) String userId,
+                            @Valid @RequestBody AttemptRequest request) {
+        playerProfileService.recordAttempt(userId, request.getLevelId(), request.getProgram(), request.isSuccess());
+    }
 }
-
-
