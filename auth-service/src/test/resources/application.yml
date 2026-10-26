@@ -1,0 +1,12 @@
+jwt:
+  secret: test-secret-test-secret-test-secret-123
+  ttl-hours: 1
+
+data-service:
+  url: http://data-service.test
+
+internal:
+  token: test-internal
+
+cors:
+  origin: http://localhost:3000
